@@ -1,0 +1,6 @@
+<Project>
+  <!-- Normalize agent-host PLATFORM=linux to the .NET solution/project platform. -->
+  <PropertyGroup Condition="'$(Platform)' == 'linux'">
+    <Platform>AnyCPU</Platform>
+  </PropertyGroup>
+</Project>

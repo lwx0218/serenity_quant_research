@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/SerenityQuantResearch/">
+    <Project Path="src/SerenityQuantResearch/SerenityQuantResearch.Web/SerenityQuantResearch.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SerenityQuantResearch.Tests/SerenityQuantResearch.Tests.csproj" />
+  </Folder>
+</Solution>

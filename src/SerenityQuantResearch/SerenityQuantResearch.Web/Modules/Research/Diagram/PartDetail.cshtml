@@ -1,0 +1,23 @@
+@{
+    ViewData["Title"] = "部件研究详情";
+    ViewData["PageId"] = "PartResearchDetail";
+    var partId = ViewData["PartId"] as string;
+}
+
+@section ContentHeader {
+    <div class="cpo-page-heading">
+        <div>
+            <a class="cpo-back-link" href="~/Research/Cpo">← 返回 CPO 系统构成图</a>
+            <span class="cpo-eyebrow">PART RESEARCH DETAIL</span>
+            <h1>部件研究详情</h1>
+        </div>
+    </div>
+}
+
+<div id="cpo-research-app" class="cpo-research-app cpo-detail-app" data-mode="detail" data-part-id="@partId">
+    <article id="cpo-detail-content" class="cpo-detail-content" aria-live="polite">
+        <div class="cpo-loading">正在通过 PartResearchService 读取 <code>@partId</code>…</div>
+    </article>
+</div>
+
+@Html.ModulePageInit("~/esm/Modules/Research/Diagram/CpoDiagramPage.js", new { mode = "detail", partId })

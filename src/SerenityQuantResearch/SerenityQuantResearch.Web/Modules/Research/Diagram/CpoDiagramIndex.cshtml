@@ -1,0 +1,56 @@
+@{
+    ViewData["Title"] = "CPO 物理部件研究";
+    ViewData["PageId"] = "CpoResearch";
+}
+
+@section ContentHeader {
+    <div class="cpo-page-heading">
+        <div>
+            <span class="cpo-eyebrow">PHASE 1 · PHYSICAL RESEARCH MAP</span>
+            <h1>CPO 物理部件研究</h1>
+            <p>自主设计的二维系统构成图。几何仅用于呈现，研究关系由服务查询。</p>
+        </div>
+        <span class="cpo-coverage" id="cpo-coverage">正在读取部件目录…</span>
+    </div>
+}
+
+<div id="cpo-research-app" class="cpo-research-app" data-mode="diagram">
+    <section class="cpo-workbench" aria-labelledby="cpo-diagram-title">
+        <div class="cpo-toolbar">
+            <div>
+                <h2 id="cpo-diagram-title">系统构成视图</h2>
+                <p>悬停预览，单击锁定；键盘使用 Tab 聚焦，Enter / Space 选择。</p>
+            </div>
+            <button id="cpo-clear-selection" class="btn btn-outline-secondary btn-sm" type="button" disabled>清除锁定</button>
+        </div>
+        <div id="cpo-hover-preview" class="cpo-hover-preview" aria-live="polite">
+            <strong>选择一个部件开始研究</strong>
+            <span>21 个 seed part 均可通过图形或下方表格访问。</span>
+        </div>
+        <div class="cpo-canvas-wrap">
+            <svg id="cpo-diagram" class="cpo-diagram" viewBox="0 0 1000 720" role="group" aria-label="CPO 物理模块与部件交互图"></svg>
+        </div>
+    </section>
+
+    <section class="cpo-fallback" aria-labelledby="cpo-fallback-title">
+        <div class="cpo-toolbar">
+            <div>
+                <span class="cpo-eyebrow">NON-POINTER FALLBACK</span>
+                <h2 id="cpo-fallback-title">部件树 / 表格</h2>
+            </div>
+        </div>
+        <div id="cpo-part-tree" class="cpo-part-tree"></div>
+    </section>
+
+    <aside id="cpo-research-drawer" class="cpo-research-drawer" role="dialog" aria-modal="false" aria-labelledby="cpo-drawer-title" hidden>
+        <div class="cpo-drawer-bar">
+            <span class="cpo-eyebrow">PART RESEARCH</span>
+            <button id="cpo-close-drawer" class="btn-close" type="button" aria-label="关闭部件研究抽屉"></button>
+        </div>
+        <div id="cpo-drawer-content"></div>
+    </aside>
+</div>
+
+<noscript><div class="alert alert-warning">请启用 JavaScript；部件树仍需要脚本从研究服务读取最新 seed 数据。</div></noscript>
+
+@Html.ModulePageInit("~/esm/Modules/Research/Diagram/CpoDiagramPage.js", new { mode = "diagram" })

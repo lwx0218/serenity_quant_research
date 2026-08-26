@@ -1,0 +1,178 @@
+# Serenity Framework 投研工作台调研总结（标准版）
+
+## 0 结论总览
+
+| 决策项 | 结论 |
+|---|---|
+| 总体路线 | 双母本：finance-first 定义“应该长什么样”，Serenity 生态定义“在 Serenity 里怎么搭” |
+| 产品母本 | `Fundamental-copilot-br` |
+| 技术母本 | `serenity-is/Serenity` |
+| 页面壳子补充 | `investment-dashboard` |
+| 研究流程补充 | `financial-analyst` |
+| 关键交互部件 | `serenity-is/sleekgrid` |
+| 明确排除 | 交易终端、纯回测框架、纯知识库壳子、只有对话 Agent 没有工作台 |
+
+## 1 输入材料与阅读顺序
+
+| 材料 | 作用 | 链接 |
+|---|---|---|
+| 双母本最终结论 | 给出最终组合与职责边界 | [View file](computer:///workspace/.uploads/44a21c0c-ef92-4f2c-b3ee-aeaa2c88f8f0_serenity_finance_research_conclusion.md) |
+| 参考双池拆分 | 固化“领域池 vs 技术池”的边界与转池规则 | [View file](computer:///workspace/.uploads/4608c491-4070-47f1-8a31-d0cb32dfa2e4_serenity_reference_split.md) |
+| 评价矩阵 | 固化统一评估维度，防止判断漂移 | [View file](computer:///workspace/.uploads/a867cd3f-17c5-4e9d-a8f4-cc3bd7c29dbe_serenity_finance_evaluation_matrix.md) |
+| finance-first shortlist | 逐项目“适合借/不适合借”证据来源 | [View file](computer:///workspace/.uploads/50eaed20-8cb8-4670-8665-6fec43e5e338_serenity_finance_github_shortlist.md) |
+| Serenity 承接映射 | 对象/页面 → Serenity 模块/能力映射（含 SleekGrid 角色） | [View file](computer:///workspace/.uploads/e1e762e6-8041-43fa-b9de-bf4b8df37323_serenity_architecture_candidates.md) |
+
+| 推荐阅读顺序 | 目的 |
+|---|---|
+| 双母本最终结论 → 双池拆分 → 评价矩阵 → shortlist → Serenity 承接映射 | 先钉结论与边界，再用同一套维度复核争议点，最后才进入技术承接 |
+
+## 2 双母本决策依据
+
+### 2.1 单母本失败模式
+
+| 失败模式 | 典型表现 | 直接后果 |
+|---|---|---|
+| finance-first 单母本 | 产品语义正确，但无法落到 Serenity | 落地阶段变成“重写一套平台”或长期分叉 |
+| Serenity-native 单母本 | 技术底座稳定，但产品呈现像通用后台 | 研究员不买账，高密度工作流缺失 |
+
+### 2.2 双母本如何分工
+
+| 参考源 | 回答的问题 | 对本项目应输出的“可复用结果” |
+|---|---|---|
+| `Fundamental-copilot-br` | 投研产品的语气、页面骨架、非建议型与可审计表达怎么落到界面 | 公司研究页结构、方法论页结构、报告页结构、声明与审计展示方式 |
+| `investment-dashboard` | 工作台入口与多面板信息分层怎么组织 | overview → triage → 详情钻取的信息架构、staleness/预计算表达、研究入口布局 |
+| `financial-analyst` | 研究任务如何拆分与约束，证据如何进入结论与报告 | 研究链路分工、证据分层、报告生成约束与审计思路 |
+| `serenity-is/Serenity` | 在 Serenity 范式下如何承接对象、权限、服务层、列表/详情/表单/导出 | 模块化后台骨架、服务层边界、对象建模承接方式（不在本节做字段级） |
+| `serenity-is/sleekgrid` | 高密度表格交互是否成立 | 筛选/排序/冻结列/横向比较的交互基建 |
+
+### 2.3 双母本选择的“证据句”归纳
+
+| 证据点 | 对应材料中的落点 | 对决策的含义 |
+|---|---|---|
+| “投研而非交易”的产品语言与页面集合 | `Fundamental-copilot-br` 强，shortlist 与 conclusion 多处强调 | 产品母本必须来自 finance-first |
+| 系统本质是 data-centric business app | architecture_candidates 明确 Serenity 价值在对象/关系/权限/导出 | 技术母本必须来自 Serenity |
+| 高密度列表与比较页决定研究工作台能否长期使用 | architecture_candidates 强调 SleekGrid 与核心页面 | 表格交互必须单独当作关键部件对待 |
+| 不存在现成 Serenity-native finance research workstation | architecture_candidates 直接结论 | 强行找“完美单项目”只会浪费时间并走偏 |
+
+## 3 双池拆分与转池规则
+
+### 3.1 双池定义
+
+| 池 | 只回答的问题 | 典型产物形态 |
+|---|---|---|
+| 领域参考池 | 投研产品应该长什么样 | IA、页面结构、栏目命名、报告结构、非建议型表达 |
+| Serenity 技术参考池 | 在 Serenity 下怎么搭 | 模块与服务层组织、对象承接、权限审计、列表/表单、导出、表格交互 |
+
+### 3.2 当前归属表
+
+| 项目 | 归属池 | 主要借鉴点 |
+|---|---|---|
+| `Fundamental-copilot-br` | 领域参考池 | 公司研究页、方法论表达、报告页、非建议型与可审计表达 |
+| `investment-dashboard` | 领域参考池 | 工作台入口、多面板组织、预计算与数据新鲜度表达 |
+| `financial-analyst` | 领域参考池 | 研究任务拆分、证据分层、报告生成与审计约束 |
+| `stock_assessment` | 领域参考池 | 单公司分析页、评分体系、轻量工作台路由与模块边界 |
+| `Automated-Equity-Research-Valuation-Engine` | 领域参考池（模块级） | DCF/WACC/VaR 与 PDF 报告模块 |
+| `Equity-Research-Dashboard` | 领域参考池（对照级） | 最小研究 dashboard 形态对照 |
+| `serenity-is/Serenity` | 技术参考池 | service-based + data-centric 底座、模块化后台、权限/导出 |
+| `serenity-is/sleekgrid` | 技术参考池 | 高密度表格交互基建 |
+| `Serene / Northwind sample` | 技术参考池 | 默认模块布局、列表/详情/编辑页骨架 |
+
+### 3.3 转池规则
+
+#### 从领域池转到技术池
+
+| 允许转池的条件 | 说明 | 当前样本结论 |
+|---|---|---|
+| Serenity-native | 项目明确基于 Serenity 生态 | finance-first 候选中无主参考满足 |
+| 易映射到 service-based/data-centric | 能清晰拆成对象+服务层+列表/详情/权限/导出 | 可做“形态映射”，但不等价“进入技术池主参考” |
+
+#### 从技术池转到领域池
+
+| 允许转池的条件 | 说明 | 当前样本结论 |
+|---|---|---|
+| 项目本身具备明显投研场景 | 不只是通用后台 | 当前 Serenity 样本偏平台，不进入领域池 |
+
+## 4 评价矩阵解读
+
+### 4.1 维度口径
+
+| 维度 | 用于解决的争议 | 强的判据（用于快速判定） |
+|---|---|---|
+| 领域契合度 | 是否 finance-first | 主叙事是 equity/finance research，而非交易执行/运维监控 |
+| 页面形态 | 是否 research workstation | 有研究入口、多对象钻取、研究结论与报告，而非盯盘下单 |
+| 方法论透明度 | 是否可解释与可审计 | 明确数据来源/规则/声明/证据链 |
+| 数据架构 | 是否可持续承载 | 有清晰数据流、预计算/缓存/服务层或可替代方案 |
+| 分析深度 | 是否能支撑研究 | 覆盖基本面/估值/风险/研究流程的一部分且可复用 |
+| 报告能力 | 是否能产出研究物 | 报告页、导出/打印、memo/结论结构 |
+| Serenity 契合度 | 是否能落到 Serenity | Serenity-native 或明显符合 data-centric + service-based |
+| 工程成熟度 | 是否能当母本 | 结构清晰、文档/模块/维护可信 |
+
+### 4.2 用矩阵读出的“结论线”
+
+| 结论线 | 矩阵证据 | 对结构设计的含义 |
+|---|---|---|
+| 产品母本竞争只在两者之间 | `Fundamental-copilot-br` 与 `investment-dashboard` 在“领域契合度/页面形态/方法论/数据架构”领先 | 标准版正文要把两者分工写清，不再让它们互相替代 |
+| `financial-analyst` 是流程母本不是 UI 母本 | 方法论透明度/分析深度/报告能力强，但页面形态不稳定 | “研究流程/证据/报告约束”应独立成章节，不挤进 UI 壳子讨论 |
+| 技术母本只能来自 Serenity 生态 | Serenity 契合度在 `serenity-is/Serenity` 一侧显著领先 | “承接方式”章节只写 Serenity 侧映射与原则，不混入 finance-first 形态辩论 |
+
+## 5 项目逐条 适合借 不适合借
+
+统一口径：每个项目只回答“可复用的具体部件/结构”，避免抽象形容词。
+
+### 5.1 领域参考池项目
+
+| 项目 | 适合借 | 不适合借 | 在本项目中的定位 |
+|---|---|---|---|
+| `Fundamental-copilot-br` | 公司研究页信息架构；方法论页与数据来源表达；可打印报告结构；“非建议型”声明与审计表达 | 市场（B3）本地化数据模型；技术栈不适配 Serenity | 产品母本：投研语义与页面骨架 |
+| `investment-dashboard` | 工作台入口与多面板组织；overview→triage→详情钻取；静态预计算与 staleness 表达 | 偏市场/技术面终端气质；基本面深度不足 | 页面壳子补充：研究入口与多面板组织 |
+| `financial-analyst` | 研究链路拆分（角色/任务）；证据分层；报告生产与审计约束 | UI 壳子弱；偏 agent system，不可直接当工作台母本 | 研究流程补充：把“证据→结论→报告”写成可约束链路 |
+| `stock_assessment` | 单公司分析页路由与 tab 结构；评分体系；轻量 watchlist；本地缓存思路 | 深度与覆盖面有限；更像单票工具 | 模块级参考：单公司分析与评分卡 |
+| `Automated-Equity-Research-Valuation-Engine` | DCF/WACC/VaR 页面模块；PDF 报告导出模块思路 | 形态更像单机分析器，不是工作台 | 模块级参考：估值/风险/导出 |
+| `Equity-Research-Dashboard` | 最小 dashboard 对照（展示哪些块） | 工程成熟度与信息不足 | 对照样本：不进入主叙事 |
+
+### 5.2 Serenity 技术参考池项目
+
+| 项目 | 适合借 | 不适合借 | 在本项目中的定位 |
+|---|---|---|---|
+| `serenity-is/Serenity` | service-based 架构；模块化后台；权限/审计/导出；列表/详情/表单组织 | 不提供投研语义与研究 IA | 技术母本：承接对象与后台骨架 |
+| `serenity-is/sleekgrid` | 高密度表格交互：筛选/排序/冻结列/横向比较 | 不提供业务语义与研究流程 | 关键交互部件：公司池/证据库/事件清单等页面的交互基础 |
+| `Serene / Northwind sample` | 默认模块布局与脚手架；列表/编辑/详情页范式 | 业务语义无关金融 | 骨架参考：模块切分与默认页面结构 |
+
+## 6 双母本拼接方式
+
+### 6.1 页面与能力的“归因表”
+
+| 页面/能力块 | 形态定义来自（领域池） | 承接方式来自（技术池） |
+|---|---|---|
+| 研究入口与总览多面板 | `investment-dashboard` | `serenity-is/Serenity` 模块导航 + 列表/查询 |
+| 单公司研究页（分栏/多 Tab） | `Fundamental-copilot-br` + `stock_assessment` | Serenity 详情页 + 关联子表 + 导出 |
+| 方法论与数据来源表达 | `Fundamental-copilot-br` | Serenity 文档/页面模块（按平台范式承接） |
+| 公司池筛选与横向比较 | 领域池只给“需要什么对比视角” | `sleekgrid` 高密度表格 + Serenity 查询/权限 |
+| 催化剂清单与时间线 | 领域池给事件语义与信息分层 | Serenity 事件对象 + 列表查询 + 导出 |
+| 证据库与引用链 | `financial-analyst` | Serenity 对象关系 + 审计/版本策略（不做字段级） |
+| 报告输出（打印/PDF） | `Fundamental-copilot-br` + 估值引擎模块 | Serenity 导出能力 + 报告模板（仅定义产物，不落字段） |
+
+### 6.2 Serenity 承接映射（对象/页面级，不落字段）
+
+| 投研对象/页面 | Serenity 承接方式 | SleekGrid 是否优先 |
+|---|---|---|
+| 主题库 | 标准模块 + 列表/详情 | 否 |
+| 产业链节点库 | 列表 + 关系（父子/关联） | 视规模而定 |
+| 瓶颈评分页 | 评分卡对象 + 历史快照 | 是（横向比较时） |
+| 公司研究页 | 详情页 + 关联子表 | 视子表密度而定 |
+| 催化剂清单 | 事件对象 + 时间字段 + 多条件过滤 | 是 |
+| 研究证据库 | 证据对象 + 多维筛选 + 审计 | 是 |
+| 横向比较页 | 多对象多字段比较 | 是 |
+
+## 7 下一步入口问题与产物定义
+
+只保留入口问题 + 产物定义；不展开模块清单与字段级建模。
+
+| 入口问题 | 产物定义 | 评审通过的判据 |
+|---|---|---|
+| 顶层导航围绕哪些“研究对象”组织 | 一级导航与每个入口的默认列表/详情说明（文字 + 草图） | 任一入口能对应到清晰对象集合与典型钻取路径 |
+| 哪些对象必须可审计 | 可审计对象清单 + 审计原则（来源、时间戳、版本/快照、回链等原则级描述） | 能回答“结论引用的证据是否可追溯、是否可复现” |
+| 哪些页面高密度表格优先 | 表格优先页面清单 + 每页必须支持的交互边界（筛选/排序/冻结列/比较/导出） | 任一高密度页的交互需求不依赖“后面再看” |
+| 证据如何进入结论与报告 | 证据 → 结论 → 报告的引用关系草图（关系级） | 任一报告章节能说明“引用哪些对象、引用是否锁版本” |
+| 报告输出边界先定什么 | 报告目录模板（章节级）+ 每章引用对象类型清单 | 目录能覆盖“方法论/证据/结论/附录”的最小闭环 |
+| 哪些页面必须保持投研语义 | 关键页面栏目命名与文案基调规则（对齐产品母本） | 页面标题/栏目命名能区分“研究工作台”与“后台管理系统” |

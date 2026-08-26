@@ -1,0 +1,23 @@
+@{
+    ViewData["Title"] = "公司研究详情";
+    ViewData["PageId"] = "CompanyResearchDetail";
+    var companyId = ViewData["CompanyId"] as string;
+}
+
+@section ContentHeader {
+    <div class="company-page-heading">
+        <div>
+            <a class="company-back-link" href="~/Research/Companies">← 返回公司研究池</a>
+            <span class="company-eyebrow">COMPANY RESEARCH DETAIL</span>
+            <h1>公司研究详情</h1>
+        </div>
+    </div>
+}
+
+<main id="company-research-app" class="company-research-app company-detail-app" data-mode="detail" data-company-id="@companyId">
+    <article id="company-detail-content" aria-live="polite" aria-busy="true">
+        <div class="company-loading">正在通过 CompanyUniverseService 读取 <code>@companyId</code>…</div>
+    </article>
+</main>
+
+@Html.ModulePageInit("~/esm/Modules/Research/Company/CompanyUniversePage.js", new { mode = "detail", companyId })

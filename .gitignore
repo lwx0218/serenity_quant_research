@@ -1,0 +1,35 @@
+# .NET
+**/bin/
+**/obj/
+*.user
+*.suo
+
+# Node
+**/node_modules/
+**/.npm/
+
+# Runtime data
+**/App_Data/*.sqlite
+**/App_Data/*.sqlite-*
+**/App_Data/upload/
+**/App_Data/Mail/
+**/App_Data/logs/
+
+# Local configuration and secrets
+appsettings.*.local.json
+.env
+.env.*
+!.env.example
+
+# IDE / OS
+.vs/
+.vscode/
+.idea/
+.DS_Store
+
+# Test and coverage output
+TestResults/
+coverage/
+
+# Generated report/output artifacts
+artifacts/
