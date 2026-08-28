@@ -5,7 +5,7 @@
 - 状态：Phase 1 P0 研究基线
 - 核验日期：2026-08-24
 - 范围：CPO 研究工作台的“两级物理拆解”，不是工程 BOM、CAD 或某一量产产品的逆向拆解
-- 输入图片：`docs/CPO_3D.jpeg`、`docs/CPO_FUll.jpeg`
+- 输入图片：`docs/references/cpo-3d-components.jpeg`、`docs/references/cpo-industry-chain.jpeg`
 - 核验原则：图片只提供候选命名和研究线索；分类边界以 OIF 官方 co-packaging 文档为主要技术校验来源
 - 稳定标识：以下 `module_id` / `part_id` 一经进入 P1 seed，不因展示文案调整而改变
 
@@ -61,7 +61,7 @@
 
 ## 4. 物理 taxonomy 与产业链视图的分离
 
-`docs/CPO_FUll.jpeg` 给出的十个区域可作为产业链候选入口，但不能作为物理 BOM：
+`docs/references/cpo-industry-chain.jpeg` 给出的十个区域可作为产业链候选入口，但不能作为物理 BOM：
 
 | chain_node_id | 产业链视图 | 与物理 taxonomy 的关系 |
 |---|---|---|

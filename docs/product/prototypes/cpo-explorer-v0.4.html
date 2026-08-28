@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>CPO Explorer Prototype v0.4</title>
+<style>
+:root{
+  --bg:#f5f6f8; --panel:#fff; --line:#e4e7eb; --text:#17191d; --muted:#70757e;
+  --accent:#3155cf; --ease:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif
+}
+button{font:inherit}
+header{
+  height:64px;background:rgba(255,255,255,.94);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;padding:0 28px;
+  position:sticky;top:0;z-index:50;backdrop-filter:blur(14px)
+}
+.brand{display:flex;align-items:center;gap:11px}
+.mark{width:29px;height:29px;border-radius:9px;background:linear-gradient(145deg,#1d2228,#747c88)}
+.brand b{font-size:15px}.brand small{display:block;font-size:11px;color:#8c929b;margin-top:2px}
+nav{display:flex;gap:5px;padding:4px;background:#f0f2f4;border-radius:11px}
+nav button{border:0;background:transparent;padding:8px 13px;border-radius:8px;color:#737881;font-size:13px}
+nav .active{background:#fff;color:#17191d;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+
+main{position:relative;min-height:calc(100vh - 64px)}
+.workspace{padding:26px 34px 26px 34px}
+.topline{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:16px}
+.kicker{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#979ca5;font-weight:700}
+h1{font-size:24px;margin:6px 0 5px;letter-spacing:-.025em}
+.sub{font-size:13px;color:var(--muted);line-height:1.5;max-width:760px}
+.view-switch{display:flex;gap:5px;background:#eceef1;padding:4px;border-radius:12px}
+.view-switch button{border:0;background:transparent;color:#747a83;padding:8px 12px;border-radius:8px;font-size:12px;cursor:pointer}
+.view-switch button.active{background:#fff;color:#17191d;box-shadow:0 1px 5px rgba(0,0,0,.08)}
+
+.canvas{
+  height:calc(100vh - 169px);min-height:650px;background:rgba(255,255,255,.75);border:1px solid var(--line);
+  border-radius:23px;position:relative;overflow:hidden
+}
+.canvas:before{
+  content:"";position:absolute;inset:0;background-image:
+  linear-gradient(rgba(0,0,0,.018) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(0,0,0,.018) 1px,transparent 1px);
+  background-size:32px 32px;pointer-events:none
+}
+.stage{position:absolute;inset:20px}
+.scene{width:100%;height:100%;display:none}
+.scene.active{display:block}
+
+.part,.flat-zone{
+  cursor:pointer;transform-box:fill-box;transform-origin:center;
+  transition:transform .28s var(--ease),opacity .28s var(--ease),filter .28s var(--ease)
+}
+.scene.focused .part:not(.is-active):not(.is-hovered),
+.scene.focused .flat-zone:not(.is-active):not(.is-hovered){
+  opacity:.14;filter:blur(2.6px) saturate(.68)
+}
+.scene.focused .callout:not(.active):not(.hovered){
+  opacity:.18;filter:blur(1.5px) saturate(.72)
+}
+.part.is-hovered,.flat-zone.is-hovered{
+  transform:translateY(-10px) scale(1.015);
+  filter:drop-shadow(0 16px 14px rgba(20,28,40,.18))
+}
+.part.is-active,.flat-zone.is-active{
+  transform:translateY(-13px) scale(1.02);
+  filter:drop-shadow(0 20px 17px rgba(20,28,40,.22))
+}
+.callout{
+  cursor:pointer;
+  transition:opacity .24s var(--ease),filter .24s var(--ease),transform .24s var(--ease)
+}
+.callout rect{fill:rgba(255,255,255,.96);stroke:#d9dde3;stroke-width:1}
+.callout text{fill:#22272f}
+.callout .num{fill:#3155cf;font-weight:800}
+.callout .name{font-weight:700}
+.callout .fn{fill:#777e87;font-size:10px}
+.callout line{stroke:#9ca3ad;stroke-width:1.2}
+.callout circle{fill:#fff;stroke:#9ca3ad;stroke-width:1.4}
+.callout.active,.callout.hovered{transform:translateY(-2px)}
+.callout.active rect,.callout.hovered rect{stroke:#8fa2f1;filter:drop-shadow(0 8px 14px rgba(49,85,207,.12))}
+.callout.active line,.callout.hovered line,.callout.active circle,.callout.hovered circle{stroke:#3155cf}
+
+.flat-board{filter:drop-shadow(0 20px 25px rgba(27,35,47,.14))}
+.flat-zone .hit{fill:transparent;stroke:none}
+.flat-hotspot{pointer-events:none}
+
+.panel{
+  position:absolute;top:0;right:0;height:100%;width:390px;background:#fff;border-left:1px solid var(--line);
+  padding:25px 23px;overflow:auto;transform:translateX(100%);transition:transform .28s var(--ease), box-shadow .28s var(--ease);
+  z-index:30;box-shadow:none
+}
+.panel.open{transform:translateX(0);box-shadow:-18px 0 36px rgba(20,28,40,.10)}
+.panel-close{
+  position:absolute;top:16px;right:16px;border:0;background:#f2f3f5;color:#5c636d;border-radius:10px;
+  width:32px;height:32px;cursor:pointer;font-size:18px;line-height:1
+}
+.eyebrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;padding-right:42px}
+.eyebrow span:first-child{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#999fa8;font-weight:700}
+.status{font-size:11px;color:#59606a;background:#f2f3f5;border-radius:999px;padding:5px 8px}
+.panel h2{font-size:22px;letter-spacing:-.025em;margin:0 0 6px}
+.desc{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:17px}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.metric{padding:10px;border:1px solid var(--line);background:#fbfbfc;border-radius:12px}
+.metric b{display:block;font-size:15px}
+.metric span{font-size:10px;color:#9298a1;text-transform:uppercase;letter-spacing:.08em}
+.sec{margin-top:20px}
+.sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.sec h3{margin:0;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#50565e}
+.link{font-size:11px;color:var(--accent)}
+.empty{border:1px dashed #d7dbe1;border-radius:14px;padding:14px;font-size:12px;color:#777d85;background:#fafbfc;line-height:1.55}
+.subparts,.companies{display:grid;gap:8px}
+.subpart,.company{border:1px solid var(--line);border-radius:13px;background:#fff;padding:10px 11px}
+.subpart{cursor:pointer}
+.subpart:hover,.subpart.active{border-color:#b9c5f6;background:#f8f9ff}
+.subpart b{font-size:13px}
+.subpart small{display:block;color:#858b94;font-size:11px;margin-top:3px;line-height:1.4}
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.chip{font-size:10px;padding:5px 7px;border-radius:999px;background:#f1f3f5;color:#5e646c;border:1px solid #e1e4e8}
+.company{display:grid;grid-template-columns:34px 1fr auto;gap:9px;align-items:center;cursor:pointer}
+.company:hover{box-shadow:0 8px 20px rgba(25,33,46,.08);transform:translateY(-1px)}
+.logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(145deg,#edf0f4,#d8dde4);display:grid;place-items:center;font-size:10px;font-weight:800;color:#565e68}
+.cname{font-size:13px;font-weight:700}
+.role{font-size:10px;color:#8a9098;margin-top:2px}
+.tag{font-size:10px;color:#5060aa;background:#f0f3ff;border:1px solid #e1e6ff;border-radius:8px;padding:5px 7px}
+.note{margin-top:16px;color:#a0a5ad;font-size:10px;line-height:1.5}
+
+@media(max-width:1100px){
+  .panel{width:100%}
+  .canvas{height:690px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="mark"></div><div><b>Serenity Quant Research</b><small>CPO Research Workstation</small></div></div>
+  <nav><button class="active">CPO Explorer</button><button>Company Pool</button><button>Workspace</button></nav>
+  <div style="width:230px"></div>
+</header>
+
+<main>
+<section class="workspace">
+  <div class="topline">
+    <div>
+      <div class="kicker">Physical + Industry Mapping</div>
+      <h1>CPO 器件探索</h1>
+      <div class="sub">v0.4 修正：Flat View 里每个 component 单独分区，不再整图都落到 09；右侧研究区改为点击后滑出，点击空白处或关闭按钮收起。</div>
+    </div>
+    <div class="view-switch">
+      <button id="flatBtn">Flat View</button>
+      <button id="threeBtn" class="active">3D Exploded</button>
+    </div>
+  </div>
+
+  <div class="canvas" id="canvas">
+    <div class="stage">
+      <svg id="threeScene" class="scene active" viewBox="0 0 1080 720">
+        <defs>
+          <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6f7f8"/><stop offset="1" stop-color="#c6ccd3"/></linearGradient>
+          <linearGradient id="board" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a6b60"/><stop offset="1" stop-color="#303b34"/></linearGradient>
+          <linearGradient id="chip" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7d8791"/><stop offset="1" stop-color="#343b43"/></linearGradient>
+          <linearGradient id="optic" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#dce5ee"/><stop offset="1" stop-color="#8999ab"/></linearGradient>
+        </defs>
+
+        <g class="part" data-part="heatsink">
+          <polygon points="310,110 635,110 745,168 420,168" fill="url(#metal)" stroke="#aeb5bd"/>
+          <polygon points="420,168 745,168 745,199 420,199" fill="#b5bcc4"/>
+          <polygon points="635,110 745,168 745,199 635,141" fill="#c7cdd3"/>
+          <g stroke="#a4acb5" stroke-width="5" opacity=".9">
+            <line x1="350" y1="120" x2="455" y2="177"/><line x1="385" y1="116" x2="490" y2="173"/>
+            <line x1="420" y1="113" x2="525" y2="170"/><line x1="455" y1="111" x2="560" y2="168"/>
+            <line x1="490" y1="111" x2="595" y2="168"/><line x1="525" y1="111" x2="630" y2="168"/>
+          </g>
+        </g>
+        <g class="part" data-part="asic">
+          <polygon points="365,250 515,250 575,282 425,282" fill="url(#chip)" stroke="#303842"/>
+          <polygon points="425,282 575,282 575,309 425,309" fill="#303842"/>
+          <polygon points="515,250 575,282 575,309 515,277" fill="#404953"/>
+        </g>
+        <g class="part" data-part="electrical">
+          <polygon points="520,315 650,315 707,346 577,346" fill="#b8c0c9" stroke="#7f8994"/>
+          <polygon points="577,346 707,346 707,369 577,369" fill="#828b96"/>
+          <polygon points="650,315 707,346 707,369 650,338" fill="#949ea8"/>
+        </g>
+        <g class="part" data-part="siph">
+          <polygon points="390,375 535,375 597,409 452,409" fill="url(#optic)" stroke="#72808f"/>
+          <polygon points="452,409 597,409 597,431 452,431" fill="#8997a6"/>
+          <polygon points="535,375 597,409 597,431 535,397" fill="#99a7b6"/>
+        </g>
+        <g class="part" data-part="laser">
+          <polygon points="585,400 715,400 770,430 640,430" fill="#c8cfd7" stroke="#87919c"/>
+          <polygon points="640,430 770,430 770,451 640,451" fill="#929ca7"/>
+        </g>
+        <g class="part" data-part="pd">
+          <polygon points="335,440 455,440 507,468 387,468" fill="#d4dae1" stroke="#929ca7"/>
+          <polygon points="387,468 507,468 507,489 387,489" fill="#98a2ac"/>
+        </g>
+        <g class="part" data-part="fau">
+          <polygon points="640,490 770,490 820,518 690,518" fill="#e7eaee" stroke="#a8b0ba"/>
+          <polygon points="690,518 820,518 820,548 690,548" fill="#afb7c1"/>
+          <g stroke="#75818e" stroke-width="4"><line x1="788" y1="504" x2="855" y2="469"/><line x1="798" y1="510" x2="865" y2="475"/><line x1="808" y1="516" x2="875" y2="481"/></g>
+        </g>
+        <g class="part" data-part="interposer">
+          <polygon points="315,520 610,520 704,570 409,570" fill="#c3af78" stroke="#8f7d50"/>
+          <polygon points="409,570 704,570 704,584 409,584" fill="#8f7c50"/>
+        </g>
+        <g class="part" data-part="pcb">
+          <polygon points="245,585 690,585 812,650 367,650" fill="url(#board)" stroke="#27322c"/>
+          <polygon points="367,650 812,650 812,665 367,665" fill="#27322c"/>
+        </g>
+
+        <g class="callout" data-part="heatsink"><line x1="310" y1="140" x2="205" y2="110"/><circle cx="310" cy="140" r="4"/><rect x="24" y="76" width="180" height="66" rx="12"/><text x="38" y="98" class="num">01</text><text x="70" y="98" class="name">顶盖 / 散热器</text><text x="38" y="120" class="fn">均热 / 冷板 / 热界面</text></g>
+        <g class="callout" data-part="asic"><line x1="365" y1="267" x2="205" y2="225"/><circle cx="365" cy="267" r="4"/><rect x="24" y="194" width="180" height="66" rx="12"/><text x="38" y="216" class="num">02</text><text x="70" y="216" class="name">高速交换 ASIC</text><text x="38" y="238" class="fn">交换 / SerDes / 高速接口</text></g>
+        <g class="callout" data-part="electrical"><line x1="690" y1="338" x2="870" y2="290"/><circle cx="690" cy="338" r="4"/><rect x="872" y="255" width="180" height="66" rx="12"/><text x="886" y="277" class="num">03</text><text x="918" y="277" class="name">Driver / TIA / Retimer</text><text x="886" y="299" class="fn">224G PAM4 电信号处理</text></g>
+        <g class="callout" data-part="siph"><line x1="592" y1="405" x2="870" y2="375"/><circle cx="592" cy="405" r="4"/><rect x="872" y="340" width="180" height="66" rx="12"/><text x="886" y="362" class="num">04</text><text x="918" y="362" class="name">SiPh PIC</text><text x="886" y="384" class="fn">调制 / 波导 / 耦合</text></g>
+        <g class="callout" data-part="laser"><line x1="745" y1="423" x2="870" y2="455"/><circle cx="745" cy="423" r="4"/><rect x="872" y="424" width="180" height="66" rx="12"/><text x="886" y="446" class="num">05</text><text x="918" y="446" class="name">激光器阵列</text><text x="886" y="468" class="fn">CW / EML / DFB 光源</text></g>
+        <g class="callout" data-part="pd"><line x1="350" y1="460" x2="205" y2="390"/><circle cx="350" cy="460" r="4"/><rect x="24" y="356" width="180" height="66" rx="12"/><text x="38" y="378" class="num">06</text><text x="70" y="378" class="name">PD / 接收阵列</text><text x="38" y="400" class="fn">光电探测 / 接收</text></g>
+        <g class="callout" data-part="fau"><line x1="805" y1="525" x2="870" y2="545"/><circle cx="805" cy="525" r="4"/><rect x="872" y="514" width="180" height="66" rx="12"/><text x="886" y="536" class="num">07</text><text x="918" y="536" class="name">FAU / 光纤阵列</text><text x="886" y="558" class="fn">MPO / 耦合 / 出入光</text></g>
+        <g class="callout" data-part="interposer"><line x1="325" y1="548" x2="205" y2="500"/><circle cx="325" cy="548" r="4"/><rect x="24" y="468" width="180" height="66" rx="12"/><text x="38" y="490" class="num">08</text><text x="70" y="490" class="name">共封装基板 / 中介层</text><text x="38" y="512" class="fn">高密度短距互连</text></g>
+        <g class="callout" data-part="pcb"><line x1="315" y1="620" x2="205" y2="610"/><circle cx="315" cy="620" r="4"/><rect x="24" y="576" width="180" height="66" rx="12"/><text x="38" y="598" class="num">09</text><text x="70" y="598" class="name">高速 PCB / 金手指</text><text x="38" y="620" class="fn">高速互连 / 系统接口</text></g>
+      </svg>
+
+      <svg id="flatScene" class="scene" viewBox="0 0 1080 720">
+        <defs>
+          <linearGradient id="fb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4f6659"/><stop offset="1" stop-color="#26382f"/></linearGradient>
+        </defs>
+
+        <g class="flat-board">
+          <rect x="330" y="75" width="430" height="565" rx="38" fill="url(#fb)" stroke="#202d26" stroke-width="3"/>
+          <rect x="360" y="100" width="370" height="120" rx="18" fill="#d5dbe0"/>
+          <g stroke="#a3abb4" stroke-width="7"><line x1="390" y1="110" x2="390" y2="205"/><line x1="425" y1="110" x2="425" y2="205"/><line x1="460" y1="110" x2="460" y2="205"/><line x1="495" y1="110" x2="495" y2="205"/><line x1="530" y1="110" x2="530" y2="205"/><line x1="565" y1="110" x2="565" y2="205"/><line x1="600" y1="110" x2="600" y2="205"/><line x1="635" y1="110" x2="635" y2="205"/></g>
+          <rect x="455" y="265" width="170" height="150" rx="20" fill="#333b44" stroke="#89939f" stroke-width="3"/>
+          <text x="540" y="330" text-anchor="middle" fill="#fff" font-size="24" font-weight="700">Switch</text>
+          <text x="540" y="362" text-anchor="middle" fill="#fff" font-size="24" font-weight="700">ASIC</text>
+          <rect x="455" y="445" width="170" height="74" rx="14" fill="#65727f"/>
+          <text x="540" y="490" text-anchor="middle" fill="#fff" font-size="20" font-weight="700">SiPh PIC</text>
+          <g fill="#aab4be"><rect x="382" y="245" width="42" height="42" rx="6"/><rect x="438" y="245" width="42" height="42" rx="6"/><rect x="655" y="250" width="42" height="42" rx="6"/><rect x="675" y="330" width="32" height="42" rx="6"/></g>
+          <g fill="#d7c19b"><rect x="385" y="535" width="46" height="40" rx="7"/><rect x="440" y="535" width="46" height="40" rx="7"/><rect x="495" y="535" width="46" height="40" rx="7"/><rect x="550" y="535" width="46" height="40" rx="7"/><rect x="605" y="535" width="46" height="40" rx="7"/></g>
+          <g stroke="#78aef1" stroke-width="4"><line x1="408" y1="575" x2="335" y2="655"/><line x1="463" y1="575" x2="400" y2="655"/><line x1="518" y1="575" x2="470" y2="655"/><line x1="573" y1="575" x2="540" y2="655"/><line x1="628" y1="575" x2="610" y2="655"/></g>
+        </g>
+
+        <!-- segmented interaction zones -->
+        <g class="flat-zone" data-part="heatsink">
+          <rect class="hit" x="356" y="96" width="378" height="128" rx="20"/>
+        </g>
+        <g class="flat-zone" data-part="asic">
+          <rect class="hit" x="452" y="262" width="176" height="156" rx="20"/>
+        </g>
+        <g class="flat-zone" data-part="electrical">
+          <rect class="hit" x="374" y="240" width="120" height="122" rx="16"/>
+          <rect class="hit" x="648" y="244" width="64" height="134" rx="12"/>
+        </g>
+        <g class="flat-zone" data-part="siph">
+          <rect class="hit" x="452" y="442" width="176" height="80" rx="16"/>
+        </g>
+        <g class="flat-zone" data-part="laser">
+          <rect class="hit" x="380" y="530" width="275" height="50" rx="10"/>
+        </g>
+        <g class="flat-zone" data-part="pd">
+          <rect class="hit" x="668" y="324" width="42" height="52" rx="8"/>
+        </g>
+        <g class="flat-zone" data-part="fau">
+          <rect class="hit" x="372" y="582" width="280" height="35" rx="10"/>
+        </g>
+        <g class="flat-zone" data-part="interposer">
+          <rect class="hit" x="448" y="420" width="184" height="20" rx="8"/>
+        </g>
+        <g class="flat-zone" data-part="pcb">
+          <rect class="hit" x="338" y="618" width="414" height="20" rx="8"/>
+        </g>
+
+        <!-- orientation anchors -->
+        <circle class="flat-hotspot" cx="395" cy="155" r="10" fill="#3155cf"/>
+        <circle class="flat-hotspot" cx="455" cy="300" r="10" fill="#3155cf"/>
+        <circle class="flat-hotspot" cx="687" cy="270" r="10" fill="#3155cf"/>
+        <circle class="flat-hotspot" cx="455" cy="475" r="10" fill="#3155cf"/>
+        <circle class="flat-hotspot" cx="410" cy="555" r="10" fill="#3155cf"/>
+        <circle class="flat-hotspot" cx="690" cy="350" r="10" fill="#3155cf"/>
+        <circle class="flat-hotspot" cx="630" cy="598" r="10" fill="#3155cf"/>
+        <circle class="flat-hotspot" cx="370" cy="430" r="10" fill="#3155cf"/>
+        <circle class="flat-hotspot" cx="700" cy="628" r="10" fill="#3155cf"/>
+
+        <g class="callout" data-part="heatsink"><line x1="395" y1="155" x2="250" y2="120"/><circle cx="395" cy="155" r="4"/><rect x="35" y="85" width="214" height="66" rx="12"/><text x="50" y="107" class="num">01</text><text x="82" y="107" class="name">散热与结构件</text><text x="50" y="129" class="fn">均热 / 冷板 / 热界面</text></g>
+        <g class="callout" data-part="asic"><line x1="455" y1="300" x2="250" y2="245"/><circle cx="455" cy="300" r="4"/><rect x="35" y="212" width="214" height="66" rx="12"/><text x="50" y="234" class="num">02</text><text x="82" y="234" class="name">交换芯片 / ASIC</text><text x="50" y="256" class="fn">Switch / SerDes / 高速接口</text></g>
+        <g class="callout" data-part="siph"><line x1="455" y1="475" x2="250" y2="390"/><circle cx="455" cy="475" r="4"/><rect x="35" y="355" width="214" height="66" rx="12"/><text x="50" y="377" class="num">03</text><text x="82" y="377" class="name">硅光芯片 / SiPh PIC</text><text x="50" y="399" class="fn">调制 / 波导 / WDM</text></g>
+        <g class="callout" data-part="laser"><line x1="410" y1="555" x2="250" y2="510"/><circle cx="410" cy="555" r="4"/><rect x="35" y="478" width="214" height="66" rx="12"/><text x="50" y="500" class="num">04</text><text x="82" y="500" class="name">光源 / 激光器</text><text x="50" y="522" class="fn">CW / EML / DFB 激光器</text></g>
+
+        <g class="callout" data-part="electrical"><line x1="687" y1="270" x2="825" y2="170"/><circle cx="687" cy="270" r="4"/><rect x="826" y="136" width="214" height="66" rx="12"/><text x="842" y="158" class="num">05</text><text x="874" y="158" class="name">高速电信号处理</text><text x="842" y="180" class="fn">Driver / TIA / Retimer</text></g>
+        <g class="callout" data-part="interposer"><line x1="370" y1="430" x2="825" y2="285"/><circle cx="370" cy="430" r="4"/><rect x="826" y="250" width="214" height="66" rx="12"/><text x="842" y="272" class="num">06</text><text x="874" y="272" class="name">基板与互连</text><text x="842" y="294" class="fn">Interposer / Package substrate</text></g>
+        <g class="callout" data-part="pd"><line x1="690" y1="350" x2="825" y2="390"/><circle cx="690" cy="350" r="4"/><rect x="826" y="355" width="214" height="66" rx="12"/><text x="842" y="377" class="num">07</text><text x="874" y="377" class="name">PD / 接收阵列</text><text x="842" y="399" class="fn">光信号接收 / 探测</text></g>
+        <g class="callout" data-part="fau"><line x1="630" y1="598" x2="825" y2="505"/><circle cx="630" cy="598" r="4"/><rect x="826" y="470" width="214" height="66" rx="12"/><text x="842" y="492" class="num">08</text><text x="874" y="492" class="name">光器件 / 连接</text><text x="842" y="514" class="fn">FAU / 光纤阵列 / MPO</text></g>
+        <g class="callout" data-part="pcb"><line x1="700" y1="628" x2="825" y2="610"/><circle cx="700" cy="628" r="4"/><rect x="826" y="578" width="214" height="66" rx="12"/><text x="842" y="600" class="num">09</text><text x="874" y="600" class="name">高速 PCB / 系统互连</text><text x="842" y="622" class="fn">板级高速接口 / Gold fingers</text></g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<aside class="panel" id="panel">
+  <button class="panel-close" id="closePanel" aria-label="关闭">×</button>
+  <div class="eyebrow"><span>Research Context</span><span class="status" id="status">Selected</span></div>
+  <h2 id="title">CPO Assembly</h2>
+  <div class="desc" id="desc">点击组件后出现研究侧栏；点击画布空白处即可收起。</div>
+  <div class="metrics">
+    <div class="metric"><b id="msub">0</b><span>Components</span></div>
+    <div class="metric"><b id="mco">0</b><span>Companies</span></div>
+  </div>
+  <div class="sec">
+    <div class="sec-head"><h3>Components / Materials</h3><span class="link">层级视图</span></div>
+    <div id="subparts" class="empty">点击组件后显示更细的 component / material。</div>
+  </div>
+  <div class="sec">
+    <div class="sec-head"><h3>Related Companies</h3><span class="link">查看公司池 →</span></div>
+    <div id="companies" class="empty">点击组件后显示与当前层级直接相关的公司。</div>
+  </div>
+  <div class="note">Prototype v0.4：Flat segmentation 已拆分；研究区默认隐藏，仅在 click 后滑出。</div>
+</aside>
+</main>
+
+<script>
+const DATA={
+heatsink:{name:"Top Cover / Heatsink",desc:"顶部结构件与热管理层",sub:[["Cold plate","均热与液冷界面",["Cu","Al","TIM"]],["Thermal interface","芯片与散热结构之间的热阻控制",["TIM","Graphite"]]],companies:[["AVC","热管理 / 结构件","Thermal"],["Auras","散热模组","Thermal"]]},
+asic:{name:"High-speed Switch ASIC",desc:"CPO 系统高速交换与电信号核心",sub:[["Switch die","高速交换逻辑核心",["Advanced silicon"]],["SerDes","高速串行接口",["CMOS"]]],companies:[["Broadcom","Switch ASIC","Core"],["NVIDIA","Networking ASIC","Core"],["Marvell","High-speed silicon","Core"]]},
+electrical:{name:"Driver / TIA / Retimer",desc:"电域高速信号调理与光电接口驱动",sub:[["Driver","驱动调制器",["Si","SiGe"]],["TIA","接收端跨阻放大",["SiGe","CMOS"]]],companies:[["Marvell","DSP / retimer","Electrical"],["Semtech","Driver / TIA","Electrical"]]},
+siph:{name:"SiPh PIC / Optical Engine",desc:"硅光子光路、调制、耦合与集成关键层",sub:[["Modulator","电光调制结构",["Silicon","SiN"]],["Waveguide","片上光路",["Silicon","SiN"]],["Coupler","光纤/光源耦合",["Si","Glass"]]],companies:[["Intel","Silicon photonics","SiPh"],["Coherent","Optical engine","SiPh"],["光迅科技","硅光 / 光器件","A-share"]]},
+laser:{name:"Laser Array",desc:"外置或共封装光源阵列",sub:[["CW Laser","连续波激光源",["InP"]],["Laser array","多通道光源",["InP","GaAs"]]],companies:[["Coherent","Laser / photonics","Laser"],["Lumentum","Laser / components","Laser"],["源杰科技","光芯片 / 激光器","A-share"]]},
+pd:{name:"PD / Receive Array",desc:"接收端光电探测器阵列",sub:[["Photodiode","光信号转电信号",["Ge","InGaAs"]],["Receive array","多通道接收阵列",["Ge-on-Si"]]],companies:[["Coherent","Photodetector","Receive"],["光迅科技","探测器 / 光器件","A-share"]]},
+fau:{name:"FAU / Fiber Array / MPO",desc:"片上光路与外部光纤系统的连接界面",sub:[["Fiber Array Unit","高精度阵列耦合",["Fiber","Glass"]],["MPO / Connector","多芯连接器接口",["Fiber","Ferrule"]]],companies:[["Senko","Optical connectivity","Connector"],["US Conec","MPO connectivity","Connector"],["太辰光","光连接 / MPO","A-share"]]},
+interposer:{name:"Co-packaged Substrate / Interposer",desc:"ASIC、光引擎与电连接之间的高密度共封装层",sub:[["Interposer","高密度短距互连",["Si","Glass"]],["Package substrate","封装电气与机械承载",["ABF","BT resin"]]],companies:[["TSMC","Advanced packaging","Packaging"],["深南电路","封装基板 / PCB","A-share"]]},
+pcb:{name:"High-speed PCB / Gold Fingers",desc:"整机高速电气接口与系统承载层",sub:[["High-speed PCB","高速信号布线与供电",["Low-loss laminate","Cu"]],["Gold fingers","板级高速边缘连接",["Cu","Ni","Au"]]],companies:[["深南电路","高速 PCB","A-share"],["沪电股份","高速 PCB","A-share"],["生益科技","高频高速材料","A-share"]]}
+};
+
+let selected=null, hovered=null, mode="three", activeSub=0;
+const three=document.getElementById("threeScene");
+const flat=document.getElementById("flatScene");
+const canvas=document.getElementById("canvas");
+const panel=document.getElementById("panel");
+
+function renderPanel(id){
+  const title=document.getElementById("title"), desc=document.getElementById("desc");
+  const sub=document.getElementById("subparts"), co=document.getElementById("companies");
+  const ms=document.getElementById("msub"), mc=document.getElementById("mco");
+  if(!id){
+    panel.classList.remove("open");
+    return;
+  }
+  const d=DATA[id];
+  panel.classList.add("open");
+  title.textContent=d.name;
+  desc.textContent=d.desc;
+  ms.textContent=d.sub.length;
+  mc.textContent=d.companies.length;
+  sub.className="subparts";
+  sub.innerHTML=d.sub.map((x,i)=>`
+    <div class="subpart ${i===activeSub?'active':''}" data-i="${i}">
+      <b>${x[0]}</b>
+      <small>${x[1]}</small>
+      ${i===activeSub?`<div class="chips">${x[2].map(m=>`<span class="chip">${m}</span>`).join("")}</div>`:""}
+    </div>
+  `).join("");
+  sub.querySelectorAll(".subpart").forEach(el=>{
+    el.onclick=(e)=>{e.stopPropagation();activeSub=+el.dataset.i;renderPanel(id);}
+  });
+
+  co.className="companies";
+  co.innerHTML=d.companies.map(c=>`
+    <div class="company">
+      <div class="logo">${c[0].slice(0,2).toUpperCase()}</div>
+      <div><div class="cname">${c[0]}</div><div class="role">${c[1]}</div></div>
+      <div class="tag">${c[2]}</div>
+    </div>
+  `).join("");
+}
+
+function syncSceneState(sceneEl){
+  sceneEl.classList.toggle("focused", !!(selected || hovered));
+  sceneEl.querySelectorAll("[data-part]").forEach(el=>{
+    const id=el.dataset.part;
+    if(el.classList.contains("callout")){
+      el.classList.toggle("active", id===selected);
+      el.classList.toggle("hovered", !selected && id===hovered);
+    }else{
+      el.classList.toggle("is-active", id===selected);
+      el.classList.toggle("is-hovered", !selected && id===hovered);
+    }
+  });
+}
+function syncAll(){ syncSceneState(three); syncSceneState(flat); }
+
+function hoverPart(id){
+  hovered=id;
+  syncAll();
+}
+function clearHover(){
+  if(!selected){ hovered=null; syncAll(); }
+}
+
+function setSelected(id){
+  if(selected===id){
+    selected=null;
+  }else{
+    selected=id;
+    activeSub=0;
+  }
+  hovered=null;
+  syncAll();
+  renderPanel(selected);
+}
+
+function bindScene(sceneEl){
+  sceneEl.querySelectorAll("[data-part]").forEach(el=>{
+    el.addEventListener("mouseenter",(e)=>{ hoverPart(el.dataset.part); });
+    el.addEventListener("mouseleave",(e)=>{ clearHover(); });
+    el.addEventListener("click",(e)=>{ e.stopPropagation(); setSelected(el.dataset.part); });
+  });
+}
+bindScene(three);
+bindScene(flat);
+
+function resetAll(){
+  selected=null; hovered=null; activeSub=0;
+  syncAll(); renderPanel(null);
+}
+canvas.addEventListener("click", resetAll);
+document.getElementById("closePanel").addEventListener("click", (e)=>{ e.stopPropagation(); resetAll(); });
+panel.addEventListener("click",(e)=>e.stopPropagation());
+document.addEventListener("keydown",(e)=>{ if(e.key==="Escape") resetAll(); });
+
+function setMode(next){
+  mode=next;
+  three.classList.toggle("active", mode==="three");
+  flat.classList.toggle("active", mode==="flat");
+  document.getElementById("threeBtn").classList.toggle("active", mode==="three");
+  document.getElementById("flatBtn").classList.toggle("active", mode==="flat");
+  syncAll();
+}
+document.getElementById("threeBtn").onclick=()=>setMode("three");
+document.getElementById("flatBtn").onclick=()=>setMode("flat");
+
+syncAll();
+renderPanel(null);
+</script>
+</body>
+</html>

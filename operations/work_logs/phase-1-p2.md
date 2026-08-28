@@ -1,111 +1,80 @@
-# Phase 1 P2 Work Log — Interactive SVG and Part Research UI
+# Phase 1 P2 工作日志 — Interactive SVG 与 Part Research UI
 
-## Status
+## 状态
 
 - Date: 2026-08-24
 - Route: continue existing `plan`
 - Result: completed and independently reviewed (`approved with minor findings`)
-- P3 status: ready but not started
+- P3 status at the time: ready but not started
+- 当前解释：P2 工程、tests 与 review 是有效历史；其 3×3/admin-framed research-facing presentation 已被 Research Experience Reboot supersede。
 
-## Implemented
+## 已实现
 
 ### Data-driven CPO composition
 
-- Added an original abstract 3×3 system-board composition under `Modules/Research/Diagram/`.
-- Geometry is generated presentation data; it contains no company, chain, technology, or evidence relationship.
-- No JPEG, extracted pixel, traced geometry, static hotspot map, or runtime image dependency is shipped.
-- `PartResearchService.ListParts` reads the nine modules and all 21 parts from the database.
-- Each rendered SVG part group uses its stable domain key as `data-part-id`.
-- The same service catalog drives the tree/table fallback, so visual and non-pointer paths cannot silently diverge from the seeded parts.
+- 在 `Modules/Research/Diagram/` 下增加 original abstract 3×3 system-board composition。
+- Geometry 只是 presentation data，不包含 company、chain、technology 或 evidence relationship。
+- 未 shipping JPEG、extracted pixel、traced geometry、static hotspot map 或 runtime image dependency。
+- `PartResearchService.ListParts` 从数据库读取 9 modules 与 21 parts。
+- 每个 SVG part group 使用 stable domain key 作为 `data-part-id`。
+- tree/table fallback 与 visual path 共用同一 service catalog。
 
-### Selection and accessibility
+### Selection 与 accessibility
 
-- Hover and keyboard focus highlight the active part and dim unrelated module layers.
-- Click, Enter, and Space lock a part selection and open its research drawer.
-- Escape, the close button, and the clear-lock button release selection.
-- SVG part groups expose `role=button`, `tabindex=0`, accessible labels, pressed state, and focus styling.
-- The table/tree fallback exposes every seeded part as a native button.
+- Hover/focus 高亮 active part 并 dim unrelated modules。
+- Click、Enter、Space 锁定 part selection 并打开 research drawer。
+- Escape、close button、clear-lock button 释放 selection。
+- SVG part groups 暴露 `role=button`、`tabindex=0`、accessible labels、pressed state、focus styling。
+- table/tree fallback 让所有 seeded parts 都可通过 native button 访问。
 
-### Research drawer and detail
+### Drawer 与 detail
 
-- Drawer and detail requests use `PartResearchService.RetrieveCompleteChain`; no relationship is parsed from SVG.
-- Content includes part function, physical module, explicit boundaries, upstream/downstream gap state, key-specification gap state, industry-chain nodes, technology links, candidate companies and verification state, evidence and review state, conclusion gap state, risks, status warnings, and unresolved questions.
-- Empty/unverified sections are shown as explicit research gaps rather than inferred facts.
-- The seeded Broadcom exposure remains `candidate`; `EVD-2026-0001@v1` remains `draft`.
-- Added full detail navigation at `/Research/Parts/{partId}` and a navigation entry at `/Research/Cpo`.
+- Drawer/detail requests 使用 `PartResearchService.RetrieveCompleteChain`，不从 SVG 解析关系。
+- 内容覆盖 function、module、boundaries、upstream/downstream gap、key-specification gap、industry-chain nodes、technology links、candidate companies、evidence/review state、conclusion gap、risks、warnings、unresolved questions。
+- Empty/unverified sections 显示 explicit research gaps，不推断事实。
+- Broadcom 保持 `candidate`；`EVD-2026-0001@v1` 保持 `draft`。
+- 增加 `/Research/Parts/{partId}` 与 `/Research/Cpo` navigation。
 
 ### Independent-review remediation
 
-- Resolved H-01 by adding every frozen drawer/detail section to the service contract and both render paths without inventing product facts.
-- Resolved M-01 with latest-request generation guards and retryable promise caching that evicts rejected requests.
-- Resolved M-02 by mirroring `aria-expanded`, cancelling pending requests, tracking the exact initiating element, and restoring focus without reapplying dimming.
-- Resolved M-03 by adding a fresh-database Kestrel + Firefox WebDriver BiDi browser suite over the real page wiring.
-- Replaced local duplicate DTOs/service URLs with generated Serenity ServerTypes.
-- Added coherent catalog empty/error states with a retry action.
-- A fresh `pi -p` focused independent re-review resolved H-01, M-01 through M-03, and L-01/L-02; P2 is now independently reviewed.
-- Remaining L-03 concerns browser-test assertion precision/fault injection only and does not block the P2 gate.
+- 修复 drawer/detail 缺失 frozen sections。
+- 增加 latest-request generation guards 与 rejected-promise retry cache eviction。
+- 修复 `aria-expanded`、pending cancellation、focus restoration 与 dimming reset。
+- 增加 fresh SQLite/Kestrel/Firefox WebDriver BiDi browser suite。
+- 使用 generated Serenity ServerTypes，移除 local duplicate DTO/service URL。
+- 增加 catalog empty/error retry states。
+- focused independent re-review 后，P2 获得 `approved with minor findings`；剩余 L-03 为 browser-test assertion precision / fault injection，不阻塞 P2 gate。
 
-## Verify
+## 验证
 
-Passed:
+通过：
 
 ```text
 dotnet build SerenityQuantResearch.slnx --no-restore
-  0 warnings, 0 errors
+# 0 warnings, 0 errors
 
 dotnet test SerenityQuantResearch.slnx --no-build
-  13 passed, 0 failed
+# 13 passed, 0 failed
 
 cd src/SerenityQuantResearch/SerenityQuantResearch.Web
 npm run test:ui
-  5 Node state/request tests passed
-  fresh Kestrel + Firefox browser smoke passed
+# 5 Node state/request tests + fresh Kestrel/Firefox browser smoke passed
 npm run build
-  passed
+# passed
 ```
 
-Authenticated Kestrel HTTP/UI smoke at `http://127.0.0.1:5000`:
+Authenticated Kestrel HTTP/UI smoke 覆盖 `/Research/Cpo`、part detail、generated JS/CSS、`PartResearch/ListParts`、`RetrieveCompleteChain`，并证明 candidate/draft states preserved。
 
-- anonymous `/Research/Cpo`: expected `302` to login
-- authenticated `/Research/Cpo`: `200`
-- authenticated part detail example: `200`
-- generated diagram JS/CSS: `200`
-- `PartResearch/ListParts`: `200`, 9 modules and 21 unique parts
-- `PartResearch/RetrieveCompleteChain`: `200`, complete drawer contract
-- candidate company and draft evidence states preserved in JSON response
-- application log contained no failed/unhandled request
+Firefox real-page coverage 覆盖 9 modules、21 SVG/fallback bindings、pointer/keyboard selection、drawer sections、ARIA/focus reset、fallback navigation、detail、error rendering。
 
-The UI smoke covers the real rendered page, generated frontend assets, authenticated service responses, all 21 SVG/table bindings, pointer and keyboard selection, drawer contract sections, ARIA/focus reset, fallback navigation, detail, and error rendering in headless Firefox.
+## Known gaps at the time
 
-## Acceptance checklist
+- 只有一个 seed part 有 company/evidence chain；其他 parts 故意显示 missing coverage。
+- Browser regression assertions 可继续加强 exact ID-set、exact representation focus、fault-injected async/catalog scenarios。
+- 仅 Firefox headless 自动化；未覆盖 physical desktop、screen reader、contrast、zoom/high-contrast、cross-browser。
+- JPEG provenance/public reuse rights 未解决。
+- 默认 Serene development authentication 不是生产加固。
 
-1. Start the app and sign in with the local Serene development account.
-2. Open `http://localhost:5000/Research/Cpo`.
-3. Hover a part and confirm its module remains active while unrelated modules dim.
-4. Click a part and confirm the selection stays locked after pointer leave.
-5. Close/clear the drawer and confirm dimming is removed.
-6. Tab to SVG parts and select with Enter and Space; clear with Escape.
-7. Expand each tree group and confirm all 21 parts are reachable without the SVG.
-8. Open the switch ASIC part and confirm Broadcom is labeled `candidate` and evidence is labeled `draft`.
-9. Use “打开完整部件详情” and confirm the stable part ID resolves at the detail URL.
-10. Confirm empty mappings render warnings/questions instead of inferred company relationships.
+## P3 readiness at the time
 
-## Known gaps
-
-- Only one seed part currently has a company/evidence chain; the other parts intentionally expose missing coverage. Populating company coverage belongs to later authorized work and must follow the verification contract.
-- Independent re-review recorded L-03: browser regression assertions can be hardened with exact ID-set checks, exact representation focus checks, and fault-injected async/catalog scenarios.
-- Headless Firefox covers functional rendering and interaction, but no cross-browser, screen-reader, contrast, zoom/high-contrast, or pixel-diff suite is installed.
-- The taxonomy still requires domain reviewer sign-off, and JPEG provenance/public reuse rights remain unresolved.
-- Default Serene development authentication is not production hardening.
-- The repository still has no `.git` metadata, so file review used inventory and automated verification rather than git diff.
-
-## P3 readiness
-
-P3 can start without changing the P2 SVG contract:
-
-- all stable part IDs resolve through a service catalog;
-- part-to-company/evidence navigation is service-based;
-- candidate/draft state labels are visible and preserved;
-- part detail URLs provide a stable future cross-navigation target.
-
-Stop here. Do not implement the company universe/comparison until P3 is explicitly authorized.
+P3 可在不改变 P2 SVG contract 的前提下启动：stable part IDs、service-based part-to-company/evidence navigation、candidate/draft labels 与 stable part detail URLs 已存在。该记录不授权自动启动 P3。

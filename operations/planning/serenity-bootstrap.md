@@ -1,5 +1,11 @@
 # Serenity P1 Bootstrap Decision
 
+> **Authority boundary after Research Experience Reboot**
+>
+> This document remains authoritative for the Serenity/.NET/Node/SQLite technical bootstrap, supported versions, build commands, and portability decisions. It is not authoritative for research-facing information architecture, navigation, interaction, page composition, or visual design. For those decisions use `docs/product/` and `operations/planning/research-experience-reboot.md`.
+>
+> Historical statements such as “不另建 SPA 壳” prohibit an unnecessary new application framework; they do not require Serenity default research UI to remain the product shell.
+
 ## 1. 决策状态
 
 - 状态：Phase 1 P1 已按本决策执行

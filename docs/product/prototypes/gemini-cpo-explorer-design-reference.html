@@ -1,0 +1,880 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Serenity Quant Research — CPO Value-Chain Explorer v0.1</title>
+<style>
+:root {
+  --bg: #f8f9fa;
+  --surface: #ffffff;
+  --surface-subtle: #f2f4f7;
+  --line: #e4e7ec;
+  --line-strong: #cfd4dc;
+  --text-primary: #101828;
+  --text-secondary: #475467;
+  --text-tertiary: #98a2b3;
+  --accent: #155eef;
+  --accent-soft: #eff4ff;
+  --accent-border: #b2ccff;
+  --mono: "JetBrains Mono", "SF Mono", "Consolas", monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration: 0.32s;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Header */
+header {
+  height: 56px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.brand-group { display: flex; align-items: center; gap: 14px; }
+.brand-mark {
+  width: 22px; height: 22px;
+  background: var(--text-primary);
+  border-radius: 4px;
+  display: grid; place-items: center;
+  color: #fff; font-size: 11px; font-weight: 800; font-family: var(--mono);
+}
+.brand-titles { display: flex; align-items: baseline; gap: 8px; }
+.brand-titles h1 { font-size: 13.5px; font-weight: 700; letter-spacing: -0.01em; }
+.brand-titles span { font-size: 12px; color: var(--text-tertiary); font-family: var(--mono); }
+.nav-cluster { display: flex; gap: 4px; background: var(--surface-subtle); padding: 3px; border-radius: 8px; }
+.nav-item {
+  border: none; background: transparent; padding: 5px 12px; border-radius: 6px;
+  font-size: 12px; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+}
+.nav-item.active { background: var(--surface); color: var(--text-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+
+/* Topline & Canvas Area */
+main { position: relative; height: calc(100vh - 56px); display: flex; flex-direction: column; overflow: hidden; }
+.workspace { flex: 1; padding: 18px 28px 24px; display: flex; flex-direction: column; position: relative; }
+
+.sub-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
+}
+.breadcrumb-trail { display: flex; align-items: center; gap: 8px; font-size: 12px; font-family: var(--mono); }
+.bc-root { color: var(--text-tertiary); }
+.bc-sep { color: var(--line-strong); font-size: 10px; }
+.bc-current { color: var(--text-primary); font-weight: 600; }
+.status-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 8px; border-radius: 999px; background: #ecfdf3; color: #027a48;
+  font-size: 11px; font-weight: 600; font-family: var(--mono); margin-left: 8px;
+}
+.status-pill::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #12b76a; }
+
+.view-controls { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--line); padding: 3px; border-radius: 8px; }
+.view-btn {
+  border: none; background: transparent; color: var(--text-secondary);
+  padding: 5px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+}
+.view-btn.active { background: var(--surface-subtle); color: var(--text-primary); }
+
+/* Canvas Container */
+.canvas-frame {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  transition: transform var(--duration) var(--ease-out);
+}
+.canvas-frame::before {
+  content: "";
+  position: absolute; inset: 0;
+  background-image: radial-gradient(circle, #e4e7ec 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+/* Re-centering Stage for Canvas shift when Panel opens */
+.viewport-stage {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transition: transform var(--duration) var(--ease-out);
+  transform-origin: center left;
+}
+.panel-open .viewport-stage {
+  transform: translateX(-150px) scale(0.95);
+}
+
+.scene-svg {
+  width: 100%; height: 100%; display: none;
+}
+.scene-svg.active { display: block; }
+
+/* SVG Part & Callout Styles */
+.part, .flat-zone {
+  cursor: pointer;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform var(--duration) var(--ease-out), opacity var(--duration) var(--ease-out), filter var(--duration) var(--ease-out);
+}
+.scene-svg.is-focused .part:not(.is-active):not(.is-hovered),
+.scene-svg.is-focused .flat-zone:not(.is-active):not(.is-hovered) {
+  opacity: 0.12;
+  filter: grayscale(0.5) blur(1.5px);
+}
+.scene-svg.is-focused .callout:not(.is-active):not(.is-hovered) {
+  opacity: 0.15;
+  filter: blur(1px);
+}
+
+.part.is-hovered, .flat-zone.is-hovered {
+  transform: translateY(-8px) scale(1.015);
+  filter: drop-shadow(0 12px 20px rgba(16,24,40,0.14));
+}
+.part.is-active, .flat-zone.is-active {
+  transform: translateY(-12px) scale(1.025);
+  filter: drop-shadow(0 18px 24px rgba(16,24,40,0.20));
+}
+
+/* Callout Micro-card */
+.callout {
+  cursor: pointer;
+  transition: opacity var(--duration) var(--ease-out), transform var(--duration) var(--ease-out);
+}
+.callout-bg {
+  fill: #ffffff;
+  stroke: var(--line);
+  stroke-width: 1;
+  rx: 8;
+  filter: drop-shadow(0 2px 5px rgba(16,24,40,0.04));
+  transition: all 0.2s;
+}
+.callout-stem { stroke: var(--line-strong); stroke-width: 1; stroke-dasharray: 2 2; }
+.callout-dot { fill: #fff; stroke: var(--line-strong); stroke-width: 1.5; }
+.callout-mono { fill: var(--text-tertiary); font-family: var(--mono); font-size: 10px; font-weight: 700; }
+.callout-title { fill: var(--text-primary); font-family: var(--sans); font-size: 12px; font-weight: 700; }
+.callout-sub { fill: var(--text-secondary); font-family: var(--sans); font-size: 10px; }
+
+.callout.is-hovered .callout-bg, .callout.is-active .callout-bg {
+  stroke: var(--accent-border);
+  fill: #fff;
+  filter: drop-shadow(0 8px 16px rgba(21,94,239,0.10));
+}
+.callout.is-hovered .callout-stem, .callout.is-active .callout-stem { stroke: var(--accent); stroke-dasharray: none; stroke-width: 1.2; }
+.callout.is-hovered .callout-dot, .callout.is-active .callout-dot { stroke: var(--accent); fill: var(--accent); }
+.callout.is-hovered .callout-mono, .callout.is-active .callout-mono { fill: var(--accent); }
+
+/* Direction C: Research Dossier Side Panel */
+.dossier-panel {
+  position: absolute;
+  top: 0; right: 0;
+  width: 440px;
+  height: 100%;
+  background: var(--surface);
+  border-left: 1px solid var(--line);
+  box-shadow: -12px 0 32px rgba(16,24,40,0.06);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform var(--duration) var(--ease-out);
+  z-index: 40;
+}
+.dossier-panel.open { transform: translateX(0); }
+
+.panel-head {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--line);
+  position: relative;
+}
+.panel-kicker {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+}
+.comp-index { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--accent); }
+.layer-badge {
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  padding: 3px 7px; border-radius: 4px; background: var(--surface-subtle); color: var(--text-secondary);
+}
+.panel-head h2 { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+.panel-head p { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; }
+.panel-close-btn {
+  position: absolute; top: 18px; right: 18px;
+  width: 28px; height: 28px; border-radius: 6px;
+  border: 1px solid var(--line); background: transparent;
+  color: var(--text-secondary); cursor: pointer; display: grid; place-items: center;
+  font-size: 14px;
+}
+.panel-close-btn:hover { background: var(--surface-subtle); color: var(--text-primary); }
+
+/* Value-Chain Progress Flow (Direction C) */
+.value-stepper {
+  display: flex;
+  background: var(--surface-subtle);
+  border-bottom: 1px solid var(--line);
+  padding: 2px;
+}
+.step-item {
+  flex: 1; text-align: center; padding: 8px 4px; font-size: 11px; font-weight: 600;
+  color: var(--text-tertiary); cursor: pointer; border-radius: 4px; transition: all 0.15s;
+}
+.step-item.active { background: var(--surface); color: var(--text-primary); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+
+/* Panel Scrollable Body */
+.panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Value Metric Strip */
+.metric-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.metric-cell {
+  background: var(--surface-subtle);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.metric-cell .label { font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; font-weight: 600; }
+.metric-cell .val { font-size: 13.5px; font-weight: 700; font-family: var(--mono); margin-top: 2px; }
+
+/* In-place Expandable Subcomponents (L1 -> L2) */
+.section-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-tertiary); margin-bottom: 10px; display: flex; justify-content: space-between;
+}
+.chain-card-list { display: flex; flex-direction: column; gap: 8px; }
+.chain-card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  transition: all 0.2s;
+  overflow: hidden;
+}
+.chain-card.expanded {
+  border-color: var(--accent-border);
+  box-shadow: 0 4px 12px rgba(21,94,239,0.06);
+}
+.chain-card-header {
+  padding: 12px 14px;
+  display: flex; justify-content: space-between; align-items: center;
+  cursor: pointer;
+}
+.chain-card-header:hover { background: #fafbfc; }
+.chain-card-title { font-size: 13px; font-weight: 700; }
+.chain-card-desc { font-size: 11.5px; color: var(--text-secondary); margin-top: 2px; }
+.expand-icon { font-size: 12px; color: var(--text-tertiary); transition: transform 0.2s; }
+.chain-card.expanded .expand-icon { transform: rotate(180deg); color: var(--accent); }
+
+/* Deep Details (L2 In-Place) */
+.chain-card-deep {
+  display: none;
+  padding: 12px 14px 14px;
+  background: #fbfcfe;
+  border-top: 1px dashed var(--line);
+  font-size: 12px;
+}
+.chain-card.expanded .chain-card-deep { display: block; }
+.deep-row { margin-bottom: 8px; }
+.deep-label { font-size: 10px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 4px; }
+.tag-group { display: flex; gap: 5px; flex-wrap: wrap; }
+.tech-tag {
+  font-size: 11px; font-family: var(--mono); padding: 3px 7px; border-radius: 4px;
+  background: #fff; border: 1px solid var(--line); color: var(--text-secondary);
+}
+
+/* Company Ecosystem Section */
+.company-dossier-list { display: flex; flex-direction: column; gap: 8px; }
+.comp-card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  background: #fff;
+  transition: all 0.15s;
+}
+.comp-card:hover { border-color: var(--line-strong); box-shadow: 0 4px 10px rgba(0,0,0,0.04); }
+.comp-card-main { display: flex; justify-content: space-between; align-items: center; }
+.comp-identity { display: flex; align-items: center; gap: 10px; }
+.comp-avatar {
+  width: 30px; height: 30px; border-radius: 6px;
+  background: var(--surface-subtle); border: 1px solid var(--line);
+  display: grid; place-items: center; font-size: 11px; font-weight: 700; font-family: var(--mono);
+}
+.comp-name { font-size: 13px; font-weight: 700; }
+.comp-role { font-size: 11px; color: var(--text-secondary); }
+.comp-meta { text-align: right; }
+.comp-tier {
+  font-size: 10px; font-weight: 700; font-family: var(--mono);
+  padding: 2px 6px; border-radius: 4px; background: var(--accent-soft); color: var(--accent);
+}
+.comp-thesis {
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid #f0f2f5;
+  font-size: 11.5px; color: var(--text-secondary); line-height: 1.45;
+}
+
+/* L3 Jump Footer */
+.panel-footer {
+  padding: 14px 24px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  display: flex; gap: 8px;
+}
+.action-jump {
+  flex: 1; padding: 9px 14px; border-radius: 8px; border: none;
+  background: var(--text-primary); color: #fff; font-size: 12px; font-weight: 600;
+  cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 6px;
+  transition: background 0.15s;
+}
+.action-jump:hover { background: #242c38; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand-group">
+    <div class="brand-mark">S</div>
+    <div class="brand-titles">
+      <h1>Serenity Quant Research</h1>
+      <span>// CPO Value-Chain Workstation</span>
+    </div>
+  </div>
+  <nav class="nav-cluster">
+    <button class="nav-item active">Physical Explorer</button>
+    <button class="nav-item">Value-Chain Pool</button>
+    <button class="nav-item">Company Workspace</button>
+  </nav>
+</header>
+
+<main>
+<section class="workspace">
+  <div class="sub-header">
+    <div class="breadcrumb-trail">
+      <span class="bc-root">CPO System</span>
+      <span class="bc-sep">/</span>
+      <span class="bc-current" id="activeBreadcrumb">Assembly Overview (All Nodes)</span>
+      <span class="status-pill">9 Active Components</span>
+    </div>
+    <div class="view-controls">
+      <button class="view-btn active" id="btnThree">3D Exploded View</button>
+      <button class="view-btn" id="btnFlat">Flat System Topo</button>
+    </div>
+  </div>
+
+  <div class="canvas-frame" id="canvasFrame">
+    <div class="viewport-stage" id="viewportStage">
+
+      <!-- 3D Exploded View SVG -->
+      <svg id="sceneThree" class="scene-svg active" viewBox="0 0 1080 720">
+        <defs>
+          <linearGradient id="grad-heatsink" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f8f9fb"/><stop offset="100%" stop-color="#d0d5dd"/></linearGradient>
+          <linearGradient id="grad-asic" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#344054"/><stop offset="100%" stop-color="#1d2939"/></linearGradient>
+          <linearGradient id="grad-siph" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#e0f2fe"/><stop offset="100%" stop-color="#7dd3fc"/></linearGradient>
+          <linearGradient id="grad-pcb" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2d3748"/><stop offset="100%" stop-color="#1a202c"/></linearGradient>
+          <linearGradient id="grad-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fef08a"/><stop offset="100%" stop-color="#ca8a04"/></linearGradient>
+        </defs>
+
+        <!-- Components Geometry -->
+        <g class="part" data-part="heatsink">
+          <polygon points="310,110 635,110 745,168 420,168" fill="url(#grad-heatsink)" stroke="#98a2b3" stroke-width="1.2"/>
+          <polygon points="420,168 745,168 745,199 420,199" fill="#98a2b3"/>
+          <polygon points="635,110 745,168 745,199 635,141" fill="#b2b9c3"/>
+          <g stroke="#8590a0" stroke-width="4" opacity="0.7">
+            <line x1="350" y1="120" x2="455" y2="177"/><line x1="385" y1="116" x2="490" y2="173"/>
+            <line x1="420" y1="113" x2="525" y2="170"/><line x1="455" y1="111" x2="560" y2="168"/>
+            <line x1="490" y1="111" x2="595" y2="168"/><line x1="525" y1="111" x2="630" y2="168"/>
+          </g>
+        </g>
+        <g class="part" data-part="asic">
+          <polygon points="365,250 515,250 575,282 425,282" fill="url(#grad-asic)" stroke="#101828" stroke-width="1.2"/>
+          <polygon points="425,282 575,282 575,309 425,309" fill="#101828"/>
+          <polygon points="515,250 575,282 575,309 515,277" fill="#1f242f"/>
+        </g>
+        <g class="part" data-part="electrical">
+          <polygon points="520,315 650,315 707,346 577,346" fill="#94a3b8" stroke="#64748b" stroke-width="1.2"/>
+          <polygon points="577,346 707,346 707,369 577,369" fill="#64748b"/>
+          <polygon points="650,315 707,346 707,369 650,338" fill="#475569"/>
+        </g>
+        <g class="part" data-part="siph">
+          <polygon points="390,375 535,375 597,409 452,409" fill="url(#grad-siph)" stroke="#0284c7" stroke-width="1.4"/>
+          <polygon points="452,409 597,409 597,431 452,431" fill="#0284c7"/>
+          <polygon points="535,375 597,409 597,431 535,397" fill="#0369a1"/>
+        </g>
+        <g class="part" data-part="laser">
+          <polygon points="585,400 715,400 770,430 640,430" fill="#fed7aa" stroke="#ea580c" stroke-width="1.2"/>
+          <polygon points="640,430 770,430 770,451 640,451" fill="#ea580c"/>
+        </g>
+        <g class="part" data-part="pd">
+          <polygon points="335,440 455,440 507,468 387,468" fill="#e2e8f0" stroke="#64748b" stroke-width="1.2"/>
+          <polygon points="387,468 507,468 507,489 387,489" fill="#64748b"/>
+        </g>
+        <g class="part" data-part="fau">
+          <polygon points="640,490 770,490 820,518 690,518" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.2"/>
+          <polygon points="690,518 820,518 820,548 690,548" fill="#4f46e5"/>
+          <g stroke="#6366f1" stroke-width="3"><line x1="788" y1="504" x2="855" y2="469"/><line x1="798" y1="510" x2="865" y2="475"/><line x1="808" y1="516" x2="875" y2="481"/></g>
+        </g>
+        <g class="part" data-part="interposer">
+          <polygon points="315,520 610,520 704,570 409,570" fill="url(#grad-gold)" stroke="#a16207" stroke-width="1.2"/>
+          <polygon points="409,570 704,570 704,584 409,584" fill="#a16207"/>
+        </g>
+        <g class="part" data-part="pcb">
+          <polygon points="245,585 690,585 812,650 367,650" fill="url(#grad-pcb)" stroke="#0f172a" stroke-width="1.5"/>
+          <polygon points="367,650 812,650 812,665 367,665" fill="#0f172a"/>
+        </g>
+
+        <!-- Callouts -->
+        <g class="callout" data-part="heatsink"><line class="callout-stem" x1="310" y1="140" x2="195" y2="105"/><circle class="callout-dot" cx="310" cy="140" r="3.5"/><rect class="callout-bg" x="20" y="75" width="175" height="58"/><text class="callout-mono" x="32" y="94">01 // THERMAL</text><text class="callout-title" x="32" y="110">顶盖 / 均热板</text><text class="callout-sub" x="32" y="123">热界面材料与冷板散热</text></g>
+        <g class="callout" data-part="asic"><line class="callout-stem" x1="365" y1="267" x2="195" y2="215"/><circle class="callout-dot" cx="365" cy="267" r="3.5"/><rect class="callout-bg" x="20" y="185" width="175" height="58"/><text class="callout-mono" x="32" y="204">02 // SILICON</text><text class="callout-title" x="32" y="220">高速交换 ASIC</text><text class="callout-sub" x="32" y="233">51.2T/102.4T 交换逻辑核心</text></g>
+        <g class="callout" data-part="electrical"><line class="callout-stem" x1="690" y1="338" x2="885" y2="280"/><circle class="callout-dot" cx="690" cy="338" r="3.5"/><rect class="callout-bg" x="885" y="250" width="175" height="58"/><text class="callout-mono" x="897" y="269">03 // IC-DRV</text><text class="callout-title" x="897" y="285">Driver / TIA / Retimer</text><text class="callout-sub" x="897" y="298">224G PAM4 高速电信号放大</text></g>
+        <g class="callout" data-part="siph"><line class="callout-stem" x1="592" y1="405" x2="885" y2="365"/><circle class="callout-dot" cx="592" cy="405" r="3.5"/><rect class="callout-bg" x="885" y="335" width="175" height="58"/><text class="callout-mono" x="897" y="354">04 // OPTIC-PIC</text><text class="callout-title" x="897" y="370">硅光子芯片 (SiPh PIC)</text><text class="callout-sub" x="897" y="383">片上光调制、波导与多路复用</text></g>
+        <g class="callout" data-part="laser"><line class="callout-stem" x1="745" y1="423" x2="885" y2="445"/><circle class="callout-dot" cx="745" cy="423" r="3.5"/><rect class="callout-bg" x="885" y="415" width="175" height="58"/><text class="callout-mono" x="897" y="434">05 // LIGHT-SRC</text><text class="callout-title" x="897" y="450">激光器阵列 (ELS / CW)</text><text class="callout-sub" x="897" y="463">外置/共封装连续波光源</text></g>
+        <g class="callout" data-part="pd"><line class="callout-stem" x1="350" y1="460" x2="195" y2="380"/><circle class="callout-dot" cx="350" cy="460" r="3.5"/><rect class="callout-bg" x="20" y="350" width="175" height="58"/><text class="callout-mono" x="32" y="369">06 // DETECTOR</text><text class="callout-title" x="32" y="385">PD 光电探测器</text><text class="callout-sub" x="32" y="398">高灵敏度高速光电接收</text></g>
+        <g class="callout" data-part="fau"><line class="callout-stem" x1="805" y1="525" x2="885" y2="535"/><circle class="callout-dot" cx="805" cy="525" r="3.5"/><rect class="callout-bg" x="885" y="505" width="175" height="58"/><text class="callout-mono" x="897" y="524">07 // FIBER-IO</text><text class="callout-title" x="897" y="540">光纤阵列 (FAU) / MPO</text><text class="callout-sub" x="897" y="553">微米级高精度光纤耦合接口</text></g>
+        <g class="callout" data-part="interposer"><line class="callout-stem" x1="325" y1="548" x2="195" y2="490"/><circle class="callout-dot" cx="325" cy="548" r="3.5"/><rect class="callout-bg" x="20" y="460" width="175" height="58"/><text class="callout-mono" x="32" y="479">08 // SUBSTRATE</text><text class="callout-title" x="32" y="495">共封装中介层 (Interposer)</text><text class="callout-sub" x="32" y="508">高密度 2.5D/3D 硅基短距互连</text></g>
+        <g class="callout" data-part="pcb"><line class="callout-stem" x1="315" y1="620" x2="195" y2="600"/><circle class="callout-dot" cx="315" cy="620" r="3.5"/><rect class="callout-bg" x="20" y="570" width="175" height="58"/><text class="callout-mono" x="32" y="589">09 // SYSTEM-PCB</text><text class="callout-title" x="32" y="605">高速 PCB 主板</text><text class="callout-sub" x="32" y="618">极低损耗覆铜板与金手指接口</text></g>
+      </svg>
+
+      <!-- Flat System Topo SVG -->
+      <svg id="sceneFlat" class="scene-svg" viewBox="0 0 1080 720">
+        <g class="flat-board">
+          <rect x="330" y="75" width="430" height="565" rx="24" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+          <rect x="360" y="100" width="370" height="120" rx="12" fill="#cbd5e1"/>
+          <g stroke="#94a3b8" stroke-width="6"><line x1="390" y1="110" x2="390" y2="205"/><line x1="430" y1="110" x2="430" y2="205"/><line x1="470" y1="110" x2="470" y2="205"/><line x1="510" y1="110" x2="510" y2="205"/><line x1="550" y1="110" x2="550" y2="205"/><line x1="590" y1="110" x2="590" y2="205"/><line x1="630" y1="110" x2="630" y2="205"/></g>
+          <rect x="455" y="265" width="170" height="150" rx="14" fill="#0f172a" stroke="#475569" stroke-width="2"/>
+          <text x="540" y="335" text-anchor="middle" fill="#f8fafc" font-size="20" font-weight="700">Switch ASIC</text>
+          <rect x="455" y="445" width="170" height="74" rx="10" fill="#0284c7"/>
+          <text x="540" y="488" text-anchor="middle" fill="#fff" font-size="16" font-weight="700">SiPh PIC Engine</text>
+          <g fill="#94a3b8"><rect x="382" y="250" width="42" height="42" rx="6"/><rect x="438" y="250" width="42" height="42" rx="6"/><rect x="655" y="250" width="42" height="42" rx="6"/><rect x="675" y="330" width="32" height="42" rx="6"/></g>
+          <g fill="#ca8a04"><rect x="385" y="535" width="46" height="40" rx="6"/><rect x="440" y="535" width="46" height="40" rx="6"/><rect x="495" y="535" width="46" height="40" rx="6"/><rect x="550" y="535" width="46" height="40" rx="6"/><rect x="605" y="535" width="46" height="40" rx="6"/></g>
+        </g>
+
+        <!-- Flat Zones -->
+        <g class="flat-zone" data-part="heatsink"><rect fill="transparent" x="356" y="96" width="378" height="128" rx="16"/></g>
+        <g class="flat-zone" data-part="asic"><rect fill="transparent" x="452" y="262" width="176" height="156" rx="16"/></g>
+        <g class="flat-zone" data-part="electrical"><rect fill="transparent" x="374" y="240" width="120" height="122" rx="12"/><rect fill="transparent" x="648" y="244" width="64" height="134" rx="12"/></g>
+        <g class="flat-zone" data-part="siph"><rect fill="transparent" x="452" y="442" width="176" height="80" rx="12"/></g>
+        <g class="flat-zone" data-part="laser"><rect fill="transparent" x="380" y="530" width="275" height="50" rx="8"/></g>
+        <g class="flat-zone" data-part="pd"><rect fill="transparent" x="668" y="324" width="42" height="52" rx="6"/></g>
+        <g class="flat-zone" data-part="fau"><rect fill="transparent" x="372" y="582" width="280" height="35" rx="8"/></g>
+        <g class="flat-zone" data-part="interposer"><rect fill="transparent" x="448" y="420" width="184" height="20" rx="6"/></g>
+        <g class="flat-zone" data-part="pcb"><rect fill="transparent" x="338" y="618" width="414" height="20" rx="6"/></g>
+
+        <!-- Flat Callouts -->
+        <g class="callout" data-part="heatsink"><line class="callout-stem" x1="395" y1="155" x2="225" y2="120"/><circle class="callout-dot" cx="395" cy="155" r="3.5"/><rect class="callout-bg" x="30" y="88" width="195" height="58"/><text class="callout-mono" x="42" y="107">01 // THERMAL</text><text class="callout-title" x="42" y="123">散热与热管理系统</text><text class="callout-sub" x="42" y="136">冷板 / 界面材料</text></g>
+        <g class="callout" data-part="asic"><line class="callout-stem" x1="455" y1="300" x2="225" y2="245"/><circle class="callout-dot" cx="455" cy="300" r="3.5"/><rect class="callout-bg" x="30" y="213" width="195" height="58"/><text class="callout-mono" x="42" y="232">02 // SILICON</text><text class="callout-title" x="42" y="248">核心交换芯片 (ASIC)</text><text class="callout-sub" x="42" y="261">SerDes / 高速接口</text></g>
+        <g class="callout" data-part="siph"><line class="callout-stem" x1="455" y1="475" x2="225" y2="390"/><circle class="callout-dot" cx="455" cy="475" r="3.5"/><rect class="callout-bg" x="30" y="358" width="195" height="58"/><text class="callout-mono" x="42" y="377">03 // OPTIC</text><text class="callout-title" x="42" y="393">硅光芯片 / SiPh PIC</text><text class="callout-sub" x="42" y="406">调制 / 波导 / WDM</text></g>
+        <g class="callout" data-part="laser"><line class="callout-stem" x1="410" y1="555" x2="225" y2="510"/><circle class="callout-dot" cx="410" cy="555" r="3.5"/><rect class="callout-bg" x="30" y="478" width="195" height="58"/><text class="callout-mono" x="42" y="497">04 // LASER</text><text class="callout-title" x="42" y="513">光源与激光器阵列</text><text class="callout-sub" x="42" y="526">CW / EML / DFB</text></g>
+
+        <g class="callout" data-part="electrical"><line class="callout-stem" x1="687" y1="270" x2="855" y2="170"/><circle class="callout-dot" cx="687" cy="270" r="3.5"/><rect class="callout-bg" x="855" y="138" width="195" height="58"/><text class="callout-mono" x="867" y="157">05 // ANALOG</text><text class="callout-title" x="867" y="173">电信号放大 (TIA/Driver)</text><text class="callout-sub" x="867" y="186">PAM4 线性放大</text></g>
+        <g class="callout" data-part="interposer"><line class="callout-stem" x1="370" y1="430" x2="855" y2="285"/><circle class="callout-dot" cx="370" cy="430" r="3.5"/><rect class="callout-bg" x="855" y="253" width="195" height="58"/><text class="callout-mono" x="867" y="272">06 // SUBSTRATE</text><text class="callout-title" x="867" y="288">共封装基板 / Interposer</text><text class="callout-sub" x="867" y="301">2.5D 高密度互连</text></g>
+        <g class="callout" data-part="pd"><line class="callout-stem" x1="690" y1="350" x2="855" y2="390"/><circle class="callout-dot" cx="690" cy="350" r="3.5"/><rect class="callout-bg" x="855" y="358" width="195" height="58"/><text class="callout-mono" x="867" y="377">07 // SENSING</text><text class="callout-title" x="867" y="393">光电探测器 (PD)</text><text class="callout-sub" x="867" y="406">探测与接收阵列</text></g>
+        <g class="callout" data-part="fau"><line class="callout-stem" x1="630" y1="598" x2="855" y2="505"/><circle class="callout-dot" cx="630" cy="598" r="3.5"/><rect class="callout-bg" x="855" y="473" width="195" height="58"/><text class="callout-mono" x="867" y="492">08 // OPT-IO</text><text class="callout-title" x="867" y="508">FAU 光纤耦合阵列</text><text class="callout-sub" x="867" y="521">MPO / 模斑转换</text></g>
+        <g class="callout" data-part="pcb"><line class="callout-stem" x1="700" y1="628" x2="855" y2="610"/><circle class="callout-dot" cx="700" cy="628" r="3.5"/><rect class="callout-bg" x="855" y="578" width="195" height="58"/><text class="callout-mono" x="867" y="597">09 // INTERCONNECT</text><text class="callout-title" x="867" y="613">高速 PCB 与系统主板</text><text class="callout-sub" x="867" y="626">低损耗覆铜板与金手指</text></g>
+      </svg>
+
+    </div>
+
+    <!-- Direction C: Value-Chain Dossier Drawer -->
+    <aside class="dossier-panel" id="dossierPanel">
+      <div class="panel-head">
+        <button class="panel-close-btn" id="btnClosePanel" aria-label="关闭">✕</button>
+        <div class="panel-kicker">
+          <span class="comp-index" id="pIdx">NODE // 04</span>
+          <span class="layer-badge" id="pLayer">Optical Engine Layer</span>
+        </div>
+        <h2 id="pTitle">SiPh PIC 硅光芯片</h2>
+        <p id="pDesc">硅基光电集成核心，完成光路路由、高速电光调制与光纤耦合。</p>
+      </div>
+
+      <div class="value-stepper">
+        <div class="step-item active" data-tab="specs">01 规格与壁垒</div>
+        <div class="step-item" data-tab="materials">02 子组件 / 材料</div>
+        <div class="step-item" data-tab="companies">03 产业链标的</div>
+      </div>
+
+      <div class="panel-body">
+        <!-- Metric Strip (L1 Summary) -->
+        <div class="metric-strip">
+          <div class="metric-cell">
+            <div class="label">BOM 价值量</div>
+            <div class="val" id="mBOM">~32%</div>
+          </div>
+          <div class="metric-cell">
+            <div class="label">技术壁垒</div>
+            <div class="val" id="mBarrier" style="color:#d92d20">CRITICAL</div>
+          </div>
+          <div class="metric-cell">
+            <div class="label">国产化率</div>
+            <div class="val" id="mDom">< 15%</div>
+          </div>
+        </div>
+
+        <!-- Section: Progressive In-place Expandable Subcomponents -->
+        <div>
+          <div class="section-title">
+            <span>Subcomponents & Materials</span>
+            <span style="font-weight:400;color:var(--text-tertiary)">点击展开深度参数</span>
+          </div>
+          <div class="chain-card-list" id="subCardList">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Section: Tiered Listed Companies -->
+        <div>
+          <div class="section-title">
+            <span>Value-Chain Companies</span>
+            <span style="font-weight:400;color:var(--text-tertiary)">核心标的池</span>
+          </div>
+          <div class="company-dossier-list" id="companyList">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-footer">
+        <button class="action-jump" id="btnJumpPool">
+          <span>进入公司池深度研究 (带入当前节点)</span>
+          <span style="font-family:var(--mono)">→</span>
+        </button>
+      </div>
+    </aside>
+
+  </div>
+</section>
+</main>
+
+<script>
+const RESEARCH_DATA = {
+  heatsink: {
+    idx: "NODE // 01", layer: "Thermal Management", name: "顶盖 / 均热板散热系统",
+    desc: "CPO 高功耗（51.2T 交换机功耗可达数千瓦）下的核心热管理界面，负责 ASIC 与 PIC 的异构散热隔离。",
+    bom: "6~8%", barrier: "MEDIUM", dom: "65%",
+    subs: [
+      { name: "均温板 (Vapor Chamber)", desc: "超薄两相流均温结构", tech: ["超薄铜粉烧结", "微沟道设计"], mat: ["Oxygen-free Cu", "DI Water"] },
+      { name: "热界面材料 (TIM1 / TIM2)", desc: "极低热阻导热胶与相变垫片", tech: ["金刚石颗粒混合", "液态金属封装"], mat: ["Indium", "Phase Change Material"] }
+    ],
+    cos: [
+      { name: "奇鋐 (AVC)", role: "台股 / 散热模组龙头", tier: "Global Leader", thesis: "NVIDIA / Broadcom 核心散热供应链，具备 3D VC 与冷板整机集成能力。" },
+      { name: "双鸿 (Auras)", role: "台股 / 水冷与散热", tier: "Core Supplier", thesis: "布局 CPO 液冷模组与芯片级微通道散热。" },
+      { name: "中石科技", role: "A股 / 高性能 TIM", tier: "Domestic Pioneer", thesis: "高导热相变材料已切入国内头部服务器及交换机供应链。" }
+    ]
+  },
+  asic: {
+    idx: "NODE // 02", layer: "Core Computing Silicon", name: "高速交换芯片 (Switch ASIC)",
+    desc: "数据中心 CPO 架构的主交换中枢，集成高密度 112G/224G SerDes 与数据平面处理核心。",
+    bom: "40~45%", barrier: "MONOPOLY", dom: "< 5%",
+    subs: [
+      { name: "Switch Core Die", desc: "51.2T / 102.4T 交换转发逻辑核心", tech: ["TSMC N3/N4 工艺", "超大裸片拼接"], mat: ["Advanced Silicon", "Low-k Dielectric"] },
+      { name: "224G SerDes IP", desc: "超高速长/短距电接口物理层", tech: ["DSP-based 架构", "低功耗模拟前端"], mat: ["FinFET CMOS"] }
+    ],
+    cos: [
+      { name: "Broadcom (AVGO)", role: "美股 / 交换网络霸主", tier: "Dominant Tier 1", thesis: "Tomahawk 5/6 系列主导全球顶级云厂商 CPO 与传统交换网络标准。" },
+      { name: "Marvell (MRVL)", role: "美股 / 定制网络芯片", tier: "Core Challenger", thesis: "Teralynx 平台与专用 ASIC 定制开发能力极强。" }
+    ]
+  },
+  electrical: {
+    idx: "NODE // 03", layer: "Analog Frontend", name: "Driver / TIA / 电信号放大阵列",
+    desc: "连接 ASIC 与光引擎的模拟电信号桥梁，提供超高频线性调制驱动与跨阻微弱信号放大。",
+    bom: "8~10%", barrier: "HIGH", dom: "10%",
+    subs: [
+      { name: "Direct-Drive Linear Driver", desc: "直驱式马赫-曾德尔或微环调制驱动", tech: ["SiGe BiCMOS", "超低抖动输出"], mat: ["Silicon Germanium"] },
+      { name: "Low-Noise TIA", desc: "低噪声高带宽跨阻放大器", tech: ["自动增益控制 (AGC)", "差分输出匹配"], mat: ["InP / SiGe"] }
+    ],
+    cos: [
+      { name: "Marvell", role: "美股 / PAM4 DSP & Analog", tier: "Global Leader", thesis: "提供从电芯片到光学驱动的完整模拟链方案。" },
+      { name: "Semtech", role: "美股 / 模拟信号链路", tier: "Core Supplier", thesis: "在非重定时 (LPO/CPO) 驱动领域拥有领先专利卡位。" }
+    ]
+  },
+  siph: {
+    idx: "NODE // 04", layer: "Optical Engine", name: "SiPh PIC 硅光子芯片",
+    desc: "CPO 架构区别于传统光模块的核心增量，实现片上光路由、电光调制、多路复用与集成耦合。",
+    bom: "25~30%", barrier: "CRITICAL", dom: "< 15%",
+    subs: [
+      { name: "硅基调制器 (MZM / MRM)", desc: "将电信号转换为光相位/强度调制", tech: ["薄膜铌酸锂异质集成", "微环谐振腔"], mat: ["Silicon", "LNOI (薄膜铌酸锂)"] },
+      { name: "片上低损波导与 AWG", desc: "光信号分配与密集波分复用 (DWDM)", tech: ["低损耗 SiN 波导", "纳米级刻蚀"], mat: ["Si3N4", "SiO2"] },
+      { name: "片上光纤耦合光栅", desc: "将片上波导光信号高效引出至光纤", tech: ["端面耦合 (SSC)", "高精度亚波长光栅"], mat: ["Fused Silica"] }
+    ],
+    cos: [
+      { name: "Intel (INTC)", role: "美股 / 硅光晶圆制造与设计", tier: "IDM Leader", thesis: "拥有成熟的硅光制造工艺与混合集成激光器专有技术。" },
+      { name: "Coherent", role: "美股 / 全球光器件巨头", tier: "Global Leader", thesis: "具备从材料、晶圆到光引擎制造的全栈自主可控能力。" },
+      { name: "光迅科技", role: "A股 / 硅光芯片平台", tier: "Domestic Leader", thesis: "国内首家实现自研硅光芯片在光模块中批量出货的企业。" }
+    ]
+  },
+  laser: {
+    idx: "NODE // 05", layer: "Light Source", name: "激光器阵列 (ELS / CW Laser)",
+    desc: "外置可插拔光源 (ELS) 或共封装 CW 连续波光源，为硅光子调制提供纯净稳定的单模激光。",
+    bom: "10~12%", barrier: "HIGH", dom: "20%",
+    subs: [
+      { name: "高功率 DFB / DBR 激光芯片", desc: "百毫瓦级大功率单模光源", tech: ["InP 异质外延生长", "抗高温光谱稳定控制"], mat: ["InP (磷化铟)", "GaAs"] },
+      { name: "保偏隔离与微光学透镜", desc: "防止背向反射损坏激光芯片并完成准直", tech: ["空间微光学耦合", "法拉第旋转器"], mat: ["YIG 单晶", "SmCo 磁体"] }
+    ],
+    cos: [
+      { name: "Lumentum (LITE)", role: "美股 / 光源芯片龙头", tier: "Global Leader", thesis: "高功率 CW 激光器在 CPO/ELS 方案中占据全球最大份额。" },
+      { name: "源杰科技", role: "A股 / 高速激光器芯片", tier: "Domestic Pioneer", thesis: "国内少数突破 100G EML 及大功率 CW 光源研发的硬核芯片商。" }
+    ]
+  },
+  pd: {
+    idx: "NODE // 06", layer: "Photodetector", name: "PD 光电探测器阵列",
+    desc: "将接收到的光信号高效还原为电流信号的高速半导体探测器。",
+    bom: "4~6%", barrier: "MEDIUM", dom: "35%",
+    subs: [
+      { name: "Ge-on-Si 探测器", desc: "硅基外延生长锗光电二极管", tech: ["锗硅晶格失配外延", "波导集成耦合"], mat: ["Germanium", "Silicon"] }
+    ],
+    cos: [
+      { name: "Coherent", role: "美股 / 探测器与光芯片", tier: "Global Leader", thesis: "供应全球顶级高速探测器晶圆。" },
+      { name: "光迅科技", role: "A股 / 探测器与光器件", tier: "Domestic Leader", thesis: "具备自研自产 PD 探测器阵列能力。" }
+    ]
+  },
+  fau: {
+    idx: "NODE // 07", layer: "Optical Interconnect", name: "FAU 光纤阵列 / MPO 连接器",
+    desc: "芯片微米级波导与宏观光缆的精密物理转换接口，制造精度要求在亚微米级别。",
+    bom: "5~7%", barrier: "HIGH (Precision Mfg)", dom: "45%",
+    subs: [
+      { name: "超精密切槽石英 V-Groove", desc: "承载几十上百芯光纤的高精度基座", tech: ["亚微米微机械加工", "精密研磨抛光"], mat: ["Fused Silica", "Pyrex Glass"] },
+      { name: "保偏 / 模斑转换光纤 (TEC)", desc: "匹配芯片微小光斑与标准光纤", tech: ["热膨胀纤芯 (TEC)", "微透镜端面研磨"], mat: ["Silica Glass"] }
+    ],
+    cos: [
+      { name: "太辰光", role: "A股 / 高密光互连龙头", tier: "Global Leader", thesis: "全球 MPO 与高精度 FAU 核心制造商，直接供货海外北美大客户。" },
+      { name: "Senko", role: "日韩 / 光互连创新者", tier: "Standard Setter", thesis: "SN-MT 及 CPO 光连接器标准的制定者之一。" }
+    ]
+  },
+  interposer: {
+    idx: "NODE // 08", layer: "Advanced Packaging", name: "共封装中介层 (Interposer / Substrate)",
+    desc: "ASIC 裸片与多个硅光引擎 (PIC) 进行 2.5D/3D 高密度微凸块互连的封装基板与硅中介层。",
+    bom: "12~15%", barrier: "CRITICAL", dom: "< 10%",
+    subs: [
+      { name: "TSV 硅中介层 (Silicon Interposer)", desc: "微米级间距贯穿硅通孔互连", tech: ["TSV 深反应离子刻蚀", "CMP 超平坦化"], mat: ["Silicon", "Cu TSV Filling"] },
+      { name: "高层数 ABF 封装基板", desc: "承载整套系统的超大尺寸基板", tech: ["超微细线路 (L/S 5/5um)", "低膨胀系数控制"], mat: ["Ajinomoto Build-up Film (ABF)"] }
+    ],
+    cos: [
+      { name: "台积电 (TSMC)", role: "台股 / 先进封装先驱", tier: "Global Leader", thesis: "COUPE 平台结合 CoWoS 封装，定义全球 CPO 先进异构集成标杆。" },
+      { name: "深南电路", role: "A股 / 高阶封装基板", tier: "Domestic Challenger", thesis: "突破高端 FC-BGA 基板制造工艺，稳步推进国产供应链适配。" }
+    ]
+  },
+  pcb: {
+    idx: "NODE // 09", layer: "System Board", name: "超低损耗高速 PCB",
+    desc: "交换机整机系统的承载底座，具备极高层数、超高频低损耗介质与金手指高频边缘连接器。",
+    bom: "6~8%", barrier: "MEDIUM-HIGH", dom: "50%",
+    subs: [
+      { name: "极低损耗覆铜板 (CCL)", desc: "高频信号超低介质损耗基材", tech: ["超低表面粗糙度铜箔", "特殊树脂配方"], mat: ["PTFE / Modified Polyphenylene Oxide"] },
+      { name: "高多层背板 (30+ Layers)", desc: "超大尺寸背板精密对位与压合", tech: ["背钻技术 (Backdrill)", "埋嵌电容/电阻"], mat: ["FR-4 High-Tg", "Low-loss CCL"] }
+    ],
+    cos: [
+      { name: "沪电股份", role: "A股 / 算力与网络 PCB 龙头", tier: "Global Leader", thesis: "数通 800G/1.6T 交换机主板绝对主力供应商。" },
+      { name: "生益科技", role: "A股 / 高频高速 CCL 核心", tier: "Upstream Material", thesis: "极低损耗 CCL 材料持续实现关键技术突破与进口替代。" }
+    ]
+  }
+};
+
+let currentSelected = null;
+let currentHovered = null;
+let currentMode = "three"; // 'three' or 'flat'
+
+const sceneThree = document.getElementById("sceneThree");
+const sceneFlat = document.getElementById("sceneFlat");
+const canvasFrame = document.getElementById("canvasFrame");
+const dossierPanel = document.getElementById("dossierPanel");
+const activeBreadcrumb = document.getElementById("activeBreadcrumb");
+
+function renderDossier(partId) {
+  if (!partId) {
+    dossierPanel.classList.remove("open");
+    canvasFrame.classList.remove("panel-open");
+    activeBreadcrumb.textContent = "Assembly Overview (All Nodes)";
+    return;
+  }
+
+  const d = RESEARCH_DATA[partId];
+  if (!d) return;
+
+  dossierPanel.classList.add("open");
+  canvasFrame.classList.add("panel-open");
+
+  activeBreadcrumb.textContent = `${d.name} (${d.layer})`;
+  document.getElementById("pIdx").textContent = d.idx;
+  document.getElementById("pLayer").textContent = d.layer;
+  document.getElementById("pTitle").textContent = d.name;
+  document.getElementById("pDesc").textContent = d.desc;
+
+  document.getElementById("mBOM").textContent = d.bom;
+  document.getElementById("mBarrier").textContent = d.barrier;
+  document.getElementById("mDom").textContent = d.dom;
+
+  // Render Subcomponent List (L1 -> L2 Accordion)[cite: 1]
+  const subContainer = document.getElementById("subCardList");
+  subContainer.innerHTML = d.subs.map((s, idx) => `
+    <div class="chain-card ${idx === 0 ? 'expanded' : ''}" data-idx="${idx}">
+      <div class="chain-card-header">
+        <div>
+          <div class="chain-card-title">${s.name}</div>
+          <div class="chain-card-desc">${s.desc}</div>
+        </div>
+        <div class="expand-icon">▼</div>
+      </div>
+      <div class="chain-card-deep">
+        <div class="deep-row">
+          <div class="deep-label">核心制造工艺 / 技术壁垒</div>
+          <div class="tag-group">
+            ${s.tech.map(t => `<span class="tech-tag">${t}</span>`).join("")}
+          </div>
+        </div>
+        <div class="deep-row" style="margin-bottom:0">
+          <div class="deep-label">关键原材料 / 晶圆介质</div>
+          <div class="tag-group">
+            ${s.mat.map(m => `<span class="tech-tag" style="background:#f2f4f7">${m}</span>`).join("")}
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join("");
+
+  subContainer.querySelectorAll(".chain-card-header").forEach(hdr => {
+    hdr.onclick = (e) => {
+      e.stopPropagation();
+      const parent = hdr.closest(".chain-card");
+      parent.classList.toggle("expanded");
+    };
+  });
+
+  // Render Company Dossier List
+  const coContainer = document.getElementById("companyList");
+  coContainer.innerHTML = d.cos.map(c => `
+    <div class="comp-card">
+      <div class="comp-card-main">
+        <div class="comp-identity">
+          <div class="comp-avatar">${c.name.slice(0, 2).toUpperCase()}</div>
+          <div>
+            <div class="comp-name">${c.name}</div>
+            <div class="comp-role">${c.role}</div>
+          </div>
+        </div>
+        <div class="comp-meta">
+          <span class="comp-tier">${c.tier}</span>
+        </div>
+      </div>
+      <div class="comp-thesis">${c.thesis}</div>
+    </div>
+  `).join("");
+}
+
+function syncSceneState(sceneEl) {
+  const isFocused = !!(currentSelected || currentHovered);
+  sceneEl.classList.toggle("is-focused", isFocused);
+
+  sceneEl.querySelectorAll("[data-part]").forEach(el => {
+    const id = el.dataset.part;
+    const isActive = id === currentSelected;
+    const isHov = !currentSelected && (id === currentHovered);
+
+    if (el.classList.contains("callout")) {
+      el.classList.toggle("is-active", isActive);
+      el.classList.toggle("is-hovered", isHov);
+    } else {
+      el.classList.toggle("is-active", isActive);
+      el.classList.toggle("is-hovered", isHov);
+    }
+  });
+}
+
+function syncAll() {
+  syncSceneState(sceneThree);
+  syncSceneState(sceneFlat);
+}
+
+function setHover(id) {
+  currentHovered = id;
+  syncAll();
+}
+
+function clearHover() {
+  if (!currentSelected) {
+    currentHovered = null;
+    syncAll();
+  }
+}
+
+function setSelection(id) {
+  if (currentSelected === id) {
+    currentSelected = null;
+  } else {
+    currentSelected = id;
+  }
+  currentHovered = null;
+  syncAll();
+  renderDossier(currentSelected);
+}
+
+function resetAll() {
+  currentSelected = null;
+  currentHovered = null;
+  syncAll();
+  renderDossier(null);
+}
+
+function bindInteractiveScene(sceneEl) {
+  sceneEl.querySelectorAll("[data-part]").forEach(el => {
+    el.addEventListener("mouseenter", () => setHover(el.dataset.part));
+    el.addEventListener("mouseleave", () => clearHover());
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setSelection(el.dataset.part);
+    });
+  });
+}
+
+bindInteractiveScene(sceneThree);
+bindInteractiveScene(sceneFlat);
+
+// Canvas blank area click and ESC reset
+canvasFrame.addEventListener("click", resetAll);
+dossierPanel.addEventListener("click", (e) => e.stopPropagation());
+document.getElementById("btnClosePanel").addEventListener("click", (e) => {
+  e.stopPropagation();
+  resetAll();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") resetAll();
+});
+
+// View Switcher (3D vs Flat)
+const btnThree = document.getElementById("btnThree");
+const btnFlat = document.getElementById("btnFlat");
+
+function switchMode(mode) {
+  currentMode = mode;
+  btnThree.classList.toggle("active", mode === "three");
+  btnFlat.classList.toggle("active", mode === "flat");
+  sceneThree.classList.toggle("active", mode === "three");
+  sceneFlat.classList.toggle("active", mode === "flat");
+  syncAll();
+}
+
+btnThree.onclick = () => switchMode("three");
+btnFlat.onclick = () => switchMode("flat");
+
+// Init
+syncAll();
+renderDossier(null);
+</script>
+</body>
+</html>

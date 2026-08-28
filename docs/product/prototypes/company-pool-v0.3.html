@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Company Pool v0.3</title>
+<style>
+:root{--bg:#f6f7f8;--p:#fff;--line:#e5e8eb;--t:#191b1f;--m:#747a82;--a:#3155cf;--ease:cubic-bezier(.2,.8,.2,1)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+button,input{font:inherit}header{height:64px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:40}
+.brand{font-weight:750;font-size:15px}nav{display:flex;gap:5px;padding:4px;background:#f0f2f4;border-radius:11px}nav button{border:0;background:transparent;padding:8px 13px;border-radius:8px;color:#737881;font-size:13px}nav .active{background:#fff;color:#111;box-shadow:0 1px 4px #0001}
+main{max-width:1450px;margin:auto;padding:30px 34px 100px}.hidden{display:none}.k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#9aa0a8;font-weight:700}h1{font-size:28px;margin:7px 0 5px}.sub{font-size:13px;color:var(--m)}
+.context{margin:18px 0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:12px}.context small{display:block;color:#9aa0a8;text-transform:uppercase;letter-spacing:.08em;font-size:9px;margin-bottom:3px}
+.controls{display:grid;grid-template-columns:minmax(260px,420px) 1fr auto;gap:12px;align-items:center;margin:20px 0}.search{height:42px;border:1px solid #d8dce1;background:#fff;border-radius:12px;padding:0 12px}.search input{border:0;outline:0;width:100%;height:100%;background:transparent}.chips{display:flex;gap:7px;flex-wrap:wrap}.chip{border:1px solid var(--line);background:#fff;color:#646a72;border-radius:999px;padding:8px 11px;font-size:11px}.chip.active{background:#f2f5ff;border-color:#c7d0f5;color:#4053a5}
+.toggle{display:flex;background:#eceef1;padding:4px;border-radius:10px}.toggle button{border:0;background:transparent;padding:7px 10px;border-radius:7px;color:#777;font-size:11px}.toggle .active{background:#fff;color:#222;box-shadow:0 1px 4px #0001}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.card{background:#fff;border:1px solid var(--line);border-radius:17px;padding:17px;cursor:pointer;transition:.18s}.card:hover{transform:translateY(-3px);box-shadow:0 15px 34px #18202c14}.card.selected{border-color:#b8c3ef}.top{display:flex;gap:11px}.logo{width:42px;height:42px;border-radius:12px;background:#edf0f3;display:grid;place-items:center;font-size:10px;font-weight:800}.name{font-size:15px;font-weight:750}.code{font-size:10px;color:#959ba3;margin-top:4px}.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:15px}.tag{font-size:10px;border:1px solid #e6e8eb;background:#f4f5f6;color:#656b73;border-radius:7px;padding:5px 7px}.tag.p{background:#f0f3ff;border-color:#e0e5ff;color:#4b5cad}.why{margin-top:14px;padding-top:13px;border-top:1px solid #eef0f2}.why small{font-size:9px;color:#a0a5ad;text-transform:uppercase;letter-spacing:.1em}.why p{font-size:12px;line-height:1.55;color:#555b63;margin:5px 0 0}.bottom{display:flex;justify-content:space-between;margin-top:15px;font-size:10px;color:#838991}
+.list{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden}.row{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 70px;gap:12px;align-items:center;padding:13px 15px;border-bottom:1px solid #eef0f2;cursor:pointer}.row:hover{background:#fafbfc}.row.head{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#999fa7;background:#fbfbfc;cursor:default}.companycell{display:flex;gap:9px;align-items:center}.mini{width:32px;height:32px;border-radius:9px;background:#edf0f3;display:grid;place-items:center;font-size:9px;font-weight:800}.muted{color:#868c95;font-size:11px}
+.drawer{position:fixed;top:64px;right:0;bottom:0;width:430px;background:#fff;border-left:1px solid var(--line);transform:translateX(100%);transition:.28s var(--ease);z-index:50;padding:25px 24px;overflow:auto}.drawer.open{transform:translateX(0);box-shadow:-18px 0 40px #18202c18}
+.drawer-actions{position:absolute;right:16px;top:16px;display:flex;gap:7px}.iconbtn{width:32px;height:32px;border:1px solid var(--line);background:#f7f8f9;border-radius:9px;cursor:pointer;color:#5f6670;display:grid;place-items:center;font-size:15px}.iconbtn:hover{background:#eef0f3}
+.drawer .dk{font-size:10px;color:#999fa7;text-transform:uppercase;letter-spacing:.1em;font-weight:700}.drawer h2{font-size:24px;margin:7px 80px 4px 0}.dcode{font-size:11px;color:#9399a1}.intro{font-size:13px;line-height:1.6;color:#666c75;margin-top:15px}.sec{margin-top:22px}.sec h3{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#8b9199;margin:0 0 9px}.box{border:1px solid var(--line);border-radius:13px;padding:11px}.box b{font-size:12px}.box small{display:block;color:#858b93;font-size:10px;line-height:1.5;margin-top:4px}.row2{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eef0f2;font-size:12px}.row2 span:last-child{font-size:10px;color:#8e949c}.drawer-link{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eef0f2;font-size:11px;color:#50565e}.drawer-link span:last-child{color:#9aa0a8}
+.back{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 10px;cursor:pointer;margin-bottom:18px}.detailhero{display:grid;grid-template-columns:1fr 300px;gap:20px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px}.dtitle{font-size:31px;font-weight:760}.dmeta{font-size:12px;color:#8a9099;margin-top:6px}.dsummary{font-size:14px;color:#5d636c;line-height:1.65;margin-top:18px}.facts{display:grid;grid-template-columns:1fr 1fr;gap:9px}.fact{border:1px solid #eceef1;border-radius:12px;padding:11px}.fact b{display:block}.fact span{font-size:10px;color:#959ba3}.body{display:grid;grid-template-columns:1.3fr .7fr;gap:18px;margin-top:18px}.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px}.panel h3{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:#7f858e;margin:0 0 12px}.exp{padding:11px 0;border-bottom:1px solid #eef0f2}.exp b{font-size:13px}.exp p{font-size:11px;color:#757b83}.workspace{width:100%;border:0;background:#20242a;color:#fff;border-radius:11px;padding:11px;margin-top:15px}
+.overlay{position:fixed;inset:64px 0 0;background:transparent;pointer-events:none;z-index:45}.overlay.active{pointer-events:auto}
+@media(max-width:1100px){.grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:760px){.grid{grid-template-columns:1fr}.controls,.detailhero,.body{grid-template-columns:1fr}.drawer{width:100%}}
+</style>
+</head>
+<body>
+<header><div class="brand">Serenity Quant Research</div><nav><button>CPO Explorer</button><button class="active">Company Pool</button><button>Research Workspace</button></nav><div style="width:180px"></div></header>
+<main>
+<section id="poolPage">
+<div class="k">Company Research Pool</div><h1>公司研究池</h1><div class="sub">浏览层：卡片 / 列表。点击公司先打开右侧快速研究 Drawer，再决定是否放大进入完整页面。</div>
+<div class="context"><small>Research Context from Explorer</small>CPO → <b>SiPh PIC</b> → Modulator</div>
+<div class="controls"><label class="search"><input id="q" placeholder="搜索公司、代码、角色或组件…"></label><div class="chips"><button class="chip active" data-f="all">全部</button><button class="chip" data-f="optical">光模块</button><button class="chip" data-f="siph">硅光 / PIC</button><button class="chip" data-f="laser">激光器</button><button class="chip" data-f="fau">FAU / 光连接</button><button class="chip" data-f="pcb">PCB / 基板</button></div><div class="toggle"><button id="cardBtn" class="active">卡片</button><button id="listBtn">列表</button></div></div>
+<div id="cards" class="grid"></div><div id="list" class="list" style="display:none"></div>
+</section>
+
+<section id="detailPage" class="hidden">
+<button class="back" id="back">← 返回公司池</button>
+<div class="detailhero"><div><div class="k">Company Detail</div><div class="dtitle" id="fn"></div><div class="dmeta" id="fm"></div><div class="dsummary" id="fs"></div></div><div class="facts"><div class="fact"><b id="fst"></b><span>Exposure state</span></div><div class="fact"><b id="fev"></b><span>Evidence coverage</span></div><div class="fact"><b id="foq"></b><span>Open questions</span></div><div class="fact"><b>CPO</b><span>Research theme</span></div></div></div>
+<div class="body"><div class="panel"><h3>Industry-chain Exposure</h3><div id="fexps"></div></div><div><div class="panel"><h3>Research Context</h3><div class="exp"><b>CPO → SiPh PIC → Modulator</b><p>保留从 Explorer 进入公司的来源路径。</p></div><button class="workspace">在 Research Workspace 中打开</button></div><div class="panel" style="margin-top:16px"><h3>Latest Evidence</h3><div class="exp"><b>Primary-source disclosure</b><p>与当前 exposure 直接相关的结构化证据。</p></div><div class="exp"><b>Industry technical material</b><p>作为架构与技术语境，不自动升级供应关系。</p></div></div></div></div>
+</section>
+</main>
+
+<div id="overlay" class="overlay"></div>
+<aside id="drawer" class="drawer">
+<div class="drawer-actions"><button class="iconbtn" id="expandBtn" title="放大到完整页面">⤢</button><button class="iconbtn" id="closeBtn" title="关闭">×</button></div>
+<div class="dk">Quick Company Research</div><h2 id="dn"></h2><div class="dcode" id="dm"></div><div class="intro" id="di"></div>
+<div class="sec"><h3>Why this company is here</h3><div class="box" id="de"></div></div>
+<div class="sec"><h3>Current research state</h3><div class="row2"><span>Exposure verification</span><span id="dst"></span></div><div class="row2"><span>Evidence coverage</span><span id="dev"></span></div><div class="row2"><span>Open questions</span><span id="doq"></span></div></div>
+<div class="sec"><h3>Quick research</h3><div class="drawer-link"><span>Industry-chain exposure</span><span>→</span></div><div class="drawer-link"><span>Latest evidence</span><span>→</span></div><div class="drawer-link"><span>Open questions</span><span>→</span></div></div>
+</aside>
+
+<script>
+const C=[
+{name:"中际旭创",code:"300308.SZ",g:"optical",tags:["高速光模块","Optical engine"],st:"Candidate",ev:"Medium",q:3,why:"高速光模块核心研究对象；需要继续区分 pluggable、光引擎与明确 CPO 暴露。"},
+{name:"新易盛",code:"300502.SZ",g:"optical",tags:["高速光模块","Optical engine"],st:"Candidate",ev:"Medium",q:4,why:"重点核验 CPO 与传统可插拔模块的产品边界。"},
+{name:"光迅科技",code:"002281.SZ",g:"siph",tags:["SiPh / PIC","Laser","Receiver"],st:"Candidate",ev:"Medium",q:5,why:"覆盖光芯片、器件、模块等多个环节；适合从 PIC / laser / receiver 多路径核验。"},
+{name:"天孚通信",code:"300394.SZ",g:"fau",tags:["FAU","精密耦合","封装"],st:"Candidate",ev:"Medium",q:3,why:"与 FAU、连接、source coupling 等环节相关。"},
+{name:"源杰科技",code:"688498.SH",g:"laser",tags:["Laser chip","CW / DFB","InP"],st:"Candidate",ev:"Medium",q:3,why:"重点核验 ELS / CPO 对应的激光路线和验证阶段。"},
+{name:"深南电路",code:"002916.SZ",g:"pcb",tags:["PCB","Package substrate"],st:"Discovery",ev:"Low",q:6,why:"PCB 与封装基板需要拆开核验，不能由 AI PCB 概念直接推断 CPO 暴露。"}];
+let f="all",current=-1;
+function data(){const s=q.value.toLowerCase();return C.filter(c=>(f==="all"||c.g===f)&&(!s||(c.name+c.code+c.tags.join(" ")+c.why).toLowerCase().includes(s)))}
+function render(){const L=data();cards.innerHTML=L.map(c=>`<article class="card ${current===C.indexOf(c)?"selected":""}" data-i="${C.indexOf(c)}"><div class="top"><div class="logo">${c.name.slice(0,2)}</div><div><div class="name">${c.name}</div><div class="code">${c.code}</div></div></div><div class="tags">${c.tags.map((t,i)=>`<span class="tag ${i===0?"p":""}">${t}</span>`).join("")}</div><div class="why"><small>Why it appears here</small><p>${c.why}</p></div><div class="bottom"><span>${c.st} · Evidence ${c.ev}</span><span>→</span></div></article>`).join("");
+list.innerHTML=`<div class="row head"><div>Company</div><div>Primary exposure</div><div>State</div><div>Evidence</div><div></div></div>`+L.map(c=>`<div class="row" data-i="${C.indexOf(c)}"><div class="companycell"><div class="mini">${c.name.slice(0,2)}</div><div><div class="name">${c.name}</div><div class="code">${c.code}</div></div></div><div class="muted">${c.tags[0]}</div><div>${c.st}</div><div class="muted">${c.ev}</div><div>→</div></div>`).join("");
+document.querySelectorAll("[data-i]").forEach(el=>el.onclick=()=>openDrawer(+el.dataset.i))}
+function openDrawer(i){current=i;const c=C[i];drawer.classList.add("open");overlay.classList.add("active");dn.textContent=c.name;dm.textContent=c.code+" · "+c.tags.join(" · ");di.textContent=c.why;de.innerHTML=`<b>${c.tags.join(" · ")}</b><small>当前 CPO 主题下的候选 exposure，后续由证据继续确认边界。</small>`;dst.textContent=c.st;dev.textContent=c.ev;doq.textContent=c.q+" open";render()}
+function closeDrawer(){drawer.classList.remove("open");overlay.classList.remove("active");current=-1;render()}
+function full(i){const c=C[i];closeDrawer();poolPage.classList.add("hidden");detailPage.classList.remove("hidden");fn.textContent=c.name;fm.textContent=c.code+" · "+c.tags.join(" · ");fs.textContent=c.why;fst.textContent=c.st;fev.textContent=c.ev;foq.textContent=c.q;fexps.innerHTML=c.tags.map(t=>`<div class="exp"><b>${t}</b><p>当前 CPO 主题下的候选 exposure，后续由证据继续确认边界。</p></div>`).join("");scrollTo(0,0)}
+expandBtn.onclick=()=>current>=0&&full(current);closeBtn.onclick=closeDrawer;overlay.onclick=closeDrawer;back.onclick=()=>{detailPage.classList.add("hidden");poolPage.classList.remove("hidden");scrollTo(0,0)}
+cardBtn.onclick=()=>{cards.style.display="grid";list.style.display="none";cardBtn.classList.add("active");listBtn.classList.remove("active")};listBtn.onclick=()=>{cards.style.display="none";list.style.display="block";listBtn.classList.add("active");cardBtn.classList.remove("active")};q.oninput=render;document.querySelectorAll(".chip").forEach(x=>x.onclick=()=>{f=x.dataset.f;document.querySelectorAll(".chip").forEach(y=>y.classList.toggle("active",y===x));render()});document.addEventListener("keydown",e=>e.key==="Escape"&&closeDrawer());render();
+</script>
+</body></html>

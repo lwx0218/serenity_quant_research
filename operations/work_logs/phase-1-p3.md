@@ -1,154 +1,78 @@
-# Phase 1 P3 Work Log — Company Universe and Detail
+# Phase 1 P3 工作日志 — Company Universe 与 Detail
 
-## Status
+## 状态
 
 - Date: 2026-08-25
 - Route: continue existing `plan`
-- Result: completed and independently reviewed (`approved with minor findings`); initial `changes requested` history preserved
-- P4 status: not started
+- Result: completed and independently reviewed (`approved with minor findings`)，保留 initial `changes requested` 历史
+- P4 status at the time: not started
+- 当前解释：P3 的 domain/service/policy/tests 继续是有效工程历史；其 SleekGrid-first、comparison、seven-tab research-facing presentation 已被 Research Experience Reboot supersede。
 
-## Implemented
+## 已实现
 
-### CompanyUniverseService and policy
+### CompanyUniverseService 与 policy
 
-- Added `CompanyUniverseService` over the existing `Company`, `CompanyExposure`, `PhysicalPart`, `IndustryChainNode`, `Evidence`, source, event, conclusion, and audit relationships.
-- All 20 seeded companies resolve by stable company ID, including identity/market fields, universe layer, coverage priority, explicit exposures, roles, relevance, confidence, verification state, scope note, evidence/review state, audit metadata, coverage, and category-aware freshness where explicit type data supports it (`unknown` otherwise).
-- Companies without exposure/evidence records remain visible with explicit `unmapped` / research-gap indicators.
-- Server filters cover physical part, chain node, role, exchange, geography, universe layer, coverage priority, verification state, evidence coverage, freshness, and identity-only search.
-- Added stable chain-node retrieval for company → chain → part/company cross-navigation.
-- Added server-side exposure update policy under `Research:Review`; updates use Serenity logging-row audit fields and require an explicit existing exposure.
-- Exposure promotion to `verified` requires an authenticated human-review path plus supporting `reviewed` Level A/B evidence. Draft, in-review, rejected, Level C, and contextual-only evidence cannot satisfy the policy. Machine state changes are rejected by the policy API.
-- Rejected/stale exposures remain valid visible/auditable states; there is no delete or silent promotion path.
+- 基于既有 `Company`、`CompanyExposure`、`PhysicalPart`、`IndustryChainNode`、`Evidence`、source、event、conclusion、audit relationships 增加 `CompanyUniverseService`。
+- 20 家 seeded companies 均通过 stable company ID 解析，并返回 identity/market fields、universe layer、coverage priority、explicit exposures、roles、relevance、confidence、verification state、scope note、evidence/review state、audit metadata、coverage、freshness。
+- 无 exposure/evidence 的 companies 以 `unmapped` / research-gap 显示。
+- Server filters 覆盖 part、chain node、role、exchange、geography、universe layer、priority、verification state、evidence coverage、freshness、identity search。
+- 增加 stable chain-node retrieval 支持 company → chain → part/company cross-navigation。
+- 增加 `Research:Review` 下的 exposure update policy；更新使用 Serenity logging-row audit fields，且必须针对 existing exposure。
+- Promotion to `verified` 要求 authenticated human-review path 与 reviewed Level A/B supporting evidence。Draft、in-review、rejected、Level C、contextual-only evidence 不能满足 policy。Machine state changes 被 policy API 拒绝。
 
-### SleekGrid-first company universe and comparison
+### Company universe、comparison 与 detail
 
-- Added `/Research/Companies` and a CPO research navigation item.
-- Uses the bundled Serenity 10.3.7 SleekGrid with three frozen identity/selection columns, sortable research fields, high-density layout, all required server filters, and bounded five-company comparison.
-- Comparison selection is available as native checkboxes in both SleekGrid and the fallback table; comparison rows link to stable company detail URLs.
-- A native table fallback is always present and `?view=table` provides an explicit no-grid mode.
-- No price-movement, quote, market-performance ranking, trading, or export scope was added.
-
-### Company detail, exposure editing, and cross-navigation
-
-- Added `/Research/Companies/{companyId}` with the seven frozen accessible tabs:
-  1. Overview
-  2. Industry-chain Exposure
-  3. Earnings & Financial Evidence
-  4. Capex & Investment
-  5. Events
-  6. Research Conclusions
-  7. Sources & Audit
-- Existing records are displayed; unavailable typed financial/Capex/event/conclusion/source records render explicit gaps instead of keyword classification or fabricated claims.
-- Existing exposure fields, supporting/contradicting/context evidence states, source/review state, and audit metadata are visible. Review-permitted users receive an inline edit form; evidence workflow remains read-only in P3.
-- Added `/Research/ChainNodes/{chainNodeId}` as a bounded stable cross-navigation target.
-- Part drawer/detail company records now link to stable company detail URLs.
-- Company detail links to existing stable physical-part URLs and stable chain-node URLs; chain-node detail links back to company and part.
+- 增加 `/Research/Companies` 与 CPO research navigation item。
+- 当时采用 Serenity 10.3.7 SleekGrid、高密度 layout、server filters 与 bounded five-company comparison。
+- 增加 native table fallback 与 `?view=table`。
+- 未新增 price movement、quote、market ranking、trading 或 export scope。
+- 增加 `/Research/Companies/{companyId}`，包含 7 个 accessible tabs：Overview、Industry-chain Exposure、Earnings & Financial Evidence、Capex & Investment、Events、Research Conclusions、Sources & Audit。
+- 缺失 typed records 时显示 explicit gaps，不做 keyword classification 或 fabricated claims。
+- 增加 `/Research/ChainNodes/{chainNodeId}`，并完成 part/company/chain stable cross-navigation。
 
 ### Independent-review remediation
 
-The initial fresh independent review returned `changes requested` with H-01/H-02, M-01, and L-01. One permitted P3-only remediation cycle addressed all four without entering P4:
+Initial fresh review 返回 `changes requested`，随后一次 bounded P3-only remediation 解决：
 
-- H-01: selected Serenity 10.3.7 `FrozenLayout`; the committed Firefox suite now asserts exactly three `.sg-start` headers and verifies their x-position remains fixed during real horizontal scrolling.
-- H-02: added a migration-backed, security-administered `Users.ActorType` (`human` / `machine`). The exposure endpoint derives reviewer humanity exclusively from the persisted server identity. A real authenticated endpoint test gives a machine principal `Research:Review` plus eligible human-reviewed Level A supporting evidence and confirms `MachineExposureStateChangeDenied` with no mutation. Supporting evidence also qualifies only when its `ReviewedBy` user is persisted as human.
-- M-01: policy denials now use stable `ValidationError` codes and return HTTP 400. Endpoint/browser tests assert `VerifiedExposureEvidenceRequired`, rollback, candidate/draft persistence, and absence of unhandled/`InvalidOperationException` failures.
-- L-01: freshness now requires an explicit evidence category and follows the frozen category thresholds; missing category returns `unknown`, while historical financial facts are marked non-expiring instead of being auto-staled.
+- Frozen identity columns：使用 Serenity `FrozenLayout` 并在 Firefox suite 中断言 3 个 `.sg-start` headers 与横向滚动固定。
+- Human-only review：新增 migration-backed `Users.ActorType`，endpoint 从 persisted server identity 派生 reviewer humanity，并用 real endpoint test 证明 Review-authorized machine principal 被拒绝且不 mutation。
+- Structured policy rejection：policy denials 使用 stable `ValidationError` codes 与 HTTP 400。
+- Freshness：缺失 category 不再用 universal age threshold；剩余 report-period/label 语义作为 Low gap。
 
-The original review record and `changes requested` decision remain preserved in `operations/reviews/phase-1-p3-independent-review.md`.
+## 验证
 
-### Accessibility and generated contracts
-
-- Native labels and controls are used for all filters and comparison selection.
-- Tabs implement `tablist` / `tab` / `tabpanel`, `aria-selected`, roving tabindex, Arrow keys, Home, and End.
-- Visible focus styling covers filters, comparisons, tabs, links, and exposure forms.
-- Candidate/discovery/draft/in-review/rejected/stale labels include meaningful human-readable qualification.
-- Generated Serenity ServerTypes are consumed by the TypeScript page; no duplicate service URL/DTO contract was introduced.
-
-## Self-verification
-
-Passed:
+通过：
 
 ```text
 dotnet build SerenityQuantResearch.slnx --no-restore
-  0 warnings, 0 errors
+# 0 warnings, 0 errors
 
 dotnet test SerenityQuantResearch.slnx --no-build
-  51 passed, 0 failed
+# 51 passed, 0 failed
 
 cd src/SerenityQuantResearch/SerenityQuantResearch.Web
 npm run test:ui
-  10 Node UI state tests passed
-  fresh SQLite + Kestrel + Firefox browser smoke passed
+# 10 Node UI state tests + fresh SQLite/Kestrel/Firefox browser smoke passed
 npm run build
-  passed; generated frontend output current
+# passed; generated frontend output current
 
-Microsoft.TypeScript.MSBuild 6.0.3 tsc --noEmit --project tsconfig.json
-  passed with no diagnostics
+tsc --noEmit --project tsconfig.json
+# passed with no diagnostics
 ```
 
-Fresh SQLite / authenticated HTTP verification passed:
+Fresh SQLite / authenticated HTTP verification 证明：20 company IDs 全部解析；seed counts unchanged；Broadcom 仍为 `candidate`；`EVD-2026-0001@v1` 仍为 `draft/contextualizes`；machine identity 即使拥有 `Research:Review` 也不能完成 verified transition。
 
-- anonymous `/Research/Companies`: expected `302` to login;
-- authenticated universe/detail/chain-node/part/CPO pages: `200`;
-- authenticated `CompanyUniverse/List`, `Retrieve`, and `RetrieveChainNode`: `200`;
-- all 20 unique stable company IDs returned and every company service/page target resolved;
-- every current company exposure part/chain cross-navigation target resolved;
-- fresh seed counts remained 9 modules, 21 parts, 10 chain nodes, 20 companies, 1 exposure, and 1 evidence record;
-- Broadcom remained `candidate`;
-- `EVD-2026-0001@v1` remained `draft` and `contextualizes`;
-- candidate → verified was rejected with structured HTTP 400/code in service, endpoint, unit-policy, and real-browser paths without mutation;
-- a Review-authorized machine identity with otherwise eligible supporting evidence was rejected by the real endpoint;
-- fresh `Users.ActorType` migration defaulted the development admin to `human`;
-- application log contained no failed/unhandled request in the successful HTTP smoke.
+Boundary scans 未发现 P4 ingestion/timeline/transitions、P5 publication/version workflow、trading/K-line/quote/market/account/portfolio/order/backtest/chat-only scope、runtime JPEG use、image hotspots 或 inferred customer/supplier/order/revenue-share/mass-production claims。
 
-Firefox real-page coverage includes:
+## Known gaps at the time
 
-- exact 20-company stable-ID set and real SleekGrid cell/header rendering;
-- exactly three real `FrozenLayout` start headers, horizontal-scroll persistence, and native table fallback;
-- server exchange filtering and filter reset;
-- keyboard comparison selection and detail navigation;
-- all 20 detail page targets;
-- all seven tabs and ArrowRight keyboard activation;
-- candidate/draft labels, rejected promotion, and state persistence after reload;
-- company → part/chain and chain → company/part navigation;
-- explicit `?view=table` fallback mode.
+- Seed 只有一个 candidate exposure 与一个 draft contextual evidence；多数公司/详情 tabs 显示 research gaps。
+- Financial/Capex evidence 未做 keyword classification，因为当前 schema 无 reviewed typed relationship。
+- Exposure evidence associations 只显示，不编辑；evidence ingestion/review transitions 仍是 P4 scope。
+- Low gaps：freshness category/next-report semantics、Serenity 对 handled policy `ValidationError` 的 fail-level logging noise。
+- 仅 Firefox headless 自动化；未覆盖 physical desktop、screen reader、contrast/high-contrast/zoom、cross-browser。
+- JPEG provenance/public reuse rights 未解决。
 
-Boundary scans found no P3 implementation of P4 ingestion/timeline/transitions, P5 publication/version workflow, trading/K-line/quote/market-tape/account/portfolio/order execution/backtest/chat-only functionality, runtime JPEG use, image hotspots, or inferred customer/supplier/order/revenue-share/mass-production claims. Read-only display of existing evidence/conclusion publication metadata is present as required by the frozen company tabs; no transition or publication action was added.
+## 当前 Reboot 影响
 
-Toolchain used for final verification:
-
-- .NET SDK `10.0.400`
-- Node `24.19.0`
-- npm `11.17.0`
-- Serenity Community `10.3.7`
-
-## Known gaps
-
-- The seed intentionally contains only one candidate exposure and one draft contextual evidence record. The other 19 companies and most company-detail evidence tabs therefore show explicit research gaps.
-- Financial and Capex evidence are not keyword-classified because the current schema has no reviewed typed relationship for those categories; populating/reviewing those records belongs to later authorized work.
-- Exposure evidence associations are displayed but not edited; evidence ingestion/review transitions remain P4 scope.
-- Independent-review L-01R: the current schema has no persisted freshness category, so materialized records correctly show `unknown`; category-specific next-report semantics and neutralized UI wording remain a future bounded gap.
-- Independent-review L-02: handled policy denials return stable HTTP 400/code but Serenity logs `ValidationError` at fail severity, which can create observability noise.
-- Only Firefox headless is automated. Physical-desktop visual review, screen reader output, contrast/high-contrast/zoom, and cross-browser behavior remain unverified.
-- JPEG provenance/public reuse rights remain unresolved; P3 does not use either JPEG.
-- The repository still has no `.git` metadata, so review relies on file inventory, generated-output checks, source tracing, runtime tests, and boundary scans.
-
-## Preview
-
-- Company universe: `http://localhost:5000/Research/Companies`
-- Broadcom detail: `http://localhost:5000/Research/Companies/global.broadcom`
-- ASIC chain-node detail: `http://localhost:5000/Research/ChainNodes/cpo.chain.asic`
-
-## Independent review closeout
-
-- Initial fresh review decision: `changes requested` (H-01/H-02, M-01, L-01)
-- One bounded P3-only remediation cycle: completed
-- Fresh focused re-review decision: `approved with minor findings`
-- H-01/H-02: resolved
-- M-01 HTTP 400/code/rollback contract: resolved
-- Remaining Low findings:
-  - L-01R: category-specific/next-report freshness semantics and labels remain incomplete; current untyped records safely return `unknown`
-  - L-02: Serenity logs handled policy `ValidationError` responses at fail severity despite correct HTTP 400 behavior
-- Review history: `operations/reviews/phase-1-p3-independent-review.md`
-- P3 independently reviewed: yes
-- P4 readiness: P3 no longer blocks a separately authorized P4 round
-- P4 status: unstarted; no P4/P5/P6 work was performed
+Research Experience Reboot 保留 P3 backend/service/policy/test 价值，但替换 Company research-facing presentation：未来 R5 应交付 Card/List → Quick Drawer → entity-centric continuous/lightly segmented Full Detail，不继续默认 SleekGrid/comparison/seven-tab 产品体验。

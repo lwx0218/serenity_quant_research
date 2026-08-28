@@ -16,11 +16,11 @@
 
 | 材料 | 作用 | 链接 |
 |---|---|---|
-| 双母本最终结论 | 给出最终组合与职责边界 | [View file](computer:///workspace/.uploads/44a21c0c-ef92-4f2c-b3ee-aeaa2c88f8f0_serenity_finance_research_conclusion.md) |
-| 参考双池拆分 | 固化“领域池 vs 技术池”的边界与转池规则 | [View file](computer:///workspace/.uploads/4608c491-4070-47f1-8a31-d0cb32dfa2e4_serenity_reference_split.md) |
-| 评价矩阵 | 固化统一评估维度，防止判断漂移 | [View file](computer:///workspace/.uploads/a867cd3f-17c5-4e9d-a8f4-cc3bd7c29dbe_serenity_finance_evaluation_matrix.md) |
-| finance-first shortlist | 逐项目“适合借/不适合借”证据来源 | [View file](computer:///workspace/.uploads/50eaed20-8cb8-4670-8665-6fec43e5e338_serenity_finance_github_shortlist.md) |
-| Serenity 承接映射 | 对象/页面 → Serenity 模块/能力映射（含 SleekGrid 角色） | [View file](computer:///workspace/.uploads/e1e762e6-8041-43fa-b9de-bf4b8df37323_serenity_architecture_candidates.md) |
+| 双母本最终结论 | 给出最终组合与职责边界 | 历史上传材料，未纳入当前仓库 |
+| 参考双池拆分 | 固化“领域池 vs 技术池”的边界与转池规则 | 历史上传材料，未纳入当前仓库 |
+| 评价矩阵 | 固化统一评估维度，防止判断漂移 | 历史上传材料，未纳入当前仓库 |
+| finance-first shortlist | 逐项目“适合借/不适合借”证据来源 | 历史上传材料，未纳入当前仓库 |
+| Serenity 承接映射 | 对象/页面 → Serenity 模块/能力映射（含 SleekGrid 角色） | 历史上传材料，未纳入当前仓库 |
 
 | 推荐阅读顺序 | 目的 |
 |---|---|

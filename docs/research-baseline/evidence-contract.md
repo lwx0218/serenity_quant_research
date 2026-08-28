@@ -153,7 +153,7 @@ confidence 不是投资评级，不映射买入/卖出。
 
 ## 10. 两张 seed JPEG 的来源、使用权和事实风险
 
-| 项目 | `docs/CPO_3D.jpeg` | `docs/CPO_FUll.jpeg` |
+| 项目 | `docs/references/cpo-3d-components.jpeg` | `docs/references/cpo-industry-chain.jpeg` |
 |---|---|---|
 | 文件规格 | JPEG/JFIF 1.01，1080×1440 | JPEG/JFIF 1.01，1080×1440 |
 | SHA-256 | `a72409bcbc077beb682117abfa74d499c051a78e2ba3c1f69968fbd5a1e26e76` | `69db333ba0e507aa0a5ec1ab0343290dedec15e6dfa42832380100d2309e572d` |
