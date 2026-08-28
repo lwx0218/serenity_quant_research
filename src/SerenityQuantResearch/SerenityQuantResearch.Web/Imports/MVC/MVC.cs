@@ -48,6 +48,11 @@ public static partial class Views
             public const string CpoDiagramIndex = "~/Modules/Research/Diagram/CpoDiagramIndex.cshtml";
             public const string PartDetail = "~/Modules/Research/Diagram/PartDetail.cshtml";
         }
+
+        public static partial class Workspace
+        {
+            public const string ResearchWorkspacePlaceholder = "~/Modules/Research/Workspace/ResearchWorkspacePlaceholder.cshtml";
+        }
     }
 
     public static partial class Shared

@@ -2,8 +2,8 @@
 
 Plan approval: approved
 Git baseline: 7cf1b95d23a5da3dd53766049557a67ed18fae73
-Accepted-effective Rounds: R1
-Active Round: none
+Accepted-effective Rounds: R1, R2
+Active Round: none — R3 pending separate Owner start decision
 Branch: product-reboot
 Approval authority: Owner structured approval after complete Plan Preview
 Approval scope: persist this baseline and hand off R1; no implementation, commit, push, or automatic multi-Round progression
@@ -79,7 +79,8 @@ Research-facing product authority:
 - Git changed/untracked paths 可以进入 review bundle 以证明透明性与 immutability，但不自动成为 candidate。
 - `.pi/` / harness 是治理层，不属于产品 runtime；项目开发过程中不得擅自修改。发现问题时默认单独记录为 governance maintenance issue / review limitation；只要不直接阻断产品开发或验收判断，就继续当前产品 Round。
 - `.pi/extensions/harness-flow` 是 governance tooling，不默认属于产品 Round scope。
-- automated review capability/auth/isolation 不稳定时，停止重复 reload/re-review/harness 修复；不自动修改 `.pi/` / harness；向 Owner 报告问题与影响，并请求继续产品验收、Owner-approved distinct human review fallback、另开 governance maintenance 或调整 review mode。
+- Independent Review 是验收义务；spawned Pi / `harness_run_independent_review` 只是自动化执行能力。child failed/timed out/aborted/truncated 且未返回有效 P0/P1/P2 时，记录为 `automated_review_capability_blocked`，不是产品 candidate P1。
+- automated review capability/auth/isolation 不稳定时，允许纠正一次明显调用打包错误；随后停止重复 reload/re-review/harness 修复；不自动修改 `.pi/` / harness；向 Owner 报告问题与影响，并请求 Owner-approved distinct human review fallback、继续产品验收并记录 limitation、另开 governance maintenance 或调整 review mode。
 - 本项目默认不要求 OS-level sandbox / bwrap；默认要求是 distinct no-session reviewer、strict read-only tools 与 Git immutability evidence。
 
 ## Scope
@@ -112,7 +113,7 @@ Out of scope:
 | Round ID | Primary implementation session | Independently reviewable delivery boundary | Acceptance evidence | Status |
 |---|---|---|---|---|
 | R1 | R1-code-disposition-audit | 完成只读 P0–P3 code/domain disposition audit 与 child/material-to-company capability finding；只写 durable audit/review evidence。 | 完整 disposition matrix；child/material relationship capability/gap finding；production-path unchanged evidence；validation record；Independent Review/fallback evidence 与 P2 dispositions | accepted |
-| R2 | R2-research-shell | 交付 root research entry、minimal research top navigation、research layout，并把 primary research navigation 与 secondary admin routes 分离。 | 1440px/1920px shell screenshots；root/navigation/admin-route assertions；full validation；Independent Review evidence 与 P2 dispositions | pending |
+| R2 | R2-research-shell | 交付 root research entry、minimal research top navigation、research layout，并把 primary research navigation 与 secondary admin routes 分离。 | 1440px/1920px shell screenshots；root/navigation/admin-route assertions；full validation；Independent Review evidence 与 P2 dispositions | accepted |
 | R3 | R3-cpo-explorer-vertical-slice | 交付一个 production-quality SiPh PIC Flat/3D Explorer vertical slice。 | 1440px/1920px Flat/3D evidence；view-switch/reset/keyboard sequence；focused/full validation；Independent Review evidence 与 P2 dispositions | pending |
 | R4 | R4-full-cpo-explorer | 将已接受的 Explorer interaction 扩展到完整 approved CPO taxonomy。 | Full component coverage matrix；1440px/1920px Explorer evidence；interaction recording；full validation；Independent Review evidence 与 P2 dispositions | pending |
 | R5 | R5-company-research-experience | 交付 Card/List Company Pool、context-preserving Quick Drawer 与 entity-centric Full Company Detail。 | 1440px/1920px Card/List/Drawer/Detail evidence；context/filter/scroll sequence；policy regression；full validation；Independent Review evidence 与 P2 dispositions | pending |
@@ -140,6 +141,7 @@ Out of scope:
 - Product-visible acceptance evidence: Audit matrix 与 migration sequence human-readable；child/material finding 明确说明 current capability、gap、query/service need、schema-change need。
 - Screenshot / recording requirements: None because R1 has no UI candidate; durable audit matrix is visible evidence
 - Independent Review mode: spawned_pi_process
+- Review fallback rule: If automated spawned review capability is blocked, use Owner-approved distinct human_review fallback or explicit Owner review-mode/acceptance change; do not edit `.pi/` / harness inside the product Round.
 - Round review: operations/reviews/research-experience-reboot-r1-independent-review.md
 - Final integrated review: operations/reviews/research-experience-reboot-final-integrated-review.md
 - Acceptance evidence: Complete disposition matrix; child/material relationship capability and gap finding; unchanged production-path evidence; automated validation record; Independent Review/fallback evidence and P2 dispositions
@@ -154,8 +156,8 @@ Out of scope:
 - Primary Pi implementation session: R2-research-shell
 - Goal: 用 minimal independent research-facing shell 替换 admin-template research framing。
 - Handoff contracts: AGENTS.md; operations/orchestration/independent-review-and-round-scope-standard.md; src/SerenityQuantResearch/SerenityQuantResearch.Web/AGENTS.md; docs/product/README.md; docs/product/experience-map.md; docs/product/visual-language.md; docs/product/acceptance-contract.md; operations/planning/research-experience-reboot.md; operations/orchestration/research-experience-reboot.md; operations/reviews/reboot-p3-code-disposition.md
-- Latest work log: operations/work_logs/research-experience-reboot-r1.md
-- Latest review: operations/reviews/research-experience-reboot-r1-independent-review.md
+- Latest work log: operations/work_logs/research-experience-reboot-r2.md
+- Latest review: operations/reviews/research-experience-reboot-r2-independent-review.md
 - Review work log: operations/work_logs/research-experience-reboot-r2.md
 - Non-goals: Do not redesign Explorer or Company pages; do not implement Workspace content; do not delete admin services or routes; do not add a new primary product area
 - Dependencies / Definition of Ready: R1 is accepted-effective; shell KEEP/ADAPT/HIDE disposition is approved; current admin routes remain available for maintenance; Owner explicitly starts R2
@@ -169,11 +171,12 @@ Out of scope:
 - Product-visible acceptance evidence: Root/research-shell screenshots at both viewports; primary-nav assertions; secondary admin route reachability; no generic Dashboard framing
 - Screenshot / recording requirements: Root and one research page at 1440px and 1920px; secondary admin route proof without primary-nav exposure
 - Independent Review mode: spawned_pi_process
+- Review fallback rule: If automated spawned review capability is blocked, use Owner-approved distinct human_review fallback or explicit Owner review-mode/acceptance change; do not edit `.pi/` / harness inside the product Round.
 - Round review: operations/reviews/research-experience-reboot-r2-independent-review.md
 - Final integrated review: operations/reviews/research-experience-reboot-final-integrated-review.md
-- Acceptance evidence: 1440px and 1920px shell screenshots; root/navigation/admin-route assertions; full automated validation record; Independent Review evidence and P2 dispositions
+- Acceptance evidence: 1440px/1920px shell screenshots；root/navigation/admin-route assertions；full validation；Independent Review evidence 与 P2 dispositions
 - Product Owner acceptance gate: Owner accepts shell objective, IA, visual hierarchy, and admin separation before R3
-- Exact next gate: Product Owner R2 acceptance; authorized acceptance commit/post-commit verify if requested; stop. R3 requires separate Owner start decision.
+- Exact next gate: R2 accepted by Owner on 2026-08-28; acceptance commit authorized by Owner on 2026-08-28; post-commit verify required before accepted-effective closeout. R3 requires separate Owner start decision.
 - Blockers / assumptions: Existing Razor/TypeScript/CSS can host shell; Open Access remains local-only; admin capability hidden from primary research navigation rather than deleted
 - Blocked / rebaseline conditions: A new primary product area is needed; admin maintenance would be destroyed; a new large frontend framework is required; root-route behavior conflicts with approved product contract
 
@@ -198,6 +201,7 @@ Out of scope:
 - Product-visible acceptance evidence: Idle/Hover/Selected Flat and 3D states; open drawer; preserved selection during view switch; reset and keyboard demonstrations
 - Screenshot / recording requirements: 1440px and 1920px Flat/3D state screenshots; short recording or sequence for view switching, resets, keyboard selection
 - Independent Review mode: spawned_pi_process
+- Review fallback rule: If automated spawned review capability is blocked, use Owner-approved distinct human_review fallback or explicit Owner review-mode/acceptance change; do not edit `.pi/` / harness inside the product Round.
 - Round review: operations/reviews/research-experience-reboot-r3-independent-review.md
 - Final integrated review: operations/reviews/research-experience-reboot-final-integrated-review.md
 - Acceptance evidence: 1440px and 1920px Flat/3D state evidence; view-switch/reset/keyboard recording or sequence; focused and full automated validation record; Independent Review evidence and P2 dispositions
@@ -227,6 +231,7 @@ Out of scope:
 - Product-visible acceptance evidence: Full coverage matrix; representative and edge-case Flat/3D screenshots; interaction recording; prototype-defect remediation evidence
 - Screenshot / recording requirements: 1440px and 1920px representative Idle/Hover/Selected Flat and 3D; full-coverage interaction sequence or recording
 - Independent Review mode: spawned_pi_process
+- Review fallback rule: If automated spawned review capability is blocked, use Owner-approved distinct human_review fallback or explicit Owner review-mode/acceptance change; do not edit `.pi/` / harness inside the product Round.
 - Round review: operations/reviews/research-experience-reboot-r4-independent-review.md
 - Final integrated review: operations/reviews/research-experience-reboot-final-integrated-review.md
 - Acceptance evidence: Full component coverage matrix; 1440px and 1920px Explorer evidence; interaction recording; full automated validation record; Independent Review evidence and P2 dispositions
@@ -256,6 +261,7 @@ Out of scope:
 - Product-visible acceptance evidence: Card/List/Quick Drawer/Full Detail/Explorer-context screenshots; state-preservation sequence; candidate/draft/unknown semantics visible
 - Screenshot / recording requirements: Both viewports for Card/List/Drawer/Detail; sequence proving context/filter/scroll preservation
 - Independent Review mode: spawned_pi_process
+- Review fallback rule: If automated spawned review capability is blocked, use Owner-approved distinct human_review fallback or explicit Owner review-mode/acceptance change; do not edit `.pi/` / harness inside the product Round.
 - Round review: operations/reviews/research-experience-reboot-r5-independent-review.md
 - Final integrated review: operations/reviews/research-experience-reboot-final-integrated-review.md
 - Acceptance evidence: 1440px and 1920px Card/List/Drawer/Detail evidence; context/filter/scroll sequence; policy regression record; full automated validation record; Independent Review evidence and P2 dispositions
@@ -285,6 +291,7 @@ Out of scope:
 - Product-visible acceptance evidence: Component object, company object, linked-object/backlink context, evidence/status, and open-question screenshots; Explorer/Company-to-Workspace navigation sequence
 - Screenshot / recording requirements: 1440px and 1920px component and company states; navigation sequences from Explorer and Full Company Detail
 - Independent Review mode: spawned_pi_process
+- Review fallback rule: If automated spawned review capability is blocked, use Owner-approved distinct human_review fallback or explicit Owner review-mode/acceptance change; do not edit `.pi/` / harness inside the product Round.
 - Round review: operations/reviews/research-experience-reboot-r6-independent-review.md
 - Final integrated review: operations/reviews/research-experience-reboot-final-integrated-review.md
 - Acceptance evidence: Schema-unchanged evidence; 1440px and 1920px component/company Workspace evidence; navigation/context sequence; full automated validation record; Independent Review evidence and P2 dispositions
@@ -313,7 +320,8 @@ Out of scope:
 - Exact validation strategy: Run full build, .NET tests, UI tests, browser journey, endpoint machine/human reviewer tests, no-schema-change scan, no-reference cleanup scan, portability scan, and Final Integrated Independent Review
 - Product-visible acceptance evidence: End-to-end journey screenshots/sequence; machine-reviewer rejection evidence; cleanup map; full regression and portability record
 - Screenshot / recording requirements: 1440px and 1920px integrated journey sequence; representative cleanup/no-dead-link evidence
-- Independent Review mode: spawned_pi_process plus final_integrated review
+- Independent Review mode: spawned_pi_process
+- Review fallback rule: R7 also requires Final Integrated Independent Review before pre-commit gate; if automated spawned review capability is blocked, use Owner-approved distinct human_review fallback or explicit Owner review-mode/acceptance change; do not edit `.pi/` / harness inside the product Round.
 - Round review: operations/reviews/research-experience-reboot-r7-independent-review.md
 - Final integrated review: operations/reviews/research-experience-reboot-final-integrated-review.md
 - Acceptance evidence: End-to-end journey evidence; machine-reviewer rejection test; bounded cleanup map; clean full regression and portability record; per-Round Independent Review evidence; Final Integrated Independent Review evidence and P2 dispositions

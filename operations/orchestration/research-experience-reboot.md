@@ -90,15 +90,16 @@ Workspace v1 是 read-only + linked-object-first。它不引入 persistent Resea
 
 ## Independent Review
 
-- 每个 fixed Round 在 automated validation 通过后执行 Independent Review 或 Owner-approved fallback。
+- 每个 fixed Round 在 automated validation 通过后必须完成 Independent Review 义务；spawned Pi 只是自动化执行方式之一。
 - 默认 reviewer 要求：distinct、non-interactive、no-session、strict read-only tools。
+- automated child 如果 failed、timed out、aborted 或 produced truncated evidence，且未返回有效 P0/P1/P2，不算完成 Review；该状态是 `automated_review_capability_blocked`，不是产品 candidate P1。
 - 本项目默认不要求 OS-level sandbox / bwrap；bwrap/provider-auth/harness 修复属于单独 governance maintenance，不应拖入产品 Round。
 - 项目开发过程中不得擅自修改 `.pi/` / harness。发现治理层问题时默认记录为 governance maintenance issue / review limitation；只要不直接阻断产品开发或验收判断，就继续当前产品 Round。只有严重恶性 bug 导致项目无法继续，且 Owner 明确授权后，才允许修改治理层文件。
 - Child 不写 artifact；Builder 记录 process/model/output/tool-boundary/Git immutability。
 - P0/P1：在同一 Round Fix → Verify → Re-review。
 - P2：验收前必须 durable disposition。
 - 最后一个 planned Round 还需要单独 Final Integrated Independent Review，且不创建隐藏 Round。
-- Capability/auth/isolation failure 标记为 blocked；不自动修 harness、不重复 reload；默认向 Owner 报告影响并请求继续产品验收、distinct human fallback、另开治理维护或调整 review mode，不能静默降级。
+- Capability/auth/isolation failure 标记为 blocked；允许纠正一次明显 Builder packaging error，但不自动修 harness、不重复 reload；默认向 Owner 报告影响并请求 distinct human fallback、继续产品验收并记录 limitation、另开治理维护或调整 review mode，不能静默降级。
 - same-session self-check 和 `/new` 都不是 Independent Review。
 
 ## Commit And Stop Rules

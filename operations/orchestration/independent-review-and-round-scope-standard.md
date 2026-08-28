@@ -12,6 +12,16 @@
 
 本标准用于防止 Independent Review 从当前产品 Round 候选漂移到治理工具实现、环境脏状态或下一 Round。Review 的目标是证明当前 Round candidate 是否满足已批准合同，而不是评审整个仓库或修复 Pi/harness 工具。
 
+## Review 义务与自动化能力分离
+
+Independent Review 是验收义务；`harness_run_independent_review` / spawned Pi 只是其中一种执行能力。二者不得混同。
+
+- 如果 spawned reviewer 成功返回 `pass` / `changes_required` / `blocked` 且包含可审计 P0/P1/P2 evidence，才算完成一次有效 automated Independent Review。
+- 如果 harness 返回 `review child failed, timed out, was aborted, or produced truncated evidence`，或未产生 P0/P1/P2，则只说明 automated review capability 不成立；它不是产品 candidate failure，也不是产品 P1。
+- automated capability 失败不等于 Independent Review 义务取消。该 Round 仍需通过稳定 automated review、Owner-approved distinct human review fallback，或 Owner 明确修改/放弃 formal review gate 后才能验收。
+- 同一 Round 对同一 capability failure 不做 reload/retry 循环；最多记录一次纠正明显调用错误后的真实 capability result。
+- 如果本项目已有未关闭的 `automated_review_capability_blocked` governance issue，后续 Round 不应假定 spawned review 已恢复；除非已有单独治理维护验证通过，否则直接按 Owner 决策使用 human fallback / review-mode 调整。
+
 ## Review 对象
 
 Independent Review 评审三类材料，但只有第一类是验收候选：
@@ -21,6 +31,36 @@ Independent Review 评审三类材料，但只有第一类是验收候选：
 3. **Environment / dirty-worktree scope**：Git dirty/untracked 状态、pre-existing local files、工具目录或其他环境残留。它们用于透明记录、immutability 与污染风险判断，不自动成为当前 Round 的交付范围。
 
 结论规则：**进入 review bundle 不等于进入 candidate scope。**
+
+## Machine-readable Round 字段标准
+
+Plan 中供 handoff/review 工具解析的字段必须保持精确值，不得把解释性正文追加到同一字段中。
+
+尤其是：
+
+```text
+- Independent Review mode: spawned_pi_process
+```
+
+或：
+
+```text
+- Independent Review mode: human_review
+```
+
+必须是完整字段值。不得写成：
+
+```text
+- Independent Review mode: spawned_pi_process; if automated capability is blocked ...
+```
+
+fallback、limitation、Final Integrated Review 或 Owner decision 说明必须放在独立字段或正文中，例如：
+
+```text
+- Review fallback rule: ...
+```
+
+如果 mode 字段被扩写，harness 会在自身 gate 层返回 `Independent Review mode must be spawned_pi_process or human_review`，且不会启动 reviewer child。这是治理元数据错误，不是产品 Round failure。
 
 ## Scope 设定规则
 
@@ -105,6 +145,21 @@ Dirty worktree 必须透明，不得隐藏：
 | Harness capability/auth/isolation 不稳定 | 标记 `automated_review_capability_blocked`；不自动修 harness、不重复 reload；请求 Owner 选择继续产品验收、human fallback、单开治理维护或调整 review mode |
 | Harness 本身是已批准 candidate | 仅在单独治理维护任务中按 candidate finding 处理 |
 
+## Human review fallback 最小合同
+
+当 automated spawned review capability blocked 时，Owner 可批准 distinct human review fallback。批准后 Builder 必须提供一个只读 review packet，并记录到 review artifact：
+
+- Round ID、Plan path、active Round 状态；
+- candidate scope paths 与 screenshots/evidence paths；
+- context scope paths；
+- environment / dirty-worktree classification；
+- automated validation summary；
+- protected surface diff/status；
+- reviewer 必须回答的 P0/P1/P2 + decision 格式；
+- reviewer 只读、不修改文件、不 commit、不 push 的边界。
+
+Human reviewer 返回后，Builder 只负责记录 reviewer identity/role、输入、decision、findings、P2 disposition 与 before/after Git immutability。Builder 不得把自己的 same-session self-check 伪装成 human review。
+
 ## spawned Pi、human fallback 与 same-session 边界
 
 有效 Independent Review 只能是：
@@ -147,17 +202,18 @@ Dirty worktree 必须透明，不得隐藏：
 
 若 automated review 因 capability/auth/isolation/tool bug 阻塞：
 
-1. 停止重复 reload/re-review/harness 修复循环；
-2. 不自动修改 `.pi/` / harness；
-3. 标记 `automated_review_capability_blocked`；
-4. 不把该 blocker 作为产品 candidate P1；
-5. 向 Owner 报告：问题是什么、是否影响产品 Round 判断、是否让必要门禁完全无法成立；
-6. 请求 Owner 在以下选项中选择：
-   - 继续产品验收并把问题记为 review limitation；
-   - 使用 distinct human review fallback；
+1. 先排除一次性 Builder packaging error（例如把目录传入要求 regular file 的 `scopePaths`）；这类错误可纠正一次，但仍不触碰 `.pi/` / harness。
+2. 若纠正调用后仍失败，停止重复 reload/re-review/harness 修复循环。
+3. 不自动修改 `.pi/` / harness。
+4. 标记 `automated_review_capability_blocked`，并在 governance maintenance backlog 中记录或更新 issue。
+5. 不把该 blocker 作为产品 candidate P1。
+6. 向 Owner 报告：问题是什么、是否影响产品 Round 判断、是否让必要门禁完全无法成立。
+7. 请求 Owner 在以下选项中选择：
+   - 使用 distinct human review fallback 完成 Independent Review 义务；
+   - 继续产品验收并把 automated review failure 记为 review limitation（仅当 Owner 明确修改/放弃 formal gate）；
    - 暂停当前 Round，单开 governance maintenance；
    - 修改 Plan 的 review mode/acceptance；
-   - 明确放弃本次 formal review gate。
+   - 暂停当前任务。
 
 未获 Owner 批准前，不得静默降级为 same-session review。
 
@@ -167,7 +223,7 @@ Fixed Round 的 accepted-effective 顺序为：
 
 1. Builder 完成当前 Round candidate；
 2. automated validation 通过；
-3. Independent Review 或 Owner-approved human fallback 完成；
+3. Independent Review 义务完成：稳定 automated review 返回有效 decision/P0/P1/P2，或 Owner-approved distinct human review fallback 完成，或 Owner 明确修改/放弃 formal review gate；
 4. P0/P1 清零；
 5. P2 disposition 完成；
 6. Owner 明确验收当前 Round；

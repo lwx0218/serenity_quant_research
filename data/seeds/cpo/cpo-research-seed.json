@@ -1,0 +1,152 @@
+{
+  "theme": {
+    "id": "theme.cpo",
+    "name": "光模块 / CPO",
+    "description": "Phase 1 finance-first CPO research baseline"
+  },
+  "industryChain": {
+    "id": "chain.cpo",
+    "name": "CPO 产业链",
+    "description": "Industry-chain view kept separate from the physical taxonomy"
+  },
+  "chainNodes": [
+    { "id": "cpo.chain.demand", "name": "需求与算力网络", "nodeType": "context", "sortOrder": 1 },
+    { "id": "cpo.chain.asic", "name": "交换 ASIC", "nodeType": "supply", "sortOrder": 2 },
+    { "id": "cpo.chain.silicon-photonics", "name": "硅光", "nodeType": "supply", "sortOrder": 3 },
+    { "id": "cpo.chain.light-source", "name": "光源/激光器", "nodeType": "supply", "sortOrder": 4 },
+    { "id": "cpo.chain.optical-engine-package", "name": "光引擎与封装", "nodeType": "supply", "sortOrder": 5 },
+    { "id": "cpo.chain.substrate-interconnect", "name": "基板与互连", "nodeType": "supply", "sortOrder": 6 },
+    { "id": "cpo.chain.thermal-structure", "name": "散热与结构", "nodeType": "supply", "sortOrder": 7 },
+    { "id": "cpo.chain.test-equipment", "name": "测试与设备", "nodeType": "supply", "sortOrder": 8 },
+    { "id": "cpo.chain.optical-connection", "name": "光器件与连接", "nodeType": "supply", "sortOrder": 9 },
+    { "id": "cpo.chain.systems-switches", "name": "下游系统与交换机", "nodeType": "context", "sortOrder": 10 }
+  ],
+  "modules": [
+    { "id": "cpo.mod.thermal", "name": "散热与上盖 / Thermal solution and lid", "sortOrder": 1 },
+    { "id": "cpo.mod.host-asic", "name": "主机交换 ASIC / Host switch ASIC", "sortOrder": 2 },
+    { "id": "cpo.mod.eic", "name": "电接口处理层 / Electrical IC layer", "sortOrder": 3 },
+    { "id": "cpo.mod.pic", "name": "硅光 PIC / Silicon-photonics PIC", "sortOrder": 4 },
+    { "id": "cpo.mod.laser", "name": "光源 / Laser source", "sortOrder": 5 },
+    { "id": "cpo.mod.receiver", "name": "光接收阵列 / Photodetector receive array", "sortOrder": 6 },
+    { "id": "cpo.mod.fiber-interface", "name": "光纤耦合与连接 / Fiber attach and optical connector", "sortOrder": 7 },
+    { "id": "cpo.mod.cpa-substrate", "name": "共封装装配基板 / Co-packaged assembly substrate", "sortOrder": 8 },
+    { "id": "cpo.mod.host-board", "name": "主机板与板级互连 / Host board and board-level interconnect", "sortOrder": 9 }
+  ],
+  "parts": [
+    { "id": "cpo.part.thermal.lid-spreader", "moduleId": "cpo.mod.thermal", "name": "上盖/均热盖", "functionSummary": "封装热扩散与结构保护", "researchStatus": "validated_category", "sortOrder": 1 },
+    { "id": "cpo.part.thermal.cooling-assembly", "moduleId": "cpo.mod.thermal", "name": "冷板/散热器组件", "functionSummary": "把热量导出到系统冷却回路", "researchStatus": "product_candidate", "sortOrder": 2 },
+    { "id": "cpo.part.thermal.tim", "moduleId": "cpo.mod.thermal", "name": "热界面材料", "functionSummary": "降低器件与冷却结构间接触热阻", "researchStatus": "validated_category", "sortOrder": 3 },
+    { "id": "cpo.part.host-asic.switch-die", "moduleId": "cpo.mod.host-asic", "name": "交换 ASIC 裸片/封装", "functionSummary": "完成高速数据交换与调度", "researchStatus": "validated_category", "sortOrder": 1 },
+    { "id": "cpo.part.host-asic.serdes-io", "moduleId": "cpo.mod.host-asic", "name": "SerDes 与高速 I/O", "functionSummary": "连接 host ASIC 与近封装光引擎", "researchStatus": "validated_category", "sortOrder": 2 },
+    { "id": "cpo.part.eic.driver", "moduleId": "cpo.mod.eic", "name": "调制器驱动器", "functionSummary": "驱动光调制器", "researchStatus": "validated_category", "sortOrder": 1 },
+    { "id": "cpo.part.eic.tia", "moduleId": "cpo.mod.eic", "name": "跨阻放大器", "functionSummary": "将光电探测电流转换并放大", "researchStatus": "validated_category", "sortOrder": 2 },
+    { "id": "cpo.part.eic.retimer-cdr-dsp", "moduleId": "cpo.mod.eic", "name": "Retimer/CDR/DSP 功能块", "functionSummary": "可选的重定时、时钟恢复和数字处理", "researchStatus": "architecture_option", "sortOrder": 3 },
+    { "id": "cpo.part.pic.modulator", "moduleId": "cpo.mod.pic", "name": "光调制器", "functionSummary": "把电信号调制到光载波", "researchStatus": "validated_category", "sortOrder": 1 },
+    { "id": "cpo.part.pic.wdm", "moduleId": "cpo.mod.pic", "name": "WDM 复用/解复用", "functionSummary": "组合或分离波长通道", "researchStatus": "validated_category", "sortOrder": 2 },
+    { "id": "cpo.part.pic.waveguide-coupler", "moduleId": "cpo.mod.pic", "name": "波导与片上耦合结构", "functionSummary": "在 PIC 内传输、分合和耦合光信号", "researchStatus": "validated_category", "sortOrder": 3 },
+    { "id": "cpo.part.laser.cw-array", "moduleId": "cpo.mod.laser", "name": "连续波激光器/阵列", "functionSummary": "提供连续波光载波", "researchStatus": "validated_category", "sortOrder": 1 },
+    { "id": "cpo.part.laser.source-interface", "moduleId": "cpo.mod.laser", "name": "光源耦合与供光接口", "functionSummary": "完成集成或外置光源的耦合与供光", "researchStatus": "validated_category", "sortOrder": 2 },
+    { "id": "cpo.part.receiver.pd-array", "moduleId": "cpo.mod.receiver", "name": "光电探测器阵列", "functionSummary": "把接收光信号转换为电流", "researchStatus": "product_boundary_pending", "sortOrder": 1 },
+    { "id": "cpo.part.fiber.fau", "moduleId": "cpo.mod.fiber-interface", "name": "光纤阵列单元", "functionSummary": "多通道光纤对准与耦合", "researchStatus": "validated_category", "sortOrder": 1 },
+    { "id": "cpo.part.fiber.connector", "moduleId": "cpo.mod.fiber-interface", "name": "高密度光连接器", "functionSummary": "连接板内或前面板光纤", "researchStatus": "interface_option", "sortOrder": 2 },
+    { "id": "cpo.part.cpa.package-substrate", "moduleId": "cpo.mod.cpa-substrate", "name": "高密度封装基板", "functionSummary": "共同承载 host ASIC 与光引擎", "researchStatus": "validated_category", "sortOrder": 1 },
+    { "id": "cpo.part.cpa.interposer-bridge", "moduleId": "cpo.mod.cpa-substrate", "name": "中介层/RDL/桥接", "functionSummary": "提供高密度短距封装互连", "researchStatus": "architecture_option", "sortOrder": 2 },
+    { "id": "cpo.part.board.high-speed-pcb", "moduleId": "cpo.mod.host-board", "name": "高速主机 PCB", "functionSummary": "承载系统级供电、控制和高速连接", "researchStatus": "validated_system_category", "sortOrder": 1 },
+    { "id": "cpo.part.board.edge-connector", "moduleId": "cpo.mod.host-board", "name": "板级连接器/金手指", "functionSummary": "候选板级系统接口", "researchStatus": "product_candidate", "sortOrder": 2 },
+    { "id": "cpo.part.board.power-management", "moduleId": "cpo.mod.host-board", "name": "板级供电与电源管理", "functionSummary": "提供多路供电、转换和监控", "researchStatus": "validated_system_category", "sortOrder": 3 }
+  ],
+  "technologyLinks": [
+    { "id": "cpo.tech.high-speed-switching", "name": "高速交换与 XSR 电接口", "description": "Host ASIC, SerDes and short-reach electrical interface" },
+    { "id": "cpo.tech.silicon-photonics", "name": "硅光集成", "description": "PIC modulation, routing, multiplexing and detection" },
+    { "id": "cpo.tech.external-laser", "name": "外置连续波光源", "description": "Maintainable external laser source architecture" },
+    { "id": "cpo.tech.thermal-management", "name": "共封装热管理", "description": "Package-to-system thermal path" }
+  ],
+  "partChainMappings": [
+    { "partId": "cpo.part.thermal.lid-spreader", "chainNodeId": "cpo.chain.thermal-structure" },
+    { "partId": "cpo.part.thermal.cooling-assembly", "chainNodeId": "cpo.chain.thermal-structure" },
+    { "partId": "cpo.part.thermal.tim", "chainNodeId": "cpo.chain.thermal-structure" },
+    { "partId": "cpo.part.host-asic.switch-die", "chainNodeId": "cpo.chain.asic" },
+    { "partId": "cpo.part.host-asic.serdes-io", "chainNodeId": "cpo.chain.asic" },
+    { "partId": "cpo.part.eic.driver", "chainNodeId": "cpo.chain.optical-engine-package" },
+    { "partId": "cpo.part.eic.tia", "chainNodeId": "cpo.chain.optical-engine-package" },
+    { "partId": "cpo.part.eic.retimer-cdr-dsp", "chainNodeId": "cpo.chain.optical-engine-package" },
+    { "partId": "cpo.part.pic.modulator", "chainNodeId": "cpo.chain.silicon-photonics" },
+    { "partId": "cpo.part.pic.wdm", "chainNodeId": "cpo.chain.silicon-photonics" },
+    { "partId": "cpo.part.pic.waveguide-coupler", "chainNodeId": "cpo.chain.silicon-photonics" },
+    { "partId": "cpo.part.laser.cw-array", "chainNodeId": "cpo.chain.light-source" },
+    { "partId": "cpo.part.laser.source-interface", "chainNodeId": "cpo.chain.light-source" },
+    { "partId": "cpo.part.receiver.pd-array", "chainNodeId": "cpo.chain.optical-connection" },
+    { "partId": "cpo.part.fiber.fau", "chainNodeId": "cpo.chain.optical-connection" },
+    { "partId": "cpo.part.fiber.connector", "chainNodeId": "cpo.chain.optical-connection" },
+    { "partId": "cpo.part.cpa.package-substrate", "chainNodeId": "cpo.chain.substrate-interconnect" },
+    { "partId": "cpo.part.cpa.interposer-bridge", "chainNodeId": "cpo.chain.substrate-interconnect" },
+    { "partId": "cpo.part.board.high-speed-pcb", "chainNodeId": "cpo.chain.substrate-interconnect" },
+    { "partId": "cpo.part.board.edge-connector", "chainNodeId": "cpo.chain.substrate-interconnect" },
+    { "partId": "cpo.part.board.power-management", "chainNodeId": "cpo.chain.substrate-interconnect" }
+  ],
+  "partTechnologyMappings": [
+    { "partId": "cpo.part.host-asic.switch-die", "technologyId": "cpo.tech.high-speed-switching" },
+    { "partId": "cpo.part.host-asic.serdes-io", "technologyId": "cpo.tech.high-speed-switching" },
+    { "partId": "cpo.part.pic.modulator", "technologyId": "cpo.tech.silicon-photonics" },
+    { "partId": "cpo.part.pic.wdm", "technologyId": "cpo.tech.silicon-photonics" },
+    { "partId": "cpo.part.pic.waveguide-coupler", "technologyId": "cpo.tech.silicon-photonics" },
+    { "partId": "cpo.part.laser.cw-array", "technologyId": "cpo.tech.external-laser" },
+    { "partId": "cpo.part.laser.source-interface", "technologyId": "cpo.tech.external-laser" },
+    { "partId": "cpo.part.thermal.lid-spreader", "technologyId": "cpo.tech.thermal-management" },
+    { "partId": "cpo.part.thermal.cooling-assembly", "technologyId": "cpo.tech.thermal-management" },
+    { "partId": "cpo.part.thermal.tim", "technologyId": "cpo.tech.thermal-management" }
+  ],
+  "companies": [
+    { "id": "global.nvidia", "name": "NVIDIA Corporation", "ticker": "NVDA", "exchange": "NASDAQ", "countryRegion": "美国", "universeLayer": "global_anchor", "coveragePriority": "context", "officialUrl": "https://www.nvidia.com/en-us/networking/" },
+    { "id": "global.broadcom", "name": "Broadcom Inc.", "ticker": "AVGO", "exchange": "NASDAQ", "countryRegion": "美国", "universeLayer": "global_anchor", "coveragePriority": "context", "officialUrl": "https://www.broadcom.com/products/ethernet-connectivity/switching" },
+    { "id": "global.cisco", "name": "Cisco Systems, Inc.", "ticker": "CSCO", "exchange": "NASDAQ", "countryRegion": "美国", "universeLayer": "global_anchor", "coveragePriority": "context", "officialUrl": "https://www.cisco.com/" },
+    { "id": "global.intel", "name": "Intel Corporation", "ticker": "INTC", "exchange": "NASDAQ", "countryRegion": "美国", "universeLayer": "global_anchor", "coveragePriority": "context", "officialUrl": "https://www.intel.com/content/www/us/en/architecture-and-technology/silicon-photonics/" },
+    { "id": "global.marvell", "name": "Marvell Technology, Inc.", "ticker": "MRVL", "exchange": "NASDAQ", "countryRegion": "美国", "universeLayer": "global_anchor", "coveragePriority": "context", "officialUrl": "https://www.marvell.com/products/optical-dsp.html" },
+    { "id": "global.coherent", "name": "Coherent Corp.", "ticker": "COHR", "exchange": "NYSE", "countryRegion": "美国", "universeLayer": "global_anchor", "coveragePriority": "context", "officialUrl": "https://www.coherent.com/networking" },
+    { "id": "global.lumentum", "name": "Lumentum Holdings Inc.", "ticker": "LITE", "exchange": "NASDAQ", "countryRegion": "美国", "universeLayer": "global_anchor", "coveragePriority": "context", "officialUrl": "https://www.lumentum.com/en/optical-communications/products/datacom-transceivers" },
+    { "id": "global.arista", "name": "Arista Networks, Inc.", "ticker": "ANET", "exchange": "NYSE", "countryRegion": "美国", "universeLayer": "global_anchor", "coveragePriority": "context", "officialUrl": "https://www.arista.com/en/products/platforms" },
+    { "id": "cn.300308", "name": "中际旭创股份有限公司", "ticker": "300308", "exchange": "SZSE", "countryRegion": "中国", "universeLayer": "a_share_focus", "coveragePriority": "core" },
+    { "id": "cn.300502", "name": "成都新易盛通信技术股份有限公司", "ticker": "300502", "exchange": "SZSE", "countryRegion": "中国", "universeLayer": "a_share_focus", "coveragePriority": "core" },
+    { "id": "cn.002281", "name": "武汉光迅科技股份有限公司", "ticker": "002281", "exchange": "SZSE", "countryRegion": "中国", "universeLayer": "a_share_focus", "coveragePriority": "core" },
+    { "id": "cn.300394", "name": "苏州天孚光通信股份有限公司", "ticker": "300394", "exchange": "SZSE", "countryRegion": "中国", "universeLayer": "a_share_focus", "coveragePriority": "core" },
+    { "id": "cn.000988", "name": "华工科技产业股份有限公司", "ticker": "000988", "exchange": "SZSE", "countryRegion": "中国", "universeLayer": "a_share_focus", "coveragePriority": "core" },
+    { "id": "cn.603083", "name": "上海剑桥科技股份有限公司", "ticker": "603083", "exchange": "SSE", "countryRegion": "中国", "universeLayer": "a_share_focus", "coveragePriority": "core" },
+    { "id": "cn.688498", "name": "陕西源杰半导体科技股份有限公司", "ticker": "688498", "exchange": "SSE", "countryRegion": "中国", "universeLayer": "a_share_focus", "coveragePriority": "core" },
+    { "id": "cn.688048", "name": "苏州长光华芯光电技术股份有限公司", "ticker": "688048", "exchange": "SSE", "countryRegion": "中国", "universeLayer": "a_share_focus", "coveragePriority": "core" },
+    { "id": "cn.002916", "name": "深南电路股份有限公司", "ticker": "002916", "exchange": "SZSE", "countryRegion": "中国", "universeLayer": "a_share_focus", "coveragePriority": "gap_fill" },
+    { "id": "cn.002463", "name": "沪士电子股份有限公司", "ticker": "002463", "exchange": "SZSE", "countryRegion": "中国", "universeLayer": "a_share_focus", "coveragePriority": "gap_fill" },
+    { "id": "cn.300602", "name": "深圳市飞荣达科技股份有限公司", "ticker": "300602", "exchange": "SZSE", "countryRegion": "中国", "universeLayer": "a_share_focus", "coveragePriority": "gap_fill" },
+    { "id": "cn.688200", "name": "北京华峰测控技术股份有限公司", "ticker": "688200", "exchange": "SSE", "countryRegion": "中国", "universeLayer": "a_share_focus", "coveragePriority": "gap_fill" }
+  ],
+  "exampleChain": {
+    "partId": "cpo.part.host-asic.switch-die",
+    "chainNodeId": "cpo.chain.asic",
+    "technologyId": "cpo.tech.high-speed-switching",
+    "companyId": "global.broadcom",
+    "exposure": {
+      "role": "chip_vendor",
+      "relevance": "industry_anchor",
+      "confidence": "low",
+      "verificationState": "candidate",
+      "scopeNote": "The official switching portfolio supports anchor classification only; it does not by itself verify a specific CPO product or supply relationship."
+    },
+    "source": {
+      "id": "source.broadcom.ethernet-switching",
+      "sourceLevel": "A",
+      "publisher": "Broadcom Inc.",
+      "title": "Ethernet Switches and Switch Fabric Devices",
+      "originalUrl": "https://www.broadcom.com/products/ethernet-connectivity/switching",
+      "captureTime": "2026-08-24T00:00:00Z",
+      "rightsNote": "Metadata and minimum locator only; no copied artwork or full-page content."
+    },
+    "evidence": {
+      "id": "EVD-2026-0001",
+      "version": 1,
+      "proposition": "Broadcom maintains an Ethernet switching product portfolio; this supports global-anchor classification but not a verified CPO supply-chain conclusion.",
+      "locator": "official product page title",
+      "stance": "contextualizes",
+      "reviewState": "draft",
+      "analystNote": "Machine-assisted seed. Human review is mandatory before any conclusion or report citation."
+    }
+  }
+}

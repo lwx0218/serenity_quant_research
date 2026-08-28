@@ -154,7 +154,8 @@ Fixed rounds 只用于复杂、跨 session、高风险或 formal acceptance 工�
 - 一个 Round 默认适合一个 primary Builder session；需要 continuation 时命名为 `R1-<slug>-cont-2` 并保留同一 Round、scope、Review lifecycle 和 acceptance gate
 - 不得创建 `R2A`、`R2B` 或通过 Phase/session 拆出隐藏 acceptance unit
 - Owner 已对本项目 Plan 声明的 Independent Review 提供持续授权；满足 Round 状态、候选验证和隔离条件后，Builder 无需逐轮再次询问即可自动调用，但该授权不等于 Round 验收、Plan 变更授权或 human-review fallback 授权
-- 当前 Builder 在 automated verification 后自动调用 `harness_run_independent_review`，启动 distinct non-interactive/no-session/strict `read,grep,find,ls` child；captured evidence 包含 process/model/exit/stdout/stderr/tool boundary 和 Git immutability，durable artifact 由 Builder 写
+- Independent Review 是验收义务；`harness_run_independent_review` / spawned Pi 只是自动化执行能力。只有返回有效 decision 与 P0/P1/P2 evidence 才算完成 automated Review；child failed/timed out/aborted/truncated 只表示 capability blocked，不是产品 P1。
+- 当前 Builder 在 automated verification 后自动调用 `harness_run_independent_review`，启动 distinct non-interactive/no-session/strict `read,grep,find,ls` child；captured evidence 包含 process/model/exit/stdout/stderr/tool boundary 和 Git immutability，durable artifact 由 Builder 写。若已知 automated capability blocked，纠正一次明显调用错误后不得 reload/retry 循环。
 - P0/P1 在原 Round 自动 Fix/Verify/Re-review，P2 在 acceptance 前 disposition
 - 全部 planned delivery 完成后，最后 Round 在 pre-commit gate 前执行单独的 Final Integrated Independent Review；它是最后 Round 的 evidence，不是新 Round
 - `spawned_pi_process` capability/auth/read-only isolation 不成立时 fail closed，或使用经批准且与 Builder 不同的 `human_review`；`same_session` 与 `/new` 都不满足 Independent Review
@@ -170,7 +171,7 @@ Fixed rounds 只用于复杂、跨 session、高风险或 formal acceptance 工�
 - `.pi/extensions/harness-flow` 属于 governance tooling。除非当前任务明确是治理工具维护，或 Owner 明确批准纳入 candidate，否则它不属于产品 Round scope。
 - Reviewer 发现 harness/tooling bug 时，默认转为 governance maintenance backlog 或 review limitation；只要不直接阻断产品开发/验收判断，就继续当前产品 Round，不扩大产品 candidate。
 - 本项目默认不要求 OS-level sandbox / bwrap read confinement；默认要求是 distinct no-session reviewer、strict read-only tools、Builder 记录 process/model/output/tool-boundary 与 Git immutability。
-- automated review capability/auth/isolation 不稳定时，不自动修 harness、不重复 reload；向 Owner 报告问题、是否影响产品 Round 判断，并给出继续产品验收、单开治理修复或调整 review mode 的选项。
+- automated review capability/auth/isolation 不稳定时，不自动修 harness、不重复 reload；记录/更新 governance maintenance issue，向 Owner 报告问题、是否影响产品 Round 判断、是否让 gate 完全无法成立，并给出 distinct human review fallback、继续产品验收并记录 limitation、单开治理修复或调整 review mode 的选项。
 - `spawned_pi_process` 或 Owner-approved distinct `human_review` 才能作为 Independent Review；same-session self-check 和单纯 `/new` 都不得冒充 Independent Review。
 
 ## Evidence Paths
