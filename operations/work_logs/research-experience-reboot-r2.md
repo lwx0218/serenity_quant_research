@@ -9,12 +9,12 @@ Git baseline: `28ec224ac6070245f51b22f02aff18b815f3d745`
 - Round：`R2 — Research Shell`
 - Primary session：`R2-research-shell`
 - Start time：`2026-08-28T13:30:43Z`
-- 当前状态：`acceptance_commit_authorized_pending_post_commit_verify`
+- 当前状态：`accepted_effective`
 - 治理解释：`harness_run_independent_review` wrapper 仍存在 automated capability blocker；但本 session 已用 distinct manual spawned Pi process 完成 R2 Independent Review 义务。该 process 是 no-session、read-only tools、非 `/new`、非 human review。
 - R1 状态：accepted-effective；Owner 已明确启动 R2。
 - Owner R2 acceptance：2026-08-28T15:34:02Z，Owner 回复 `accept`。
 - Owner 授权 acceptance commit：2026-08-28，Owner 回复“可以，验收吧，commit吧”。
-- accepted-effective closeout 需在 commit 后 post-commit verification 通过后确认。
+- accepted-effective closeout：acceptance commit 后 post-commit verification 通过。
 
 ## Boundary
 
@@ -182,7 +182,8 @@ P2 disposition：截图脚本在部分截图中未等待异步研究内容加载
 - Acceptance time：`2026-08-28T15:34:02Z`
 - Owner response：`accept`
 - Accepted scope：R2 Research Shell candidate as documented above, including P2 non-blocking disposition.
-- Remaining gates before accepted-effective：Builder commits；post-commit verification passes。
 - Commit authorization：Owner replied “可以，验收吧，commit吧”。
+- Acceptance commit：completed by Builder after Owner authorization。
+- Post-commit verification：PASS。
 
-Required next gate：执行 acceptance commit 与 post-commit verify。R3 不得自动启动；仅在 R2 accepted-effective 后准备 R3 handoff。
+R2 is accepted-effective. Required next gate：stop；R3 requires separate Owner start decision and handoff. R3 不得自动启动。

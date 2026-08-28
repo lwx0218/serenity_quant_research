@@ -176,7 +176,7 @@ Out of scope:
 - Final integrated review: operations/reviews/research-experience-reboot-final-integrated-review.md
 - Acceptance evidence: 1440px/1920px shell screenshots；root/navigation/admin-route assertions；full validation；Independent Review evidence 与 P2 dispositions
 - Product Owner acceptance gate: Owner accepts shell objective, IA, visual hierarchy, and admin separation before R3
-- Exact next gate: R2 accepted by Owner on 2026-08-28; acceptance commit authorized by Owner on 2026-08-28; post-commit verify required before accepted-effective closeout. R3 requires separate Owner start decision.
+- Exact next gate: R2 accepted-effective after Owner acceptance, authorized acceptance commit, and post-commit verification on 2026-08-28; stop. R3 requires separate Owner start decision.
 - Blockers / assumptions: Existing Razor/TypeScript/CSS can host shell; Open Access remains local-only; admin capability hidden from primary research navigation rather than deleted
 - Blocked / rebaseline conditions: A new primary product area is needed; admin maintenance would be destroyed; a new large frontend framework is required; root-route behavior conflicts with approved product contract
 

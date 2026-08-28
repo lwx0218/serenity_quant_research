@@ -12,7 +12,7 @@ Unresolved P1: 0
 - Required mode：`spawned_pi_process`
 - Final state：**pass with one P2 disposition**
 - Artifact author：Builder；review child 未写项目文件。
-- Product candidate status：implementation、automated validation、screenshots、Independent Review gate、Owner R2 acceptance 与 acceptance commit authorization 已完成；下一门禁是 commit/post-commit verification。
+- Product candidate status：implementation、automated validation、screenshots、Independent Review gate、Owner R2 acceptance、acceptance commit 与 post-commit verification 已完成；R2 accepted-effective。
 
 ## Candidate scope reviewed
 
@@ -189,4 +189,8 @@ Owner accepted R2 on `2026-08-28T15:34:02Z` by replying `accept`.
 
 Owner authorized acceptance commit on `2026-08-28` by replying “可以，验收吧，commit吧”.
 
-R2 is still not accepted-effective until commit and post-commit verification complete. R3 must not start automatically.
+Acceptance commit：completed by Builder after Owner authorization。
+
+Post-commit verification：PASS。
+
+R2 is accepted-effective. R3 must not start automatically; it requires separate Owner start decision and handoff.
