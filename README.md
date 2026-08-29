@@ -109,3 +109,22 @@ dotnet run \
 - `PartResearchService`、`CompanyUniverseService` 与现有回归测试
 
 Seed 中的 candidate/draft 状态不得因 UI 或 prototype 升级。
+
+<!-- HARNESS:README:MANAGED:START -->
+## Harness / Pi Onboarding
+
+本项目使用 Harness starter 的 PI-first simple 默认路径。
+
+- 模型合同：`AGENTS.md`
+- 人类手册：`Harness_manual.md`
+- Pi capabilities：`.pi/`
+- 项目 evidence：`docs/project-intake/`、`operations/`
+
+第一次进入：
+
+```bash
+pi --name "00-orchestration"
+```
+
+Owner 批准 Plan 前 no-write。已有 approved baseline 后，清楚 bounded task 默认直接执行并验证。fixed Round、Independent Review、handoff 或 formal gate 只有 Owner 明确批准时才启用。
+<!-- HARNESS:README:MANAGED:END -->
