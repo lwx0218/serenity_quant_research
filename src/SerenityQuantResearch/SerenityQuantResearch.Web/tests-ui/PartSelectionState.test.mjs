@@ -2,7 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
     activePartId,
+    approvedCpoModuleIds,
+    approvedCpoPartCount,
     clearSelection,
+    componentCoverageState,
     hoverPart,
     interactionState,
     isSelectionKey,
@@ -17,6 +20,21 @@ import {
     LatestRequest,
     RetryablePromiseCache
 } from "../Modules/Research/Diagram/ResearchRequestState.ts";
+
+test("approved full CPO taxonomy coverage helper requires all 9 stable module IDs", () => {
+    assert.equal(approvedCpoModuleIds.length, 9);
+    assert.equal(approvedCpoPartCount, 21);
+    assert.deepEqual(componentCoverageState([...approvedCpoModuleIds], [...approvedCpoModuleIds]), {
+        missingCatalogIds: [],
+        extraRenderedIds: [],
+        complete: true
+    });
+    assert.deepEqual(componentCoverageState(["cpo.mod.pic", "cpo.mod.laser"], ["cpo.mod.pic", "unexpected"]), {
+        missingCatalogIds: ["cpo.mod.laser"],
+        extraRenderedIds: ["unexpected"],
+        complete: false
+    });
+});
 
 test("hover focuses the SiPh PIC slice without selecting it", () => {
     const state = hoverPart({ viewMode: "three" }, "cpo.mod.pic");

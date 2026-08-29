@@ -2,8 +2,8 @@
 
 Plan approval: approved
 Git baseline: 7cf1b95d23a5da3dd53766049557a67ed18fae73
-Accepted-effective Rounds: R1, R2, R3
-Active Round: none — R4 requires separate Owner start decision
+Accepted-effective Rounds: R1, R2, R3, R4
+Active Round: none; next Round R5 requires separate Owner start decision
 Branch: product-reboot
 Approval authority: Owner structured approval after complete Plan Preview
 Approval scope: persist this baseline and hand off R1; no implementation, commit, push, or automatic multi-Round progression
@@ -115,7 +115,7 @@ Out of scope:
 | R1 | R1-code-disposition-audit | 完成只读 P0–P3 code/domain disposition audit 与 child/material-to-company capability finding；只写 durable audit/review evidence。 | 完整 disposition matrix；child/material relationship capability/gap finding；production-path unchanged evidence；validation record；Independent Review/fallback evidence 与 P2 dispositions | accepted |
 | R2 | R2-research-shell | 交付 root research entry、minimal research top navigation、research layout，并把 primary research navigation 与 secondary admin routes 分离。 | 1440px/1920px shell screenshots；root/navigation/admin-route assertions；full validation；Independent Review evidence 与 P2 dispositions | accepted |
 | R3 | R3-cpo-explorer-vertical-slice | 交付一个 production-quality SiPh PIC Flat/3D Explorer vertical slice。 | 1440px/1920px Flat/3D evidence；view-switch/reset/keyboard sequence；focused/full validation；Independent Review evidence 与 P2 dispositions | accepted |
-| R4 | R4-full-cpo-explorer | 将已接受的 Explorer interaction 扩展到完整 approved CPO taxonomy。 | Full component coverage matrix；1440px/1920px Explorer evidence；interaction recording；full validation；Independent Review evidence 与 P2 dispositions | pending |
+| R4 | R4-full-cpo-explorer | 将已接受的 Explorer interaction 扩展到完整 approved CPO taxonomy。 | Full component coverage matrix；1440px/1920px Explorer evidence；interaction recording；full validation；valid Attempt 3 review finding、P1 fix evidence 与 Owner-accepted post-fix re-review limitation | accepted |
 | R5 | R5-company-research-experience | 交付 Card/List Company Pool、context-preserving Quick Drawer 与 entity-centric Full Company Detail。 | 1440px/1920px Card/List/Drawer/Detail evidence；context/filter/scroll sequence；policy regression；full validation；Independent Review evidence 与 P2 dispositions | pending |
 | R6 | R6-readonly-research-workspace | 使用既有 relationships 交付 read-only linked-object Workspace。 | Schema-unchanged evidence；1440px/1920px component/company Workspace evidence；navigation/context sequence；full validation；Independent Review evidence 与 P2 dispositions | pending |
 | R7 | R7-reboot-integration-cleanup | 验证 Explorer-to-Company-to-Workspace journey，修复 Evidence review endpoint 的 human actor enforcement，并只删除 proven-unreferenced legacy frontend。 | End-to-end journey evidence；machine-reviewer rejection test；cleanup map；full regression/portability；per-Round 与 Final Integrated Independent Review evidence | pending |
@@ -232,11 +232,12 @@ Out of scope:
 - Screenshot / recording requirements: 1440px and 1920px representative Idle/Hover/Selected Flat and 3D; full-coverage interaction sequence or recording
 - Independent Review mode: spawned_pi_process
 - Review fallback rule: If automated spawned review capability is blocked, use Owner-approved distinct human_review fallback or explicit Owner review-mode/acceptance change; do not edit `.pi/` / harness inside the product Round.
+- R4 Owner review limitation decision: Owner explicitly chose review-mode/acceptance option 2 for R4 only. Attempt 3 was a valid distinct spawned review with P1=1; Builder fixed the P1 and reran full validation successfully; Attempt 4 was capability-blocked because it lacked the required structured result marker and is not an Independent Review pass. Owner accepts the residual risk of lacking an effective post-fix Independent Re-review decision. Decision vocabulary for R4 closeout is `owner_accepted_with_review_limitation`, not `pass`.
 - Round review: operations/reviews/research-experience-reboot-r4-independent-review.md
 - Final integrated review: operations/reviews/research-experience-reboot-final-integrated-review.md
-- Acceptance evidence: Full component coverage matrix; 1440px and 1920px Explorer evidence; interaction recording; full automated validation record; Independent Review evidence and P2 dispositions
-- Product Owner acceptance gate: Owner accepts full Explorer before R5
-- Exact next gate: Product Owner R4 acceptance; authorized acceptance commit/post-commit verify if requested; stop. R5 requires separate Owner start decision.
+- Acceptance evidence: Full component coverage matrix；1440px/1920px Explorer evidence；interaction recording；full validation；valid Attempt 3 review evidence；P1 fix/verify evidence；documented Owner-accepted post-fix re-review limitation；P2 dispositions if any
+- Product Owner acceptance gate: Owner accepted full Explorer and the documented R4 review limitation on 2026-08-29; acceptance commit authorized.
+- Exact next gate: R4 accepted-effective closeout complete after authorized acceptance commit and post-commit verification; stop. R5 requires separate Owner start decision.
 - Blockers / assumptions: Existing 9-module/21-part taxonomy remains engineering baseline; unsupported factual fields are omitted or neutral
 - Blocked / rebaseline conditions: Full coverage needs persistent schema change; artwork rights/provenance block original implementation; accepted R3 interaction must materially change; evidence semantics would be weakened
 

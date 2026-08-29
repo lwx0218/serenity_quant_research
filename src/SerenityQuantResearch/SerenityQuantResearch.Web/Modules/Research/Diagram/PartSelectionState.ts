@@ -1,5 +1,19 @@
 export type ExplorerViewMode = "flat" | "three";
 
+export const approvedCpoModuleIds = [
+    "cpo.mod.thermal",
+    "cpo.mod.host-asic",
+    "cpo.mod.eic",
+    "cpo.mod.pic",
+    "cpo.mod.laser",
+    "cpo.mod.receiver",
+    "cpo.mod.fiber-interface",
+    "cpo.mod.cpa-substrate",
+    "cpo.mod.host-board"
+] as const;
+
+export const approvedCpoPartCount = 21;
+
 export interface PartSelectionState {
     hoveredId?: string;
     selectedId?: string;
@@ -62,4 +76,16 @@ export function researchEmptyStateText(hasRetrievalFailure: boolean, confirmedEm
 
 export function relatedCompanyCountLabel(count: number, hasRetrievalFailure: boolean): string {
     return hasRetrievalFailure && count === 0 ? "unknown" : String(count);
+}
+
+export function componentCoverageState(catalogIds: string[], renderedIds: string[]): { missingCatalogIds: string[]; extraRenderedIds: string[]; complete: boolean } {
+    const catalog = new Set(catalogIds);
+    const rendered = new Set(renderedIds);
+    const missingCatalogIds = catalogIds.filter(id => !rendered.has(id));
+    const extraRenderedIds = renderedIds.filter(id => !catalog.has(id));
+    return {
+        missingCatalogIds,
+        extraRenderedIds,
+        complete: missingCatalogIds.length === 0 && extraRenderedIds.length === 0
+    };
 }

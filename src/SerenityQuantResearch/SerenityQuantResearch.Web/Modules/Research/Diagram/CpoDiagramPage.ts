@@ -13,7 +13,10 @@ import {
     ExplorerViewMode,
     PartSelectionState,
     activePartId,
+    approvedCpoModuleIds,
+    approvedCpoPartCount,
     clearSelection,
+    componentCoverageState,
     hoverPart,
     interactionState,
     isSelectionKey,
@@ -24,18 +27,16 @@ import {
 } from "./PartSelectionState";
 import { LatestRequest, RetryablePromiseCache } from "./ResearchRequestState";
 
-const siPhComponentId = "cpo.mod.pic";
-const companyPoolContextUrl = "~/Research/Companies?source=cpo-explorer&componentId=cpo.mod.pic";
-
-interface SliceChildResearch {
+interface ChildResearch {
     part: ResearchPartSummary;
     response?: PartResearchResponse;
     error?: unknown;
 }
 
-interface SliceModel {
-    module: ResearchModuleSummary;
-    children: ResearchPartSummary[];
+interface ExplorerModel {
+    modules: ResearchModuleSummary[];
+    moduleById: Map<string, ResearchModuleSummary>;
+    totalParts: number;
 }
 
 export default async function pageInit(options?: { mode?: "diagram" | "detail"; partId?: string }) {
@@ -92,7 +93,7 @@ async function initDiagram() {
 
     const drawerRequests = new LatestRequest();
     let state: PartSelectionState = { viewMode: "three" };
-    let model: SliceModel | undefined;
+    let model: ExplorerModel | undefined;
     let selectedChildId: string | undefined;
     let selectionSource: HTMLElement | SVGElement | undefined;
     let restoringFocus = false;
@@ -102,19 +103,25 @@ async function initDiagram() {
     try {
         app.setAttribute("aria-busy", "true");
         const catalog = await listParts();
-        model = resolveSiPhSlice(catalog);
-        if (!model) {
-            markUnavailable(app, coverage, stateLine, "SiPh PIC component not found", "未在研究服务返回的 module/part 目录中找到 cpo.mod.pic；页面不会使用非权威示例数据替代。");
+        model = resolveExplorerModel(catalog);
+        const renderedIds = collectRenderedComponentIds([flatScene, threeScene]);
+        const coverageState = componentCoverageState(model.modules.map(x => x.Id!), renderedIds);
+        if (!coverageState.complete || model.modules.length !== approvedCpoModuleIds.length || model.totalParts !== approvedCpoPartCount) {
+            markUnavailable(app, coverage, stateLine, "CPO taxonomy coverage mismatch",
+                `catalog=${model.modules.length}/${model.totalParts}; missing=${coverageState.missingCatalogIds.join(",") || "none"}; extra=${coverageState.extraRenderedIds.join(",") || "none"}`);
             return;
         }
 
+        app.dataset.catalogModuleCount = String(model.modules.length);
+        app.dataset.catalogPartCount = String(model.totalParts);
+        app.dataset.coverageComplete = "true";
         if (coverage)
-            coverage.textContent = `SiPh PIC · ${model.children.length} 个真实子部件 · 材料数据缺口显式`;
+            coverage.textContent = `${model.modules.length} modules · ${model.totalParts} child parts · stable-ID coverage complete`;
         updateStateLine(stateLine, model, state);
         app.dataset.ready = "true";
     }
     catch (error) {
-        markUnavailable(app, coverage, stateLine, "无法读取 SiPh PIC 目录", error instanceof Error ? error.message : "请检查服务状态与访问权限。");
+        markUnavailable(app, coverage, stateLine, "无法读取完整 CPO taxonomy", error instanceof Error ? error.message : "请检查服务状态与访问权限。");
         notifyError("CPO Explorer 目录读取失败");
         return;
     }
@@ -129,7 +136,6 @@ async function initDiagram() {
         selectionSource = undefined;
         state = clearSelection(state);
         syncVisualState(app, [flatScene, threeScene], state);
-        updateStateLine(stateLine, model, undefined);
         closeDrawer(app, drawer, drawerContent);
         updateStateLine(stateLine, model, state);
         if (restoreFocus && source?.isConnected) {
@@ -139,35 +145,39 @@ async function initDiagram() {
         }
     };
 
-    const renderSelected = async (source?: HTMLElement | SVGElement) => {
+    const renderSelected = async (moduleId: string, source?: HTMLElement | SVGElement) => {
         if (!model)
             return;
+        const module = model.moduleById.get(moduleId);
+        if (!module)
+            return;
+
         const request = drawerRequests.begin();
         selectionSource = source;
         selectedChildId = undefined;
         syncVisualState(app, [flatScene, threeScene], state);
         updateStateLine(stateLine, model, state);
-        openDrawer(app, drawer, drawerContent, el("div", "正在读取 SiPh PIC 子部件研究链…", "cpo-loading"));
+        openDrawer(app, drawer, drawerContent, el("div", `正在读取 ${module.Name ?? module.Id} 子部件研究链…`, "cpo-loading"));
 
-        const childResearch = await Promise.all(model.children.map(async part => {
+        const childResearch = await Promise.all((module.Parts ?? []).map(async part => {
             if (!part.Id)
-                return { part } satisfies SliceChildResearch;
+                return { part } satisfies ChildResearch;
             try {
-                return { part, response: await responseCache.get(part.Id) } satisfies SliceChildResearch;
+                return { part, response: await responseCache.get(part.Id) } satisfies ChildResearch;
             }
             catch (error) {
-                return { part, error } satisfies SliceChildResearch;
+                return { part, error } satisfies ChildResearch;
             }
         }));
 
-        if (!drawerRequests.isCurrent(request) || state.selectedId !== siPhComponentId)
+        if (!drawerRequests.isCurrent(request) || state.selectedId !== moduleId)
             return;
 
         const rerender = (childId: string) => {
             selectedChildId = selectedChildId === childId ? undefined : childId;
-            renderSliceDrawer(drawerContent, model!, childResearch, selectedChildId, rerender);
+            renderModuleDrawer(drawerContent, module, childResearch, selectedChildId, rerender);
         };
-        renderSliceDrawer(drawerContent, model, childResearch, selectedChildId, rerender);
+        renderModuleDrawer(drawerContent, module, childResearch, selectedChildId, rerender);
     };
 
     const setHover = (componentId?: string) => {
@@ -179,7 +189,7 @@ async function initDiagram() {
     const select = (componentId: string, source?: HTMLElement | SVGElement) => {
         state = togglePartSelection(state, componentId);
         if (state.selectedId)
-            void renderSelected(source);
+            void renderSelected(state.selectedId, source);
         else
             reset(false);
     };
@@ -215,16 +225,32 @@ async function initDiagram() {
     syncVisualState(app, [flatScene, threeScene], state);
 }
 
-function resolveSiPhSlice(catalog: PartCatalogResponse): SliceModel | undefined {
-    const modules = [...(catalog.Modules ?? [])].sort((a, b) => (a.SortOrder ?? 0) - (b.SortOrder ?? 0));
-    const module = modules.find(x => x.Id === siPhComponentId);
-    if (!module)
-        return undefined;
+function resolveExplorerModel(catalog: PartCatalogResponse): ExplorerModel {
+    const moduleById = new Map<string, ResearchModuleSummary>();
+    const incoming = new Map((catalog.Modules ?? []).filter(x => !!x.Id).map(x => [x.Id!, x]));
+    const modules = approvedCpoModuleIds.map(id => incoming.get(id)).filter((x): x is ResearchModuleSummary => !!x)
+        .map(module => ({
+            ...module,
+            Parts: [...(module.Parts ?? [])].sort((a, b) => (a.PartSortOrder ?? 0) - (b.PartSortOrder ?? 0))
+        }));
+    for (const module of modules)
+        moduleById.set(module.Id!, module);
 
     return {
-        module,
-        children: [...(module.Parts ?? [])].sort((a, b) => (a.PartSortOrder ?? 0) - (b.PartSortOrder ?? 0))
+        modules,
+        moduleById,
+        totalParts: modules.reduce((sum, module) => sum + (module.Parts?.length ?? 0), 0)
     };
+}
+
+function collectRenderedComponentIds(scenes: SVGSVGElement[]) {
+    const rendered = new Set<string>();
+    for (const scene of scenes)
+        scene.querySelectorAll<HTMLElement | SVGElement>(".cpo-component[data-component-id]").forEach(element => {
+            if (element.dataset.componentId)
+                rendered.add(element.dataset.componentId);
+        });
+    return [...rendered];
 }
 
 function bindInteractiveObjects(root: ParentNode, onHover: (componentId?: string) => void,
@@ -284,29 +310,31 @@ function syncView(app: HTMLElement, flatScene: SVGSVGElement, threeScene: SVGSVG
     threeButton.setAttribute("aria-pressed", String(viewMode === "three"));
 }
 
-function updateStateLine(target: HTMLElement, model?: SliceModel, state: PartSelectionState = {}) {
+function updateStateLine(target: HTMLElement, model?: ExplorerModel, state: PartSelectionState = {}) {
     if (!model) {
-        replaceChildren(target, el("strong", "目录不可用"), el("span", "研究服务未返回可验证 SiPh PIC 目录。"));
+        replaceChildren(target, el("strong", "目录不可用"), el("span", "研究服务未返回可验证 CPO taxonomy。"));
         return;
     }
 
-    if (state.selectedId === siPhComponentId) {
+    const selected = state.selectedId ? model.moduleById.get(state.selectedId) : undefined;
+    if (selected) {
         replaceChildren(target,
-            el("strong", `${model.module.Name ?? "SiPh PIC"} selected`),
-            el("span", `${model.children.length} 个真实 child parts；材料采用显式缺口，相关公司仅由显式 exposure 显示。`));
+            el("strong", `${selected.Name ?? selected.Id} selected`),
+            el("span", `${selected.Parts?.length ?? 0} 个真实 child parts；材料采用显式缺口，相关公司仅由显式 exposure 显示。`));
         return;
     }
 
-    if (state.hoveredId === siPhComponentId) {
+    const hovered = state.hoveredId ? model.moduleById.get(state.hoveredId) : undefined;
+    if (hovered) {
         replaceChildren(target,
-            el("strong", `${model.module.Name ?? "SiPh PIC"} hover preview`),
+            el("strong", `${hovered.Name ?? hovered.Id} hover preview`),
             el("span", "当前只是悬停聚焦；单击组件或 callout 后才会锁定选择并打开研究抽屉。"));
         return;
     }
 
     replaceChildren(target,
         el("strong", "Overview"),
-        el("span", "当前版本聚焦 SiPh PIC；其他器件仅作空间上下文，不承载公司或材料事实。"));
+        el("span", `${model.modules.length} 个 approved major components / ${model.totalParts} 个真实 child parts 已绑定 stable-ID geometry 与 callout。`));
 }
 
 function openDrawer(app: HTMLElement, drawer: HTMLElement, drawerContent: HTMLElement, content: Node) {
@@ -324,28 +352,29 @@ function closeDrawer(app: HTMLElement, drawer: HTMLElement, drawerContent: HTMLE
     app.classList.remove("is-drawer-open");
     replaceChildren(drawerContent,
         el("span", "Research Context", "cpo-kicker"),
-        Object.assign(el("h2", "SiPh PIC"), { id: "cpo-drawer-title", tabIndex: -1 }),
+        Object.assign(el("h2", "CPO component"), { id: "cpo-drawer-title", tabIndex: -1 }),
         el("p", "选择组件后显示真实子部件、权威技术关系与公司映射缺口。"));
 }
 
-function renderSliceDrawer(target: HTMLElement, model: SliceModel, childResearch: SliceChildResearch[], selectedChildId: string | undefined,
+function renderModuleDrawer(target: HTMLElement, module: ResearchModuleSummary, childResearch: ChildResearch[], selectedChildId: string | undefined,
     onChildSelect: (childId: string) => void) {
     const selectedChild = selectedChildId ? childResearch.find(x => x.part.Id === selectedChildId) : undefined;
     const visibleResearch = selectedChild ? [selectedChild] : childResearch;
     const retrievalFailures = visibleResearch.filter(x => x.error);
     const hasRetrievalFailure = retrievalFailures.length > 0;
     const technologies = dedupeNamedLinks(visibleResearch.flatMap(x => x.response?.Technologies ?? []));
+    const chainNodes = dedupeNamedLinks(visibleResearch.flatMap(x => x.response?.ChainNodes ?? []));
     const companies = dedupeCompanies(visibleResearch.flatMap(x => x.response?.Companies ?? []));
-    const evidence = visibleResearch.flatMap(x => x.response?.Evidence ?? []);
+    const evidence = dedupeEvidence(visibleResearch.flatMap(x => x.response?.Evidence ?? []));
     const warnings = visibleResearch.flatMap(x => x.response?.StatusWarnings ?? []);
 
     const header = el("header", undefined, "cpo-drawer-header");
     header.append(
         el("span", "Research Context", "cpo-kicker"),
-        Object.assign(el("h2", model.module.Name ?? "SiPh PIC"), { id: "cpo-drawer-title", tabIndex: -1 }),
-        el("p", "当前选择：CPO → SiPh PIC。该组件使用 stable module ID cpo.mod.pic；下方子部件来自现有研究目录中的 PhysicalPart 记录。"));
+        Object.assign(el("h2", module.Name ?? module.Id ?? "CPO component"), { id: "cpo-drawer-title", tabIndex: -1 }),
+        el("p", `当前选择：CPO → ${module.Name ?? module.Id}。该组件使用 stable module ID ${module.Id}；下方子部件来自现有研究目录中的 PhysicalPart 记录。`));
     const badges = el("div", undefined, "cpo-badge-row");
-    badges.append(badge("stable: cpo.mod.pic", "stable"), badge(`${model.children.length} child parts`, "count"), badge("material gap explicit", "gap"));
+    badges.append(badge(`stable: ${module.Id ?? "unknown"}`, "stable"), badge(`${module.Parts?.length ?? 0} child parts`, "count"), badge("material gap explicit", "gap"));
     header.append(badges);
 
     const childSection = researchSection("真实子部件");
@@ -372,7 +401,20 @@ function renderSliceDrawer(target: HTMLElement, model: SliceModel, childResearch
 
     const failureSection = hasRetrievalFailure ? researchRetrievalFailureSection(retrievalFailures) : undefined;
 
-    const technologySection = researchSection(selectedChild ? "当前子部件技术 context" : "SiPh PIC 技术 context");
+    const chainSection = researchSection(selectedChild ? "当前子部件产业链 context" : "组件产业链 context");
+    if (chainNodes.length) {
+        const chips = el("div", undefined, "cpo-chip-list");
+        for (const item of chainNodes)
+            chips.append(badge(item.Name ?? item.Id ?? "未命名产业链节点", "link"));
+        chainSection.append(chips, el("p", "这些是现有数据中明确的 part→chain-node link；不等同于确定供应关系。", "cpo-footnote"));
+    }
+    else {
+        chainSection.append(el("p", researchEmptyStateText(hasRetrievalFailure,
+            "尚无当前层级的产业链节点映射。",
+            "部分子部件研究链读取失败；当前不能确认是否没有产业链节点映射。"), `cpo-empty${hasRetrievalFailure ? " is-unknown" : ""}`));
+    }
+
+    const technologySection = researchSection(selectedChild ? "当前子部件技术 context" : "组件技术 context");
     if (technologies.length) {
         const chips = el("div", undefined, "cpo-chip-list");
         for (const technology of technologies)
@@ -394,30 +436,31 @@ function renderSliceDrawer(target: HTMLElement, model: SliceModel, childResearch
     if (companies.length) {
         const list = el("div", undefined, "cpo-record-list");
         for (const company of companies)
-            list.append(companyCard(company));
+            list.append(companyCard(company, module.Id));
         companySection.append(list);
     }
     else {
         companySection.append(el("p", researchEmptyStateText(hasRetrievalFailure,
-            "尚无 SiPh PIC 或其子部件的显式公司暴露映射。不得由硅光类别或图形位置推导供应关系。",
+            `尚无 ${module.Name ?? module.Id} 或其子部件的显式公司暴露映射。不得由组件类别或图形位置推导供应关系。`,
             "部分子部件研究链读取失败；当前不能确认是否没有显式公司暴露映射。不得把服务失败解释为供应关系不存在。"), `cpo-empty${hasRetrievalFailure ? " is-unknown" : ""}`));
     }
 
     const action = document.createElement("a");
     action.className = "cpo-company-pool-link";
-    action.href = resolveUrl(companyPoolContextUrl);
-    action.textContent = "进入 Company Pool（保留 CPO → SiPh PIC context） →";
+    const partParam = selectedChild?.part.Id ? `&partId=${encodeURIComponent(selectedChild.part.Id)}` : "";
+    action.href = resolveUrl(`~/Research/Companies?source=cpo-explorer&componentId=${encodeURIComponent(module.Id ?? "")}${partParam}`);
+    action.textContent = `进入 Company Pool（保留 CPO → ${module.Name ?? module.Id} context） →`;
 
     const evidenceSectionNode = evidenceSummarySection(evidence, warnings, hasRetrievalFailure);
 
-    replaceChildren(target, ...[header, childSection, failureSection, technologySection, materialSection, companySection, evidenceSectionNode, action].filter((x): x is Node => !!x));
+    replaceChildren(target, ...[header, childSection, failureSection, chainSection, technologySection, materialSection, companySection, evidenceSectionNode, action].filter((x): x is Node => !!x));
 }
 
-function companyCard(company: CompanyExposureSummary) {
+function companyCard(company: CompanyExposureSummary, moduleId?: string) {
     const article = el("article", undefined, "cpo-record cpo-company-card");
     const heading = el("div", undefined, "cpo-record-heading");
     const companyLink = document.createElement("a");
-    companyLink.href = resolveUrl(`~/Research/Companies/${encodeURIComponent(company.CompanyId ?? "")}?source=cpo-explorer&componentId=${encodeURIComponent(siPhComponentId)}`);
+    companyLink.href = resolveUrl(`~/Research/Companies/${encodeURIComponent(company.CompanyId ?? "")}?source=cpo-explorer&componentId=${encodeURIComponent(moduleId ?? "")}`);
     companyLink.textContent = company.CompanyName ?? company.CompanyId ?? "未知公司";
     heading.append(companyLink, badge(company.VerificationState ?? "unknown", "verification"));
     article.append(heading,
@@ -426,7 +469,7 @@ function companyCard(company: CompanyExposureSummary) {
     return article;
 }
 
-function researchRetrievalFailureSection(failures: SliceChildResearch[]) {
+function researchRetrievalFailureSection(failures: ChildResearch[]) {
     const section = researchSection("Research chain status");
     const list = document.createElement("ul");
     list.className = "cpo-message-list";
@@ -440,7 +483,7 @@ function evidenceSummarySection(evidence: EvidenceSummary[], warnings: string[],
     const section = researchSection("Evidence safety");
     if (!evidence.length)
         section.append(el("p", researchEmptyStateText(hasRetrievalFailure,
-            "当前 SiPh PIC 未返回直接 evidence；页面只展示 taxonomy/service 中已有的 child 与 technology context。",
+            "当前选择未返回直接 evidence；页面只展示 taxonomy/service 中已有的 child、chain-node 与 technology context。",
             "部分子部件研究链读取失败；当前不能确认是否没有直接 evidence。"), `cpo-empty${hasRetrievalFailure ? " is-unknown" : ""}`));
     else {
         const list = el("div", undefined, "cpo-record-list");
@@ -454,7 +497,7 @@ function evidenceSummarySection(evidence: EvidenceSummary[], warnings: string[],
     if (warnings.length) {
         const list = document.createElement("ul");
         list.className = "cpo-message-list";
-        for (const warning of Array.from(new Set(warnings)).slice(0, 4))
+        for (const warning of Array.from(new Set(warnings)).slice(0, 5))
             list.append(el("li", warning));
         section.append(list);
     }
@@ -535,6 +578,16 @@ function dedupeCompanies(items: CompanyExposureSummary[]) {
     return [...map.values()];
 }
 
+function dedupeEvidence(items: EvidenceSummary[]) {
+    const map = new Map<string, EvidenceSummary>();
+    for (const item of items) {
+        const key = `${item.EvidenceId ?? "unknown"}@${item.Version ?? 0}`;
+        if (!map.has(key))
+            map.set(key, item);
+    }
+    return [...map.values()];
+}
+
 function researchSection(title: string) {
     const section = document.createElement("section");
     section.className = "cpo-research-section";
@@ -549,7 +602,7 @@ function badge(text: string, kind: string) {
 function markUnavailable(app: HTMLElement, coverage: HTMLElement | null, stateLine: HTMLElement, title: string, detail: string) {
     app.dataset.ready = "error";
     if (coverage)
-        coverage.textContent = "SiPh PIC 目录不可用";
+        coverage.textContent = "CPO taxonomy coverage unavailable";
     replaceChildren(stateLine, el("strong", title), el("span", detail));
 }
 
