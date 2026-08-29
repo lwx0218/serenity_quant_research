@@ -2,8 +2,8 @@
 
 Plan approval: approved
 Git baseline: 7cf1b95d23a5da3dd53766049557a67ed18fae73
-Accepted-effective Rounds: R1, R2
-Active Round: none — R3 pending separate Owner start decision
+Accepted-effective Rounds: R1, R2, R3
+Active Round: none — R4 requires separate Owner start decision
 Branch: product-reboot
 Approval authority: Owner structured approval after complete Plan Preview
 Approval scope: persist this baseline and hand off R1; no implementation, commit, push, or automatic multi-Round progression
@@ -114,7 +114,7 @@ Out of scope:
 |---|---|---|---|---|
 | R1 | R1-code-disposition-audit | 完成只读 P0–P3 code/domain disposition audit 与 child/material-to-company capability finding；只写 durable audit/review evidence。 | 完整 disposition matrix；child/material relationship capability/gap finding；production-path unchanged evidence；validation record；Independent Review/fallback evidence 与 P2 dispositions | accepted |
 | R2 | R2-research-shell | 交付 root research entry、minimal research top navigation、research layout，并把 primary research navigation 与 secondary admin routes 分离。 | 1440px/1920px shell screenshots；root/navigation/admin-route assertions；full validation；Independent Review evidence 与 P2 dispositions | accepted |
-| R3 | R3-cpo-explorer-vertical-slice | 交付一个 production-quality SiPh PIC Flat/3D Explorer vertical slice。 | 1440px/1920px Flat/3D evidence；view-switch/reset/keyboard sequence；focused/full validation；Independent Review evidence 与 P2 dispositions | pending |
+| R3 | R3-cpo-explorer-vertical-slice | 交付一个 production-quality SiPh PIC Flat/3D Explorer vertical slice。 | 1440px/1920px Flat/3D evidence；view-switch/reset/keyboard sequence；focused/full validation；Independent Review evidence 与 P2 dispositions | accepted |
 | R4 | R4-full-cpo-explorer | 将已接受的 Explorer interaction 扩展到完整 approved CPO taxonomy。 | Full component coverage matrix；1440px/1920px Explorer evidence；interaction recording；full validation；Independent Review evidence 与 P2 dispositions | pending |
 | R5 | R5-company-research-experience | 交付 Card/List Company Pool、context-preserving Quick Drawer 与 entity-centric Full Company Detail。 | 1440px/1920px Card/List/Drawer/Detail evidence；context/filter/scroll sequence；policy regression；full validation；Independent Review evidence 与 P2 dispositions | pending |
 | R6 | R6-readonly-research-workspace | 使用既有 relationships 交付 read-only linked-object Workspace。 | Schema-unchanged evidence；1440px/1920px component/company Workspace evidence；navigation/context sequence；full validation；Independent Review evidence 与 P2 dispositions | pending |
@@ -184,10 +184,10 @@ Out of scope:
 
 - Round name: CPO Explorer Vertical Slice
 - Primary Pi implementation session: R3-cpo-explorer-vertical-slice
-- Goal: 先交付一个 production-quality SiPh PIC Flat/3D interaction slice，再扩展完整 Explorer。
+- Goal: 交付一个 production-quality SiPh PIC Flat/3D Explorer vertical slice。
 - Handoff contracts: AGENTS.md; operations/orchestration/independent-review-and-round-scope-standard.md; src/SerenityQuantResearch/SerenityQuantResearch.Web/AGENTS.md; docs/product/README.md; docs/product/experience-map.md; docs/product/cpo-explorer-spec.md; docs/product/visual-language.md; docs/product/acceptance-contract.md; docs/research-baseline/evidence-contract.md; operations/planning/research-experience-reboot.md; operations/reviews/reboot-p3-code-disposition.md
-- Latest work log: operations/work_logs/research-experience-reboot-r2.md
-- Latest review: operations/reviews/research-experience-reboot-r2-independent-review.md
+- Latest work log: operations/work_logs/research-experience-reboot-r3.md
+- Latest review: operations/reviews/research-experience-reboot-r3-independent-review.md
 - Review work log: operations/work_logs/research-experience-reboot-r3.md
 - Non-goals: Do not implement full component coverage; do not redesign Company Pool; do not add WebGL or schema; do not copy prototype/Gemini research claims
 - Dependencies / Definition of Ready: R2 is accepted-effective; R1 identifies reusable state/service assets; SiPh PIC and children can use stable existing IDs without schema change; current seed lacks reviewed discrete material catalog so material must be authoritative or explicit gap
@@ -204,9 +204,9 @@ Out of scope:
 - Review fallback rule: If automated spawned review capability is blocked, use Owner-approved distinct human_review fallback or explicit Owner review-mode/acceptance change; do not edit `.pi/` / harness inside the product Round.
 - Round review: operations/reviews/research-experience-reboot-r3-independent-review.md
 - Final integrated review: operations/reviews/research-experience-reboot-final-integrated-review.md
-- Acceptance evidence: 1440px and 1920px Flat/3D state evidence; view-switch/reset/keyboard recording or sequence; focused and full automated validation record; Independent Review evidence and P2 dispositions
+- Acceptance evidence: 1440px/1920px Flat/3D evidence；view-switch/reset/keyboard sequence；focused/full validation；Independent Review evidence 与 P2 dispositions
 - Product Owner acceptance gate: Owner accepts vertical-slice behavior and visual direction before R4
-- Exact next gate: Product Owner R3 acceptance; authorized acceptance commit/post-commit verify if requested; stop. R4 requires separate Owner start decision.
+- Exact next gate: R3 accepted-effective closeout; stop. R4 requires separate Owner start decision.
 - Blockers / assumptions: SiPh PIC is representative slice; unsupported factual fields are omitted or neutral; child/material company filtering may be deferred when no explicit relationship exists
 - Blocked / rebaseline conditions: Persistent schema change is required; complex 3D/WebGL is required; core Explorer path must change; required research data would have to be invented
 

@@ -1,56 +1,122 @@
 @{
-    ViewData["Title"] = "CPO 物理部件研究";
+    ViewData["Title"] = "CPO Explorer";
     ViewData["PageId"] = "CpoResearch";
 }
 
 @section ContentHeader {
     <div class="cpo-page-heading">
         <div>
-            <span class="cpo-eyebrow">PHASE 1 · PHYSICAL RESEARCH MAP</span>
-            <h1>CPO 物理部件研究</h1>
-            <p>自主设计的二维系统构成图。几何仅用于呈现，研究关系由服务查询。</p>
+            <span class="cpo-eyebrow">PHYSICAL PRODUCT → COMPONENT → COMPANY</span>
+            <h1>CPO Explorer</h1>
+            <p>以 SiPh PIC 为入口，在 Flat / 3D 两种视图中保持同一研究对象、同一选择状态与同一 evidence-safe 研究抽屉。</p>
         </div>
-        <span class="cpo-coverage" id="cpo-coverage">正在读取部件目录…</span>
+        <span class="cpo-coverage" id="cpo-coverage">正在读取 SiPh PIC 子部件…</span>
     </div>
 }
 
-<div id="cpo-research-app" class="cpo-research-app" data-mode="diagram">
-    <section class="cpo-workbench" aria-labelledby="cpo-diagram-title">
-        <div class="cpo-toolbar">
+<div id="cpo-explorer-app" class="cpo-explorer-app" data-ready="false" data-selected="" data-view="three">
+    <section class="cpo-explorer-workbench" aria-labelledby="cpo-explorer-title">
+        <div class="cpo-explorer-topline">
             <div>
-                <h2 id="cpo-diagram-title">系统构成视图</h2>
-                <p>悬停预览，单击锁定；键盘使用 Tab 聚焦，Enter / Space 选择。</p>
+                <span class="cpo-kicker">CPO System / Optical Engine</span>
+                <h2 id="cpo-explorer-title">SiPh PIC 组件探索</h2>
+                <p>悬停预览，单击锁定；Tab 聚焦组件或 callout 后用 Enter / Space 选择，Esc 或空白画布重置。</p>
             </div>
-            <button id="cpo-clear-selection" class="btn btn-outline-secondary btn-sm" type="button" disabled>清除锁定</button>
+            <div class="cpo-view-switch" role="group" aria-label="Explorer view switch">
+                <button id="cpo-view-flat" type="button" data-view-target="flat" aria-pressed="false">Flat View</button>
+                <button id="cpo-view-three" type="button" data-view-target="three" aria-pressed="true" class="is-active">3D Exploded</button>
+            </div>
         </div>
-        <div id="cpo-hover-preview" class="cpo-hover-preview" aria-live="polite">
-            <strong>选择一个部件开始研究</strong>
-            <span>21 个 seed part 均可通过图形或下方表格访问。</span>
+
+        <div id="cpo-state-line" class="cpo-state-line" aria-live="polite">
+            <strong>Overview</strong>
+            <span>选择 SiPh PIC 查看现有研究目录中的真实 child parts；材料缺口保持显式，不把示例数据呈现为事实。</span>
         </div>
-        <div class="cpo-canvas-wrap">
-            <svg id="cpo-diagram" class="cpo-diagram" viewBox="0 0 1000 720" role="group" aria-label="CPO 物理模块与部件交互图"></svg>
+
+        <div id="cpo-canvas-frame" class="cpo-canvas-frame" role="application" aria-label="CPO Explorer canvas">
+            <div class="cpo-viewport-stage">
+                <svg id="cpo-scene-three" class="cpo-scene is-active" viewBox="0 0 1080 720" role="img" aria-label="CPO 3D exploded view SiPh PIC vertical slice">
+                    <defs>
+                        <linearGradient id="cpo-r3-metal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8f9fb"/><stop offset="1" stop-color="#cdd3db"/></linearGradient>
+                        <linearGradient id="cpo-r3-board" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f6f8"/><stop offset="1" stop-color="#d7dde5"/></linearGradient>
+                        <linearGradient id="cpo-r3-pic" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eaf0f6"/><stop offset="1" stop-color="#91a2b5"/></linearGradient>
+                    </defs>
+                    <g class="cpo-context-assembly" aria-hidden="true">
+                        <polygon points="308,102 637,102 754,164 425,164" fill="url(#cpo-r3-metal)" stroke="#c5cbd3"/>
+                        <polygon points="425,164 754,164 754,194 425,194" fill="#b6bec8"/>
+                        <polygon points="360,246 518,246 580,280 422,280" fill="#303946" opacity=".90"/>
+                        <polygon points="422,280 580,280 580,308 422,308" fill="#202936" opacity=".90"/>
+                        <polygon points="532,318 652,318 706,347 586,347" fill="#b8c1cc"/>
+                        <polygon points="586,347 706,347 706,370 586,370" fill="#8b96a2"/>
+                        <polygon points="588,398 718,398 772,428 642,428" fill="#d9dee5"/>
+                        <polygon points="642,428 772,428 772,450 642,450" fill="#a7b0bb"/>
+                        <polygon points="338,440 458,440 508,468 388,468" fill="#d5dbe3"/>
+                        <polygon points="388,468 508,468 508,489 388,489" fill="#a3acb6"/>
+                        <polygon points="638,493 769,493 820,521 689,521" fill="#edf0f3" stroke="#c7ced7"/>
+                        <polygon points="689,521 820,521 820,549 689,549" fill="#bdc5cf"/>
+                        <polygon points="315,520 611,520 705,570 409,570" fill="#d3c08a"/>
+                        <polygon points="409,570 705,570 705,584 409,584" fill="#9f8b58"/>
+                        <polygon points="245,585 690,585 812,650 367,650" fill="#56675f"/>
+                        <polygon points="367,650 812,650 812,665 367,665" fill="#35423c"/>
+                    </g>
+                    <g class="cpo-component cpo-component-three" data-component-id="cpo.mod.pic" data-hit-owner="real-geometry" tabindex="0" role="button" aria-label="SiPh PIC，3D Exploded 组件，按 Enter 或 Space 选择" aria-pressed="false">
+                        <polygon points="390,374 536,374 598,408 452,408" fill="url(#cpo-r3-pic)" stroke="#718094" stroke-width="1.4"/>
+                        <polygon points="452,408 598,408 598,432 452,432" fill="#8998aa"/>
+                        <polygon points="536,374 598,408 598,432 536,398" fill="#9aa9ba"/>
+                        <text x="493" y="403" text-anchor="middle" fill="#233041" font-size="13" font-weight="700" pointer-events="none">SiPh PIC</text>
+                    </g>
+                    <g class="cpo-callout" data-component-id="cpo.mod.pic" tabindex="0" role="button" aria-label="Callout 04，SiPh PIC，按 Enter 或 Space 选择" aria-pressed="false">
+                        <line class="cpo-callout-line" x1="596" y1="405" x2="660" y2="370"/>
+                        <circle class="cpo-callout-dot" cx="596" cy="405" r="4"/>
+                        <rect class="cpo-callout-card" x="660" y="336" width="186" height="68" rx="12"/>
+                        <text class="cpo-callout-index" x="675" y="358">04 // OPTIC-PIC</text>
+                        <text class="cpo-callout-title" x="675" y="376">SiPh PIC</text>
+                        <text class="cpo-callout-sub" x="675" y="393">调制 / 波导 / WDM</text>
+                    </g>
+                </svg>
+
+                <svg id="cpo-scene-flat" class="cpo-scene" viewBox="0 0 1080 720" role="img" aria-label="CPO flat view SiPh PIC vertical slice">
+                    <defs>
+                        <linearGradient id="cpo-r3-flat-board" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f9fafb"/><stop offset="1" stop-color="#e5e8ed"/></linearGradient>
+                    </defs>
+                    <g class="cpo-flat-board" aria-hidden="true">
+                        <rect x="330" y="75" width="430" height="565" rx="34" fill="url(#cpo-r3-flat-board)" stroke="#cfd5de" stroke-width="2"/>
+                        <rect x="360" y="102" width="370" height="118" rx="18" fill="#d7dce3"/>
+                        <g stroke="#a8b0bb" stroke-width="7" opacity=".75"><line x1="390" y1="112" x2="390" y2="206"/><line x1="430" y1="112" x2="430" y2="206"/><line x1="470" y1="112" x2="470" y2="206"/><line x1="510" y1="112" x2="510" y2="206"/><line x1="550" y1="112" x2="550" y2="206"/><line x1="590" y1="112" x2="590" y2="206"/><line x1="630" y1="112" x2="630" y2="206"/></g>
+                        <rect x="455" y="265" width="170" height="150" rx="20" fill="#333c48"/>
+                        <text x="540" y="336" text-anchor="middle" fill="#fff" font-size="22" font-weight="700">Switch</text>
+                        <text x="540" y="365" text-anchor="middle" fill="#fff" font-size="22" font-weight="700">ASIC</text>
+                        <g fill="#adb7c1"><rect x="382" y="245" width="42" height="42" rx="6"/><rect x="438" y="245" width="42" height="42" rx="6"/><rect x="655" y="250" width="42" height="42" rx="6"/><rect x="675" y="330" width="32" height="42" rx="6"/></g>
+                        <g fill="#d5bd83"><rect x="385" y="535" width="46" height="40" rx="7"/><rect x="440" y="535" width="46" height="40" rx="7"/><rect x="495" y="535" width="46" height="40" rx="7"/><rect x="550" y="535" width="46" height="40" rx="7"/><rect x="605" y="535" width="46" height="40" rx="7"/></g>
+                        <g stroke="#9eb8d9" stroke-width="4" opacity=".55"><line x1="408" y1="575" x2="335" y2="655"/><line x1="463" y1="575" x2="400" y2="655"/><line x1="518" y1="575" x2="470" y2="655"/><line x1="573" y1="575" x2="540" y2="655"/><line x1="628" y1="575" x2="610" y2="655"/></g>
+                    </g>
+                    <g class="cpo-component cpo-component-flat" data-component-id="cpo.mod.pic" data-hit-owner="real-geometry" tabindex="0" role="button" aria-label="SiPh PIC，Flat View 组件，按 Enter 或 Space 选择" aria-pressed="false">
+                        <rect x="455" y="445" width="170" height="74" rx="14" fill="#738190" stroke="#566575" stroke-width="1.4"/>
+                        <text x="540" y="489" text-anchor="middle" fill="#fff" font-size="18" font-weight="700" pointer-events="none">SiPh PIC</text>
+                    </g>
+                    <g class="cpo-callout" data-component-id="cpo.mod.pic" tabindex="0" role="button" aria-label="Callout 04，Flat View SiPh PIC，按 Enter 或 Space 选择" aria-pressed="false">
+                        <line class="cpo-callout-line" x1="455" y1="481" x2="252" y2="394"/>
+                        <circle class="cpo-callout-dot" cx="455" cy="481" r="4"/>
+                        <rect class="cpo-callout-card" x="36" y="358" width="214" height="70" rx="12"/>
+                        <text class="cpo-callout-index" x="52" y="381">04 // OPTIC-PIC</text>
+                        <text class="cpo-callout-title" x="52" y="400">SiPh PIC</text>
+                        <text class="cpo-callout-sub" x="52" y="417">调制 / 波导 / WDM</text>
+                    </g>
+                </svg>
+            </div>
         </div>
     </section>
 
-    <section class="cpo-fallback" aria-labelledby="cpo-fallback-title">
-        <div class="cpo-toolbar">
-            <div>
-                <span class="cpo-eyebrow">NON-POINTER FALLBACK</span>
-                <h2 id="cpo-fallback-title">部件树 / 表格</h2>
-            </div>
+    <aside id="cpo-research-drawer" class="cpo-research-drawer" aria-labelledby="cpo-drawer-title" aria-hidden="true" hidden>
+        <button id="cpo-close-drawer" class="cpo-panel-close" type="button" aria-label="关闭研究抽屉">×</button>
+        <div id="cpo-drawer-content" class="cpo-drawer-content">
+            <span class="cpo-kicker">Research Context</span>
+            <h2 id="cpo-drawer-title" tabindex="-1">SiPh PIC</h2>
+            <p>选择组件后显示真实子部件、权威技术关系与公司映射缺口。</p>
         </div>
-        <div id="cpo-part-tree" class="cpo-part-tree"></div>
-    </section>
-
-    <aside id="cpo-research-drawer" class="cpo-research-drawer" role="dialog" aria-modal="false" aria-labelledby="cpo-drawer-title" hidden>
-        <div class="cpo-drawer-bar">
-            <span class="cpo-eyebrow">PART RESEARCH</span>
-            <button id="cpo-close-drawer" class="btn-close" type="button" aria-label="关闭部件研究抽屉"></button>
-        </div>
-        <div id="cpo-drawer-content"></div>
     </aside>
 </div>
 
-<noscript><div class="alert alert-warning">请启用 JavaScript；部件树仍需要脚本从研究服务读取最新 seed 数据。</div></noscript>
+<noscript><div class="alert alert-warning">请启用 JavaScript；CPO Explorer 需要脚本读取研究服务和绑定交互。</div></noscript>
 
 @Html.ModulePageInit("~/esm/Modules/Research/Diagram/CpoDiagramPage.js", new { mode = "diagram" })

@@ -6,20 +6,37 @@ import type { PartCatalogResponse } from "../../ServerTypes/Research/Services.Pa
 import type { PartResearchResponse } from "../../ServerTypes/Research/Services.PartResearchResponse";
 import type { ResearchModuleSummary } from "../../ServerTypes/Research/Services.ResearchModuleSummary";
 import type { ResearchNamedLink } from "../../ServerTypes/Research/Services.ResearchNamedLink";
+import type { ResearchPartSummary } from "../../ServerTypes/Research/Services.ResearchPartSummary";
 import type { ResearchSectionSummary } from "../../ServerTypes/Research/Services.ResearchSectionSummary";
 import "./CpoDiagramPage.css";
 import {
+    ExplorerViewMode,
     PartSelectionState,
     activePartId,
     clearSelection,
     hoverPart,
+    interactionState,
     isSelectionKey,
-    layerState,
-    lockPart
+    relatedCompanyCountLabel,
+    researchEmptyStateText,
+    switchExplorerView,
+    togglePartSelection
 } from "./PartSelectionState";
 import { LatestRequest, RetryablePromiseCache } from "./ResearchRequestState";
 
-const svgNs = "http://www.w3.org/2000/svg";
+const siPhComponentId = "cpo.mod.pic";
+const companyPoolContextUrl = "~/Research/Companies?source=cpo-explorer&componentId=cpo.mod.pic";
+
+interface SliceChildResearch {
+    part: ResearchPartSummary;
+    response?: PartResearchResponse;
+    error?: unknown;
+}
+
+interface SliceModel {
+    module: ResearchModuleSummary;
+    children: ResearchPartSummary[];
+}
 
 export default async function pageInit(options?: { mode?: "diagram" | "detail"; partId?: string }) {
     if (options?.mode === "detail") {
@@ -46,7 +63,7 @@ async function initDetail(partId?: string) {
     try {
         target.setAttribute("aria-busy", "true");
         const response = await retrievePart(partId);
-        renderResearch(target, response, false);
+        renderPartDetail(target, response, false);
         document.title = `${response.Part?.Name ?? "部件研究详情"} - SerenityQuantResearch`;
     }
     catch (error) {
@@ -58,288 +75,397 @@ async function initDetail(partId?: string) {
 }
 
 async function initDiagram() {
-    const svg = document.querySelector<SVGSVGElement>("#cpo-diagram");
-    const tree = document.querySelector<HTMLElement>("#cpo-part-tree");
+    const app = document.querySelector<HTMLElement>("#cpo-explorer-app");
     const coverage = document.querySelector<HTMLElement>("#cpo-coverage");
-    const preview = document.querySelector<HTMLElement>("#cpo-hover-preview");
+    const stateLine = document.querySelector<HTMLElement>("#cpo-state-line");
+    const canvas = document.querySelector<HTMLElement>("#cpo-canvas-frame");
     const drawer = document.querySelector<HTMLElement>("#cpo-research-drawer");
     const drawerContent = document.querySelector<HTMLElement>("#cpo-drawer-content");
     const closeButton = document.querySelector<HTMLButtonElement>("#cpo-close-drawer");
-    const clearButton = document.querySelector<HTMLButtonElement>("#cpo-clear-selection");
-    if (!svg || !tree || !preview || !drawer || !drawerContent || !closeButton || !clearButton)
+    const flatButton = document.querySelector<HTMLButtonElement>("#cpo-view-flat");
+    const threeButton = document.querySelector<HTMLButtonElement>("#cpo-view-three");
+    const flatScene = document.querySelector<SVGSVGElement>("#cpo-scene-flat");
+    const threeScene = document.querySelector<SVGSVGElement>("#cpo-scene-three");
+
+    if (!app || !stateLine || !canvas || !drawer || !drawerContent || !closeButton || !flatButton || !threeButton || !flatScene || !threeScene)
         return;
 
+    const drawerRequests = new LatestRequest();
+    let state: PartSelectionState = { viewMode: "three" };
+    let model: SliceModel | undefined;
+    let selectedChildId: string | undefined;
+    let selectionSource: HTMLElement | SVGElement | undefined;
+    let restoringFocus = false;
+
+    const responseCache = new RetryablePromiseCache<string, PartResearchResponse>(retrievePart);
+
     try {
-        svg.setAttribute("aria-busy", "true");
+        app.setAttribute("aria-busy", "true");
         const catalog = await listParts();
-        const modules = [...(catalog.Modules ?? [])].sort((a, b) => (a.SortOrder ?? 0) - (b.SortOrder ?? 0));
-        const parts = modules.flatMap(module => module.Parts ?? []);
-        if (!modules.length || !parts.length) {
-            renderCatalogUnavailable(svg, tree, coverage, preview,
-                "部件目录为空", "研究服务没有返回可选择的物理部件。", "info");
+        model = resolveSiPhSlice(catalog);
+        if (!model) {
+            markUnavailable(app, coverage, stateLine, "SiPh PIC component not found", "未在研究服务返回的 module/part 目录中找到 cpo.mod.pic；页面不会使用非权威示例数据替代。");
             return;
         }
 
-        const partById = new Map(parts.map(part => [part.Id!, part]));
-        const responseCache = new RetryablePromiseCache<string, PartResearchResponse>(retrievePart);
-        const drawerRequests = new LatestRequest();
-        let state: PartSelectionState = {};
-        let previewRequest = 0;
-        let selectionSource: HTMLElement | SVGElement | undefined;
-        let restoringFocus = false;
-
         if (coverage)
-            coverage.textContent = `${modules.length} 个物理模块 · ${parts.length} 个可研究部件`;
-
-        const getResearch = (partId: string) => responseCache.get(partId);
-
-        const updateVisualState = () => {
-            const currentId = activePartId(state);
-            const activeModuleId = currentId ? partById.get(currentId)?.ModuleId : undefined;
-            svg.querySelectorAll<SVGGElement>(".cpo-module-layer").forEach(group => {
-                const visual = layerState(group.dataset.moduleId ?? "", activeModuleId);
-                group.classList.toggle("is-active", visual === "active");
-                group.classList.toggle("is-dimmed", visual === "dimmed");
-            });
-            svg.querySelectorAll<SVGGElement>("[data-part-id]").forEach(group => {
-                const id = group.dataset.partId;
-                group.classList.toggle("is-current", id === currentId);
-                group.classList.toggle("is-locked", id === state.selectedId);
-                group.setAttribute("aria-pressed", String(id === state.selectedId));
-                group.setAttribute("aria-expanded", String(id === state.selectedId));
-            });
-            tree.querySelectorAll<HTMLButtonElement>("[data-part-id]").forEach(button => {
-                const id = button.dataset.partId;
-                button.classList.toggle("is-current", id === currentId);
-                button.setAttribute("aria-pressed", String(id === state.selectedId));
-                button.setAttribute("aria-expanded", String(id === state.selectedId));
-            });
-            clearButton.disabled = !state.selectedId;
-        };
-
-        const showPreview = async (partId?: string) => {
-            const request = ++previewRequest;
-            if (!partId) {
-                replaceChildren(preview,
-                    el("strong", "选择一个部件开始研究"),
-                    el("span", `${parts.length} 个 seed part 均可通过图形或下方表格访问。`));
-                return;
-            }
-            const part = partById.get(partId);
-            replaceChildren(preview,
-                el("strong", part?.Name ?? partId),
-                el("span", `${part?.FunctionSummary ?? "正在读取研究摘要…"} · 正在读取候选公司`));
-            try {
-                const response = await getResearch(partId);
-                if (request !== previewRequest)
-                    return;
-                replaceChildren(preview,
-                    el("strong", response.Part?.Name ?? partId),
-                    el("span", `${response.Part?.FunctionSummary ?? "暂无功能摘要"} · ${response.Companies?.length ?? 0} 家候选公司`));
-            }
-            catch (error) {
-                if (request === previewRequest)
-                    replaceChildren(preview, el("strong", part?.Name ?? partId), el("span", "研究摘要读取失败"));
-            }
-        };
-
-        const hover = (partId?: string) => {
-            state = hoverPart(state, partId);
-            updateVisualState();
-            void showPreview(activePartId(state));
-        };
-
-        const focus = (partId?: string) => {
-            if (!restoringFocus)
-                hover(partId);
-        };
-
-        const select = async (partId: string, source?: HTMLElement | SVGElement) => {
-            const request = drawerRequests.begin();
-            selectionSource = source;
-            state = lockPart(state, partId);
-            updateVisualState();
-            void showPreview(partId);
-            drawer.hidden = false;
-            drawer.classList.add("is-open");
-            drawerContent.setAttribute("aria-busy", "true");
-            replaceChildren(drawerContent, el("div", "正在读取部件研究链…", "cpo-loading"));
-            try {
-                const response = await getResearch(partId);
-                if (!drawerRequests.isCurrent(request) || state.selectedId !== partId)
-                    return;
-                renderResearch(drawerContent, response, true);
-                drawer.querySelector<HTMLElement>("h2")?.focus();
-            }
-            catch (error) {
-                if (drawerRequests.isCurrent(request) && state.selectedId === partId)
-                    renderError(drawerContent, `无法读取部件 ${partId}`, error);
-            }
-            finally {
-                if (drawerRequests.isCurrent(request) && state.selectedId === partId)
-                    drawerContent.removeAttribute("aria-busy");
-            }
-        };
-
-        renderDiagram(svg, modules, hover, focus, select);
-        renderFallback(tree, modules, hover, focus, select);
-        updateVisualState();
-
-        const clear = () => {
-            const source = selectionSource;
-            drawerRequests.cancel();
-            selectionSource = undefined;
-            state = clearSelection(state);
-            updateVisualState();
-            void showPreview();
-            drawerContent.removeAttribute("aria-busy");
-            drawer.classList.remove("is-open");
-            drawer.hidden = true;
-            if (source?.isConnected) {
-                restoringFocus = true;
-                source.focus({ preventScroll: true });
-                restoringFocus = false;
-            }
-        };
-        closeButton.addEventListener("click", clear);
-        clearButton.addEventListener("click", clear);
-        document.addEventListener("keydown", event => {
-            if (event.key === "Escape" && state.selectedId)
-                clear();
-        });
+            coverage.textContent = `SiPh PIC · ${model.children.length} 个真实子部件 · 材料数据缺口显式`;
+        updateStateLine(stateLine, model, state);
+        app.dataset.ready = "true";
     }
     catch (error) {
-        renderCatalogUnavailable(svg, tree, coverage, preview,
-            "无法读取 CPO 部件目录", error instanceof Error ? error.message : "请检查服务状态与访问权限。", "danger");
-        notifyError("CPO 部件目录读取失败");
+        markUnavailable(app, coverage, stateLine, "无法读取 SiPh PIC 目录", error instanceof Error ? error.message : "请检查服务状态与访问权限。");
+        notifyError("CPO Explorer 目录读取失败");
+        return;
     }
     finally {
-        svg.removeAttribute("aria-busy");
+        app.removeAttribute("aria-busy");
+    }
+
+    const reset = (restoreFocus: boolean = true) => {
+        const source = selectionSource;
+        drawerRequests.cancel();
+        selectedChildId = undefined;
+        selectionSource = undefined;
+        state = clearSelection(state);
+        syncVisualState(app, [flatScene, threeScene], state);
+        updateStateLine(stateLine, model, undefined);
+        closeDrawer(app, drawer, drawerContent);
+        updateStateLine(stateLine, model, state);
+        if (restoreFocus && source?.isConnected) {
+            restoringFocus = true;
+            source.focus({ preventScroll: true });
+            restoringFocus = false;
+        }
+    };
+
+    const renderSelected = async (source?: HTMLElement | SVGElement) => {
+        if (!model)
+            return;
+        const request = drawerRequests.begin();
+        selectionSource = source;
+        selectedChildId = undefined;
+        syncVisualState(app, [flatScene, threeScene], state);
+        updateStateLine(stateLine, model, state);
+        openDrawer(app, drawer, drawerContent, el("div", "正在读取 SiPh PIC 子部件研究链…", "cpo-loading"));
+
+        const childResearch = await Promise.all(model.children.map(async part => {
+            if (!part.Id)
+                return { part } satisfies SliceChildResearch;
+            try {
+                return { part, response: await responseCache.get(part.Id) } satisfies SliceChildResearch;
+            }
+            catch (error) {
+                return { part, error } satisfies SliceChildResearch;
+            }
+        }));
+
+        if (!drawerRequests.isCurrent(request) || state.selectedId !== siPhComponentId)
+            return;
+
+        const rerender = (childId: string) => {
+            selectedChildId = selectedChildId === childId ? undefined : childId;
+            renderSliceDrawer(drawerContent, model!, childResearch, selectedChildId, rerender);
+        };
+        renderSliceDrawer(drawerContent, model, childResearch, selectedChildId, rerender);
+    };
+
+    const setHover = (componentId?: string) => {
+        state = hoverPart(state, componentId);
+        syncVisualState(app, [flatScene, threeScene], state);
+        updateStateLine(stateLine, model, state);
+    };
+
+    const select = (componentId: string, source?: HTMLElement | SVGElement) => {
+        state = togglePartSelection(state, componentId);
+        if (state.selectedId)
+            void renderSelected(source);
+        else
+            reset(false);
+    };
+
+    bindInteractiveObjects(document, setHover, select, () => restoringFocus);
+
+    canvas.addEventListener("click", event => {
+        if ((event.target as Element).closest(".cpo-component,.cpo-callout"))
+            return;
+        if (state.selectedId)
+            reset(false);
+    });
+    drawer.addEventListener("click", event => event.stopPropagation());
+    closeButton.addEventListener("click", event => {
+        event.stopPropagation();
+        reset();
+    });
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && state.selectedId)
+            reset();
+    });
+
+    const setView = (viewMode: ExplorerViewMode) => {
+        state = switchExplorerView(state, viewMode);
+        syncView(app, flatScene, threeScene, flatButton, threeButton, viewMode);
+        syncVisualState(app, [flatScene, threeScene], state);
+    };
+
+    flatButton.addEventListener("click", () => setView("flat"));
+    threeButton.addEventListener("click", () => setView("three"));
+
+    syncView(app, flatScene, threeScene, flatButton, threeButton, state.viewMode ?? "three");
+    syncVisualState(app, [flatScene, threeScene], state);
+}
+
+function resolveSiPhSlice(catalog: PartCatalogResponse): SliceModel | undefined {
+    const modules = [...(catalog.Modules ?? [])].sort((a, b) => (a.SortOrder ?? 0) - (b.SortOrder ?? 0));
+    const module = modules.find(x => x.Id === siPhComponentId);
+    if (!module)
+        return undefined;
+
+    return {
+        module,
+        children: [...(module.Parts ?? [])].sort((a, b) => (a.PartSortOrder ?? 0) - (b.PartSortOrder ?? 0))
+    };
+}
+
+function bindInteractiveObjects(root: ParentNode, onHover: (componentId?: string) => void,
+    onSelect: (componentId: string, source?: HTMLElement | SVGElement) => void, isRestoringFocus: () => boolean) {
+    root.querySelectorAll<HTMLElement | SVGElement>(".cpo-component[data-component-id],.cpo-callout[data-component-id]").forEach(element => {
+        element.addEventListener("mouseenter", () => onHover(element.dataset.componentId));
+        element.addEventListener("mouseleave", () => onHover(undefined));
+        element.addEventListener("focus", () => {
+            if (!isRestoringFocus())
+                onHover(element.dataset.componentId);
+        });
+        element.addEventListener("blur", () => {
+            if (!isRestoringFocus())
+                onHover(undefined);
+        });
+        element.addEventListener("click", event => {
+            event.stopPropagation();
+            onSelect(element.dataset.componentId!, element);
+        });
+        element.addEventListener("keydown", event => {
+            if (!isSelectionKey(event.key))
+                return;
+            event.preventDefault();
+            event.stopPropagation();
+            onSelect(element.dataset.componentId!, element);
+        });
+    });
+}
+
+function syncVisualState(app: HTMLElement, scenes: SVGSVGElement[], state: PartSelectionState) {
+    const activeId = activePartId(state);
+    app.dataset.selected = state.selectedId ?? "";
+    app.classList.toggle("is-drawer-open", !!state.selectedId);
+    for (const scene of scenes) {
+        scene.classList.toggle("is-focused", !!activeId);
+        scene.querySelectorAll<HTMLElement | SVGElement>("[data-component-id]").forEach(element => {
+            const visual = interactionState(state, element.dataset.componentId ?? "");
+            element.classList.toggle("is-active", visual === "active");
+            element.classList.toggle("is-hovered", visual === "hovered");
+            element.classList.toggle("is-dimmed", visual === "dimmed");
+            if (element.classList.contains("cpo-component") || element.classList.contains("cpo-callout")) {
+                element.setAttribute("aria-pressed", String(visual === "active"));
+                element.setAttribute("aria-expanded", String(visual === "active"));
+            }
+        });
     }
 }
 
-function renderDiagram(svg: SVGSVGElement, modules: ResearchModuleSummary[], onHover: (partId?: string) => void,
-    onFocus: (partId?: string) => void, onSelect: (partId: string, source?: SVGElement) => void) {
-    svg.replaceChildren();
-
-    const defs = svgElement("defs");
-    const gradient = svgElement("linearGradient", { id: "cpo-board-gradient", x1: "0", y1: "0", x2: "1", y2: "1" });
-    gradient.append(svgElement("stop", { offset: "0", "stop-color": "#0e3340" }),
-        svgElement("stop", { offset: "1", "stop-color": "#071e2a" }));
-    defs.append(gradient);
-    svg.append(defs);
-
-    svg.append(svgElement("rect", { x: "8", y: "8", width: "984", height: "704", rx: "30", class: "cpo-board" }));
-    const bus = svgElement("g", { class: "cpo-signal-bus", "aria-hidden": "true" });
-    bus.append(svgElement("path", { d: "M 168 238 H 832 M 168 478 H 832 M 333 112 V 608 M 667 112 V 608" }));
-    for (const [x, y] of [[333, 238], [667, 238], [333, 478], [667, 478]])
-        bus.append(svgElement("circle", { cx: String(x), cy: String(y), r: "7" }));
-    svg.append(bus);
-
-    modules.forEach((module, index) => {
-        const col = index % 3;
-        const row = Math.floor(index / 3);
-        const x = 25 + col * 325;
-        const y = 25 + row * 232;
-        const group = svgElement("g", {
-            class: "cpo-module-layer",
-            transform: `translate(${x} ${y})`,
-            "data-module-id": module.Id ?? ""
-        });
-        group.append(svgElement("rect", { width: "300", height: "208", rx: "18", class: "cpo-module-frame" }));
-        const number = svgElement("text", { x: "18", y: "31", class: "cpo-module-number" });
-        number.textContent = String(index + 1).padStart(2, "0");
-        const title = svgElement("text", { x: "58", y: "31", class: "cpo-module-title" });
-        title.textContent = shortModuleName(module.Name);
-        group.append(number, title);
-
-        (module.Parts ?? []).forEach((part, partIndex) => {
-            if (!part.Id)
-                return;
-            const partGroup = svgElement("g", {
-                class: "cpo-part-node",
-                transform: `translate(14 ${55 + partIndex * 47})`,
-                tabindex: "0",
-                role: "button",
-                "aria-label": `${part.Name}，${part.FunctionSummary}`,
-                "aria-pressed": "false",
-                "aria-expanded": "false",
-                "data-part-id": part.Id,
-                "data-module-id": module.Id ?? ""
-            });
-            partGroup.append(svgElement("rect", { width: "272", height: "38", rx: "9", class: "cpo-part-surface" }));
-            partGroup.append(svgElement("circle", { cx: "17", cy: "19", r: "5", class: "cpo-part-status" }));
-            const label = svgElement("text", { x: "31", y: "24", class: "cpo-part-label" });
-            label.textContent = part.Name ?? part.Id;
-            partGroup.append(label);
-            partGroup.addEventListener("mouseenter", () => onHover(part.Id));
-            partGroup.addEventListener("mouseleave", () => onHover());
-            partGroup.addEventListener("focus", () => onFocus(part.Id));
-            partGroup.addEventListener("blur", () => onFocus());
-            partGroup.addEventListener("click", () => void onSelect(part.Id!, partGroup));
-            partGroup.addEventListener("keydown", event => {
-                if (!isSelectionKey(event.key))
-                    return;
-                event.preventDefault();
-                void onSelect(part.Id!, partGroup);
-            });
-            group.append(partGroup);
-        });
-        svg.append(group);
-    });
+function syncView(app: HTMLElement, flatScene: SVGSVGElement, threeScene: SVGSVGElement,
+    flatButton: HTMLButtonElement, threeButton: HTMLButtonElement, viewMode: ExplorerViewMode) {
+    app.dataset.view = viewMode;
+    flatScene.classList.toggle("is-active", viewMode === "flat");
+    threeScene.classList.toggle("is-active", viewMode === "three");
+    flatButton.classList.toggle("is-active", viewMode === "flat");
+    threeButton.classList.toggle("is-active", viewMode === "three");
+    flatButton.setAttribute("aria-pressed", String(viewMode === "flat"));
+    threeButton.setAttribute("aria-pressed", String(viewMode === "three"));
 }
 
-function renderFallback(target: HTMLElement, modules: ResearchModuleSummary[], onHover: (partId?: string) => void,
-    onFocus: (partId?: string) => void, onSelect: (partId: string, source?: HTMLElement) => void) {
-    target.replaceChildren();
-    modules.forEach((module, index) => {
-        const details = document.createElement("details");
-        details.className = "cpo-tree-module";
-        details.open = index === 0;
-        const summary = document.createElement("summary");
-        summary.append(el("strong", shortModuleName(module.Name)), el("span", `${module.Parts?.length ?? 0} 个部件`));
-        details.append(summary);
-        const table = document.createElement("table");
-        table.className = "table table-sm cpo-part-table";
-        table.innerHTML = "<thead><tr><th>部件</th><th>功能</th><th>研究状态</th></tr></thead>";
-        const body = document.createElement("tbody");
-        for (const part of module.Parts ?? []) {
-            if (!part.Id)
-                continue;
-            const row = document.createElement("tr");
-            const name = document.createElement("td");
-            const button = document.createElement("button");
-            button.type = "button";
-            button.className = "cpo-table-part";
-            button.dataset.partId = part.Id;
-            button.setAttribute("aria-pressed", "false");
-            button.setAttribute("aria-expanded", "false");
-            button.textContent = part.Name ?? part.Id;
-            button.addEventListener("mouseenter", () => onHover(part.Id));
-            button.addEventListener("mouseleave", () => onHover());
-            button.addEventListener("focus", () => onFocus(part.Id));
-            button.addEventListener("blur", () => onFocus());
-            button.addEventListener("click", () => void onSelect(part.Id!, button));
-            name.append(button);
-            row.append(name, td(part.FunctionSummary), td(part.ResearchStatus));
-            body.append(row);
+function updateStateLine(target: HTMLElement, model?: SliceModel, state: PartSelectionState = {}) {
+    if (!model) {
+        replaceChildren(target, el("strong", "目录不可用"), el("span", "研究服务未返回可验证 SiPh PIC 目录。"));
+        return;
+    }
+
+    if (state.selectedId === siPhComponentId) {
+        replaceChildren(target,
+            el("strong", `${model.module.Name ?? "SiPh PIC"} selected`),
+            el("span", `${model.children.length} 个真实 child parts；材料采用显式缺口，相关公司仅由显式 exposure 显示。`));
+        return;
+    }
+
+    if (state.hoveredId === siPhComponentId) {
+        replaceChildren(target,
+            el("strong", `${model.module.Name ?? "SiPh PIC"} hover preview`),
+            el("span", "当前只是悬停聚焦；单击组件或 callout 后才会锁定选择并打开研究抽屉。"));
+        return;
+    }
+
+    replaceChildren(target,
+        el("strong", "Overview"),
+        el("span", "当前版本聚焦 SiPh PIC；其他器件仅作空间上下文，不承载公司或材料事实。"));
+}
+
+function openDrawer(app: HTMLElement, drawer: HTMLElement, drawerContent: HTMLElement, content: Node) {
+    drawer.hidden = false;
+    drawer.setAttribute("aria-hidden", "false");
+    drawer.classList.add("is-open");
+    app.classList.add("is-drawer-open");
+    replaceChildren(drawerContent, content);
+}
+
+function closeDrawer(app: HTMLElement, drawer: HTMLElement, drawerContent: HTMLElement) {
+    drawer.classList.remove("is-open");
+    drawer.setAttribute("aria-hidden", "true");
+    drawer.hidden = true;
+    app.classList.remove("is-drawer-open");
+    replaceChildren(drawerContent,
+        el("span", "Research Context", "cpo-kicker"),
+        Object.assign(el("h2", "SiPh PIC"), { id: "cpo-drawer-title", tabIndex: -1 }),
+        el("p", "选择组件后显示真实子部件、权威技术关系与公司映射缺口。"));
+}
+
+function renderSliceDrawer(target: HTMLElement, model: SliceModel, childResearch: SliceChildResearch[], selectedChildId: string | undefined,
+    onChildSelect: (childId: string) => void) {
+    const selectedChild = selectedChildId ? childResearch.find(x => x.part.Id === selectedChildId) : undefined;
+    const visibleResearch = selectedChild ? [selectedChild] : childResearch;
+    const retrievalFailures = visibleResearch.filter(x => x.error);
+    const hasRetrievalFailure = retrievalFailures.length > 0;
+    const technologies = dedupeNamedLinks(visibleResearch.flatMap(x => x.response?.Technologies ?? []));
+    const companies = dedupeCompanies(visibleResearch.flatMap(x => x.response?.Companies ?? []));
+    const evidence = visibleResearch.flatMap(x => x.response?.Evidence ?? []);
+    const warnings = visibleResearch.flatMap(x => x.response?.StatusWarnings ?? []);
+
+    const header = el("header", undefined, "cpo-drawer-header");
+    header.append(
+        el("span", "Research Context", "cpo-kicker"),
+        Object.assign(el("h2", model.module.Name ?? "SiPh PIC"), { id: "cpo-drawer-title", tabIndex: -1 }),
+        el("p", "当前选择：CPO → SiPh PIC。该组件使用 stable module ID cpo.mod.pic；下方子部件来自现有研究目录中的 PhysicalPart 记录。"));
+    const badges = el("div", undefined, "cpo-badge-row");
+    badges.append(badge("stable: cpo.mod.pic", "stable"), badge(`${model.children.length} child parts`, "count"), badge("material gap explicit", "gap"));
+    header.append(badges);
+
+    const childSection = researchSection("真实子部件");
+    const childList = el("div", undefined, "cpo-child-list");
+    for (const item of childResearch) {
+        const part = item.part;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `cpo-child-card${selectedChildId === part.Id ? " is-active" : ""}`;
+        button.dataset.childPartId = part.Id ?? "";
+        button.setAttribute("aria-pressed", String(selectedChildId === part.Id));
+        button.append(
+            el("strong", part.Name ?? part.Id ?? "未命名子部件"),
+            el("span", part.FunctionSummary ?? "暂无功能摘要"),
+            badge(item.error ? "research_chain_unknown" : (part.ResearchStatus ?? "unknown"), item.error ? "gap" : "status"));
+        button.addEventListener("click", event => {
+            event.stopPropagation();
+            if (part.Id)
+                onChildSelect(part.Id);
+        });
+        childList.append(button);
+    }
+    childSection.append(childList);
+
+    const failureSection = hasRetrievalFailure ? researchRetrievalFailureSection(retrievalFailures) : undefined;
+
+    const technologySection = researchSection(selectedChild ? "当前子部件技术 context" : "SiPh PIC 技术 context");
+    if (technologies.length) {
+        const chips = el("div", undefined, "cpo-chip-list");
+        for (const technology of technologies)
+            chips.append(badge(technology.Name ?? technology.Id ?? "未命名技术", "link"));
+        technologySection.append(chips, el("p", "这些是现有数据中明确的 part→technology link；不等同于已核验离散材料目录。", "cpo-footnote"));
+    }
+    else {
+        technologySection.append(el("p", researchEmptyStateText(hasRetrievalFailure,
+            "尚无当前层级的技术链接。",
+            "部分子部件研究链读取失败；当前不能确认是否没有技术链接。"), `cpo-empty${hasRetrievalFailure ? " is-unknown" : ""}`));
+    }
+
+    const materialSection = researchSection("材料数据状态");
+    materialSection.append(el("p", hasRetrievalFailure
+        ? "部分子部件研究链读取失败；材料数据状态不能完整确认。已返回记录未提供已核验离散材料目录。"
+        : "暂无已核验材料数据。页面不会把示例材料名称呈现为已核验事实。", "cpo-empty"));
+
+    const companySection = researchSection(`Related Companies (${relatedCompanyCountLabel(companies.length, hasRetrievalFailure)})`);
+    if (companies.length) {
+        const list = el("div", undefined, "cpo-record-list");
+        for (const company of companies)
+            list.append(companyCard(company));
+        companySection.append(list);
+    }
+    else {
+        companySection.append(el("p", researchEmptyStateText(hasRetrievalFailure,
+            "尚无 SiPh PIC 或其子部件的显式公司暴露映射。不得由硅光类别或图形位置推导供应关系。",
+            "部分子部件研究链读取失败；当前不能确认是否没有显式公司暴露映射。不得把服务失败解释为供应关系不存在。"), `cpo-empty${hasRetrievalFailure ? " is-unknown" : ""}`));
+    }
+
+    const action = document.createElement("a");
+    action.className = "cpo-company-pool-link";
+    action.href = resolveUrl(companyPoolContextUrl);
+    action.textContent = "进入 Company Pool（保留 CPO → SiPh PIC context） →";
+
+    const evidenceSectionNode = evidenceSummarySection(evidence, warnings, hasRetrievalFailure);
+
+    replaceChildren(target, ...[header, childSection, failureSection, technologySection, materialSection, companySection, evidenceSectionNode, action].filter((x): x is Node => !!x));
+}
+
+function companyCard(company: CompanyExposureSummary) {
+    const article = el("article", undefined, "cpo-record cpo-company-card");
+    const heading = el("div", undefined, "cpo-record-heading");
+    const companyLink = document.createElement("a");
+    companyLink.href = resolveUrl(`~/Research/Companies/${encodeURIComponent(company.CompanyId ?? "")}?source=cpo-explorer&componentId=${encodeURIComponent(siPhComponentId)}`);
+    companyLink.textContent = company.CompanyName ?? company.CompanyId ?? "未知公司";
+    heading.append(companyLink, badge(company.VerificationState ?? "unknown", "verification"));
+    article.append(heading,
+        el("div", `${company.Role ?? "role unknown"} · relevance ${company.Relevance ?? "unknown"} · confidence ${company.Confidence ?? "unknown"}`, "cpo-record-meta"),
+        el("p", company.ScopeNote || "暂无范围说明"));
+    return article;
+}
+
+function researchRetrievalFailureSection(failures: SliceChildResearch[]) {
+    const section = researchSection("Research chain status");
+    const list = document.createElement("ul");
+    list.className = "cpo-message-list";
+    for (const item of failures)
+        list.append(el("li", `${item.part.Name ?? item.part.Id ?? "未知子部件"} 研究链读取失败；下游技术、公司和 evidence 状态为 unknown。`));
+    section.append(el("p", "部分子部件研究链读取失败；以下空状态不能解释为确认没有技术、公司或 evidence 映射。", "cpo-empty is-unknown"), list);
+    return section;
+}
+
+function evidenceSummarySection(evidence: EvidenceSummary[], warnings: string[], hasRetrievalFailure = false) {
+    const section = researchSection("Evidence safety");
+    if (!evidence.length)
+        section.append(el("p", researchEmptyStateText(hasRetrievalFailure,
+            "当前 SiPh PIC 未返回直接 evidence；页面只展示 taxonomy/service 中已有的 child 与 technology context。",
+            "部分子部件研究链读取失败；当前不能确认是否没有直接 evidence。"), `cpo-empty${hasRetrievalFailure ? " is-unknown" : ""}`));
+    else {
+        const list = el("div", undefined, "cpo-record-list");
+        for (const item of evidence) {
+            const article = el("article", undefined, "cpo-record");
+            article.append(el("strong", `${item.EvidenceId}@v${item.Version}`), badge(item.ReviewState ?? "unknown", "review"), el("p", item.Proposition ?? "暂无命题"));
+            list.append(article);
         }
-        table.append(body);
-        const scroll = el("div", undefined, "table-responsive");
-        scroll.append(table);
-        details.append(scroll);
-        target.append(details);
-    });
+        section.append(list);
+    }
+    if (warnings.length) {
+        const list = document.createElement("ul");
+        list.className = "cpo-message-list";
+        for (const warning of Array.from(new Set(warnings)).slice(0, 4))
+            list.append(el("li", warning));
+        section.append(list);
+    }
+    return section;
 }
 
-function renderResearch(target: HTMLElement, response: PartResearchResponse, showDetailAction: boolean) {
+function renderPartDetail(target: HTMLElement, response: PartResearchResponse, showDetailAction: boolean) {
     target.replaceChildren();
     const part = response.Part;
-    const header = el("header", undefined, "cpo-research-header");
-    const title = el("h2", part?.Name ?? "未知部件");
-    title.id = "cpo-drawer-title";
-    title.tabIndex = -1;
-    header.append(el("span", part?.Id ?? "", "cpo-stable-id"), title,
+    const header = el("header", undefined, "cpo-drawer-header");
+    header.append(el("span", part?.Id ?? "", "cpo-stable-id"), el("h2", part?.Name ?? "未知部件"),
         el("p", part?.FunctionSummary || "暂无功能摘要"));
     const badges = el("div", undefined, "cpo-badge-row");
     badges.append(badge(part?.ResearchStatus ?? "status_unknown", "status"), badge(part?.ModuleName ?? "未关联模块", "module"));
@@ -355,15 +481,11 @@ function renderResearch(target: HTMLElement, response: PartResearchResponse, sho
 
     target.append(researchItemsSection("边界", response.Boundaries));
     target.append(researchItemsSection("上游 / 下游", response.UpstreamDownstream));
-    target.append(researchItemsSection("关键规格", response.KeySpecifications));
     target.append(namedLinksSection("产业链节点", response.ChainNodes, "尚无产业链节点映射"));
     target.append(namedLinksSection("技术链接", response.Technologies, "尚无技术链接"));
-    target.append(companiesSection(response.Companies ?? []));
-    target.append(evidenceSection(response.Evidence ?? []));
+    target.append(evidenceSummarySection(response.Evidence ?? [], response.StatusWarnings ?? []));
     target.append(researchItemsSection("研究结论", response.Conclusions));
     target.append(researchItemsSection("风险", response.Risks));
-    target.append(messageSection("状态警告", response.StatusWarnings ?? [], "warning"));
-    target.append(messageSection("未决问题", response.UnresolvedQuestions ?? [], "question"));
 }
 
 function researchItemsSection(title: string, items?: ResearchSectionSummary[]) {
@@ -393,61 +515,24 @@ function namedLinksSection(title: string, items: ResearchNamedLink[] | undefined
     return section;
 }
 
-function companiesSection(companies: CompanyExposureSummary[]) {
-    const section = researchSection(`候选公司 (${companies.length})`);
-    if (!companies.length) {
-        section.append(el("p", "尚无候选公司映射。不得由图形或部件名称推导供应关系。", "cpo-empty"));
-        return section;
+function dedupeNamedLinks(items: ResearchNamedLink[]) {
+    const map = new Map<string, ResearchNamedLink>();
+    for (const item of items) {
+        const key = item.Id ?? item.Name;
+        if (key && !map.has(key))
+            map.set(key, item);
     }
-    const list = el("div", undefined, "cpo-record-list");
-    for (const company of companies) {
-        const article = el("article", undefined, "cpo-record");
-        const heading = el("div", undefined, "cpo-record-heading");
-        const companyLink = document.createElement("a");
-        companyLink.href = resolveUrl(`~/Research/Companies/${encodeURIComponent(company.CompanyId ?? "")}`);
-        companyLink.textContent = company.CompanyName ?? company.CompanyId ?? "未知公司";
-        companyLink.setAttribute("aria-label", `打开公司详情：${company.CompanyName ?? company.CompanyId}`);
-        heading.append(companyLink, badge(company.VerificationState ?? "unknown", "verification"));
-        article.append(heading,
-            el("div", `${company.Role ?? "role unknown"} · relevance ${company.Relevance ?? "unknown"} · confidence ${company.Confidence ?? "unknown"}`, "cpo-record-meta"),
-            el("p", company.ScopeNote || "暂无范围说明"));
-        list.append(article);
-    }
-    section.append(list);
-    return section;
+    return [...map.values()];
 }
 
-function evidenceSection(evidence: EvidenceSummary[]) {
-    const section = researchSection(`证据 (${evidence.length})`);
-    if (!evidence.length) {
-        section.append(el("p", "尚无直接关联证据。", "cpo-empty"));
-        return section;
+function dedupeCompanies(items: CompanyExposureSummary[]) {
+    const map = new Map<string, CompanyExposureSummary>();
+    for (const item of items) {
+        const key = item.CompanyId ?? item.CompanyName;
+        if (key && !map.has(key))
+            map.set(key, item);
     }
-    const list = el("div", undefined, "cpo-record-list");
-    for (const item of evidence) {
-        const article = el("article", undefined, "cpo-record");
-        const heading = el("div", undefined, "cpo-record-heading");
-        heading.append(el("strong", `${item.EvidenceId}@v${item.Version}`), badge(item.ReviewState ?? "unknown", "review"));
-        article.append(heading,
-            el("div", `Level ${item.SourceLevel ?? "?"} · ${item.Stance ?? "stance unknown"}`, "cpo-record-meta"),
-            el("p", item.Proposition || "暂无命题"),
-            el("small", `${item.SourceTitle ?? "来源未知"} · ${item.Locator ?? "locator 未记录"}`));
-        list.append(article);
-    }
-    section.append(list);
-    return section;
-}
-
-function messageSection(title: string, messages: string[], kind: "warning" | "question") {
-    const section = researchSection(title);
-    const list = document.createElement("ul");
-    list.className = `cpo-message-list is-${kind}`;
-    if (!messages.length)
-        list.append(el("li", "无"));
-    else
-        messages.forEach(message => list.append(el("li", message)));
-    section.append(list);
-    return section;
+    return [...map.values()];
 }
 
 function researchSection(title: string) {
@@ -461,25 +546,11 @@ function badge(text: string, kind: string) {
     return el("span", text, `cpo-badge is-${kind}`);
 }
 
-function shortModuleName(name?: string) {
-    return (name ?? "未命名模块").split("/")[0].trim();
-}
-
-function renderCatalogUnavailable(svg: SVGSVGElement, tree: HTMLElement, coverage: HTMLElement | null,
-    preview: HTMLElement, title: string, detail: string, kind: "info" | "danger") {
-    svg.replaceChildren();
-    svg.setAttribute("hidden", "");
-    svg.setAttribute("aria-label", title);
+function markUnavailable(app: HTMLElement, coverage: HTMLElement | null, stateLine: HTMLElement, title: string, detail: string) {
+    app.dataset.ready = "error";
     if (coverage)
-        coverage.textContent = kind === "info" ? "0 个可研究部件" : "部件目录读取失败";
-    replaceChildren(preview, el("strong", title), el("span", detail));
-    const alert = el("div", undefined, `alert alert-${kind}`);
-    alert.append(el("strong", title), document.createTextNode(`：${detail}`));
-    const retry = el("button", "重试", "btn btn-sm btn-outline-secondary ms-2");
-    retry.type = "button";
-    retry.addEventListener("click", () => window.location.reload());
-    alert.append(retry);
-    replaceChildren(tree, alert);
+        coverage.textContent = "SiPh PIC 目录不可用";
+    replaceChildren(stateLine, el("strong", title), el("span", detail));
 }
 
 function renderError(target: HTMLElement, title: string, error: unknown) {
@@ -498,16 +569,5 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string, classN
         node.textContent = text;
     if (className)
         node.className = className;
-    return node;
-}
-
-function td(text?: string) {
-    return el("td", text || "—");
-}
-
-function svgElement<K extends keyof SVGElementTagNameMap>(tag: K, attributes: Record<string, string> = {}): SVGElementTagNameMap[K] {
-    const node = document.createElementNS(svgNs, tag);
-    for (const [name, value] of Object.entries(attributes))
-        node.setAttribute(name, value);
     return node;
 }
