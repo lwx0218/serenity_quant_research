@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
 import { createReadStream, existsSync } from "node:fs";
-import { copyFile, lstat, mkdir, mkdtemp, readFile, readlink, realpath, rm, writeFile } from "node:fs/promises";
+import { lstat, mkdir, mkdtemp, readFile, readlink, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, isAbsolute, join, posix, relative, resolve, sep } from "node:path";
 import { StringEnum } from "@earendil-works/pi-ai";
@@ -15,7 +15,7 @@ import { Type } from "typebox";
 const EXTENSION_NAME = "harness-flow";
 const READ_ONLY_TOOLS = ["read", "grep", "find", "ls"] as const;
 const MAX_CAPTURE_BYTES = 5 * 1024 * 1024;
-const MAX_REVIEW_OUTPUT_BYTES = 5 * 1024 * 1024;
+const MAX_REVIEW_OUTPUT_BYTES = 512 * 1024;
 const HANDOFF_TTL_MS = 10 * 60 * 1000;
 const REVIEW_MARKER = "HARNESS_REVIEW_RESULT";
 
@@ -53,12 +53,38 @@ interface PlanRound {
 	status: "pending" | "in_progress" | "blocked" | "accepted";
 }
 
+type DeliveryClass = "product" | "governance_maintenance";
+type RoundProgressStage = "scope_dor" | "implementation" | "verification" | "review" | "fix_verify_rereview" | "owner_commit_gate" | "blocked";
+type RoundProgressStatus = "active" | "done" | "blocked";
+
 interface GitSnapshot {
 	head: string;
 	status: string;
 	statusHash: string;
 	candidateHash: string;
 	candidatePaths: string[];
+	environmentPaths: string[];
+}
+
+interface RoundProgressState {
+	roundId: string;
+	sessionName: string;
+	stage: RoundProgressStage;
+	status: RoundProgressStatus;
+	message?: string;
+	updatedAt: string;
+}
+
+interface ReviewAttemptRecord {
+	runId: string;
+	reviewRole: "per_round" | "final_integrated";
+	roundId: string;
+	candidateHash: string;
+	decision: "pass" | "changes_required" | "blocked";
+	blockingCount: number;
+	findings: ReviewFinding[];
+	fixEvidence?: string;
+	createdAt: string;
 }
 
 interface ReviewFinding {
@@ -269,19 +295,12 @@ function acceptedEffectiveRounds(plan: string): Set<string> | undefined {
 function assertEffectiveRoundSet(plan: string, activeRound: string): Set<string> {
 	const ids = parsePlanRoundIds(plan);
 	if (new Set(ids).size !== ids.length) throw new Error("Round Ledger contains duplicate Round IDs");
-	const declaredActiveRound = extractUniqueMetadata(plan, "Active Round");
-	if (declaredActiveRound !== activeRound) throw new Error(`Active Round metadata must uniquely declare ${activeRound}`);
 	const activeIndex = ids.indexOf(activeRound);
 	if (activeIndex < 0) throw new Error(`active Round ${activeRound} is not in the Ledger`);
-	const expected = ids.slice(0, activeIndex);
-	for (const id of expected) {
-		if (parsePlanRound(plan, id)?.status !== "accepted") {
-			throw new Error(`prior Round ${id} must be accepted before ${activeRound}`);
-		}
-	}
+	const expected = ids.slice(0, activeIndex).filter((id) => parsePlanRound(plan, id)?.status === "accepted");
 	const effective = acceptedEffectiveRounds(plan);
 	if (!effective || effective.size !== expected.length || expected.some((id) => !effective.has(id))) {
-		throw new Error("Accepted-effective Rounds metadata must exactly equal all prior accepted Ledger Rounds");
+		throw new Error("Accepted-effective Rounds metadata must exactly equal accepted prior Ledger Rounds");
 	}
 	return effective;
 }
@@ -325,6 +344,83 @@ function bullets(values: string[], empty = "None declared"): string {
 	return values.length > 0 ? values.map((value) => `- ${value}`).join("\n") : `- ${empty}`;
 }
 
+function uniqueSorted(values: string[]): string[] {
+	return [...new Set(values)].sort();
+}
+
+function parseDeliveryClass(value: string | undefined): DeliveryClass | undefined {
+	if (value === "product" || value === "governance_maintenance") return value;
+	return undefined;
+}
+
+function isGovernanceLayerPath(path: string): boolean {
+	return path === ".pi" || path.startsWith(".pi/");
+}
+
+const ROUND_PROGRESS_ORDER: RoundProgressStage[] = [
+	"scope_dor",
+	"implementation",
+	"verification",
+	"review",
+	"fix_verify_rereview",
+	"owner_commit_gate",
+];
+
+function stageLabel(stage: RoundProgressStage): string {
+	return ({
+		scope_dor: "Scope/DoR",
+		implementation: "Implementation",
+		verification: "Verification",
+		review: "Review",
+		fix_verify_rereview: "Fix/Verify/Re-review",
+		owner_commit_gate: "Owner/Commit Gate",
+		blocked: "Blocked",
+	} satisfies Record<RoundProgressStage, string>)[stage];
+}
+
+function validRoundProgressTransition(from: RoundProgressStage | undefined, to: RoundProgressStage): boolean {
+	if (!from || from === to || to === "blocked") return true;
+	if (from === "blocked") return false;
+	if (from === "review" && (to === "fix_verify_rereview" || to === "owner_commit_gate")) return true;
+	if (from === "fix_verify_rereview" && (to === "verification" || to === "review")) return true;
+	const fromIndex = ROUND_PROGRESS_ORDER.indexOf(from);
+	const toIndex = ROUND_PROGRESS_ORDER.indexOf(to);
+	return fromIndex >= 0 && toIndex >= 0 && toIndex === fromIndex + 1;
+}
+
+function renderRoundProgress(state: RoundProgressState): string[] {
+	const lines = [`Harness Round ${state.roundId}: ${stageLabel(state.stage)} (${state.status})`];
+	const bar = ROUND_PROGRESS_ORDER.map((stage) => {
+		if (stage === state.stage) return `[${stageLabel(stage)}]`;
+		const done = ROUND_PROGRESS_ORDER.indexOf(stage) < ROUND_PROGRESS_ORDER.indexOf(state.stage) && state.stage !== "fix_verify_rereview";
+		return `${done ? "✓" : "○"} ${stageLabel(stage)}`;
+	}).join(" → ");
+	lines.push(bar);
+	if (state.message) lines.push(state.message.slice(0, 240));
+	return lines;
+}
+
+function applyRoundProgressWidget(ctx: ExtensionContext, state: RoundProgressState | undefined): void {
+	if (!ctx.hasUI) return;
+	if (!state) {
+		ctx.ui.setWidget("harness-round-progress", undefined);
+		ctx.ui.setStatus("harness-round", undefined);
+		return;
+	}
+	ctx.ui.setWidget("harness-round-progress", renderRoundProgress(state));
+	ctx.ui.setStatus("harness-round", `${state.roundId}: ${stageLabel(state.stage)}`);
+}
+
+function isRoundProgressState(value: unknown): value is RoundProgressState {
+	if (!value || typeof value !== "object") return false;
+	const item = value as Partial<RoundProgressState>;
+	return typeof item.roundId === "string"
+		&& typeof item.sessionName === "string"
+		&& typeof item.updatedAt === "string"
+		&& ["scope_dor", "implementation", "verification", "review", "fix_verify_rereview", "owner_commit_gate", "blocked"].includes(item.stage ?? "")
+		&& ["active", "done", "blocked"].includes(item.status ?? "");
+}
+
 function buildHandoffPrompt(input: {
 	planPath: string;
 	roundId: string;
@@ -351,7 +447,7 @@ function buildHandoffPrompt(input: {
 		...(input.latestWorkLog ? [input.latestWorkLog] : []),
 		...(input.latestReview ? [input.latestReview] : []),
 	];
-	return redactSecrets(`# ${input.sessionName}\n\nThis is a new implementation session. Chat history is not the durable source of truth.\n\n## Read First\n${bullets(durable)}\n\n## Active Boundary\n- Round: ${input.roundId}\n- Declared primary implementation session: ${input.sessionName}\n- Bounded target: ${input.target}\n- Round is the only acceptance-bearing unit.\n\n## Non-Goals\n${bullets(input.nonGoals)}\n\n## Dependencies / Definition Of Ready\n${bullets(input.dependencies)}\n\n## Expected Change Surfaces\n${bullets(input.expectedChangeSurfaces)}\n\n## Blockers And Assumptions\n${bullets(input.blockersAndAssumptions)}\n\n## Exact Validation\n${bullets(input.validation)}\n\n## Independent Review\n- Mode: ${input.reviewMode}\n- Per-Round artifact (written by the Builder, never the review child): ${input.reviewArtifactPath}\n- Final integrated artifact (last Round only): ${input.finalReviewArtifactPath}\n- After automated verification, automatically call harness_run_independent_review. P0/P1 remains in ${input.roundId} through Fix -> Verify -> Re-review; disposition every P2.\n\n## Acceptance Evidence\n${bullets(input.acceptanceEvidence)}\n\n## Next Gate\n${input.nextGate}\n\n## Blocked / Rebaseline Conditions\n${bullets(input.blockedConditions)}\n\nDo not expand scope, create Phase acceptance, or create a letter-suffixed Round. Do not claim accepted before required Review, acceptance commit, and post-commit verification. Do not push unless explicitly instructed.`);
+	return redactSecrets(`# ${input.sessionName}\n\nThis is a new implementation session. Chat history is not the durable source of truth.\n\n## Read First\n${bullets(durable)}\n\n## Active Boundary\n- Round: ${input.roundId}\n- Declared primary implementation session: ${input.sessionName}\n- Bounded target: ${input.target}\n- Round is the only acceptance-bearing unit.\n- Control-stage progress starts at Scope/DoR and may move through Implementation, Verification, Review, Fix/Verify/Re-review, and Owner/Commit Gate without implying percentage complete.\n\n## Review Scope Boundary\n- Candidate scope: the approved Round's expected change surfaces and actual delivery paths; only candidate receives P0/P1/P2.\n- Context scope: Read First contracts, Plan, work log, validation evidence, and other read-only judgment inputs.\n- Environment / dirty-worktree scope: full Git status and unrelated dirty/untracked paths for transparency and immutability only.\n- Governance-layer status: .pi / harness candidate work is allowed only for an approved governance_maintenance Round; product Rounds must not include .pi as candidate.\n\n## Non-Goals\n${bullets(input.nonGoals)}\n\n## Dependencies / Definition Of Ready\n${bullets(input.dependencies)}\n\n## Expected Change Surfaces\n${bullets(input.expectedChangeSurfaces)}\n\n## Blockers And Assumptions\n${bullets(input.blockersAndAssumptions)}\n\n## Exact Validation\n${bullets(input.validation)}\n\n## Independent Review\n- Mode: ${input.reviewMode}\n- Per-Round artifact (written by the Builder, never the review child): ${input.reviewArtifactPath}\n- Final integrated artifact (last Round only): ${input.finalReviewArtifactPath}\n- After automated verification, automatically call harness_run_independent_review. P0/P1 remains in ${input.roundId} through Fix -> Verify -> Re-review; disposition every P2.\n\n## Acceptance Evidence\n${bullets(input.acceptanceEvidence)}\n\n## Next Gate\n${input.nextGate}\n\n## Blocked / Rebaseline Conditions\n${bullets(input.blockedConditions)}\n\nDo not expand scope, create Phase acceptance, or create a letter-suffixed Round. Do not claim accepted before required Review, acceptance commit, and post-commit verification. Do not push unless explicitly instructed.`);
 }
 
 function manualHandoff(sessionName: string, prompt: string): string {
@@ -377,66 +473,18 @@ function getPiInvocation(args: string[]): { command: string; args: string[]; dis
 }
 
 function buildReviewerEnv(auth: { apiKey?: string; env?: Record<string, string> }): NodeJS.ProcessEnv {
-	const env: NodeJS.ProcessEnv = { ...process.env };
+	const safeNames = new Set([
+		"PATH", "HOME", "USER", "LOGNAME", "SHELL", "TMPDIR", "TEMP", "TMP", "SystemRoot", "WINDIR",
+		"LANG", "TZ", "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "SSL_CERT_FILE", "SSL_CERT_DIR", "NODE_EXTRA_CA_CERTS",
+		"PI_CODING_AGENT_DIR", "PI_PACKAGE_DIR",
+	]);
+	const env: NodeJS.ProcessEnv = {};
+	for (const [key, value] of Object.entries(process.env)) {
+		if (value !== undefined && (safeNames.has(key) || key.startsWith("LC_") || (auth.apiKey !== undefined && value === auth.apiKey))) env[key] = value;
+	}
 	for (const [key, value] of Object.entries(auth.env ?? {})) env[key] = value;
 	env.PI_SKIP_VERSION_CHECK = "1";
 	return env;
-}
-
-async function prepareConfinedReviewRoot(cwd: string, root: string, paths: string[]): Promise<void> {
-	await mkdir(root, { recursive: true, mode: 0o700 });
-	for (const item of [...new Set(paths)]) {
-		const normalized = normalizeRelativePath(item);
-		if (!normalized) throw new Error(`invalid confined review path: ${item}`);
-		const source = resolve(cwd, ...normalized.split("/"));
-		const rel = relative(cwd, source);
-		if (!rel || rel.startsWith(`..${sep}`) || rel === ".." || isAbsolute(rel)) throw new Error(`confined review path escapes project: ${item}`);
-		let stat;
-		try { stat = await lstat(source); }
-		catch (error) {
-			if ((error as NodeJS.ErrnoException).code === "ENOENT") continue;
-			throw error;
-		}
-		if (stat.isSymbolicLink() || !stat.isFile()) throw new Error(`confined review path must be a regular non-symlink file: ${item}`);
-		const target = join(root, ...normalized.split("/"));
-		await mkdir(dirname(target), { recursive: true, mode: 0o700 });
-		await copyFile(source, target);
-	}
-}
-
-function redactReviewInvocationArgs(args: string[], tempDir: string): string[] {
-	const output: string[] = [];
-	for (let index = 0; index < args.length; index++) {
-		const arg = args[index];
-		if (arg === "--api-key") {
-			output.push(arg, "<redacted-provider-auth>");
-			index++;
-			continue;
-		}
-		output.push(arg.includes(tempDir) ? arg.replaceAll(tempDir, "<temporary-review-bundle>") : arg);
-	}
-	return output;
-}
-
-function confinedReviewerInvocation(invocation: { command: string; args: string[]; displayCommand: string }, reviewRoot: string) {
-	const bubblewrap = "/usr/bin/bwrap";
-	if (process.platform !== "linux" || !existsSync(bubblewrap)) throw new Error("bubblewrap read confinement is unavailable");
-	let reviewerCommand = invocation.command;
-	if (isAbsolute(reviewerCommand) && reviewerCommand.startsWith(`${process.env.HOME ?? ""}${sep}`) && basename(reviewerCommand).startsWith("node")) {
-		const bundledNode = "/opt/module/nodejs/node/bin/node";
-		if (!existsSync(bundledNode)) throw new Error("confined bundled Node runtime is unavailable");
-		reviewerCommand = bundledNode;
-	}
-	const args = [
-		"--die-with-parent", "--new-session", "--unshare-user-try", "--unshare-pid", "--unshare-ipc", "--unshare-uts", "--unshare-cgroup-try", "--share-net",
-		"--ro-bind", "/usr", "/usr", "--symlink", "usr/bin", "/bin", "--symlink", "usr/lib", "/lib", "--symlink", "usr/lib64", "/lib64",
-		"--ro-bind", "/opt", "/opt",
-		"--dir", "/etc", "--ro-bind", "/etc/ssl", "/etc/ssl", "--ro-bind", "/etc/hosts", "/etc/hosts", "--ro-bind", "/etc/resolv.conf", "/etc/resolv.conf", "--ro-bind", "/etc/nsswitch.conf", "/etc/nsswitch.conf",
-		"--dev", "/dev", "--tmpfs", "/tmp", "--dir", "/home", "--dir", "/home/reviewer",
-		"--ro-bind", reviewRoot, "/workspace", "--chdir", "/workspace",
-		"--", reviewerCommand, ...invocation.args,
-	];
-	return { command: bubblewrap, args, displayCommand: `bwrap <read-confined-review-root> -- ${invocation.displayCommand}` };
 }
 
 function runProcess(
@@ -448,6 +496,8 @@ function runProcess(
 		timeoutMs: number;
 		signal?: AbortSignal;
 		maxBytes: number;
+		onStart?: (pid: number | undefined) => void;
+		onProgress?: (elapsedMs: number) => void;
 	},
 ): Promise<ProcessResult> {
 	return new Promise((done) => {
@@ -465,6 +515,8 @@ function runProcess(
 			shell: false,
 			stdio: ["ignore", "pipe", "pipe"],
 		});
+		options.onStart?.(child.pid);
+		const progressTimer = options.onProgress ? setInterval(() => options.onProgress?.(Date.now() - started), 1000) : undefined;
 
 		const append = (current: Buffer, chunk: Buffer): Buffer => {
 			if (current.length >= options.maxBytes) {
@@ -492,6 +544,7 @@ function runProcess(
 			if (settled) return;
 			settled = true;
 			clearTimeout(timeout);
+			if (progressTimer) clearInterval(progressTimer);
 			if (killTimer) clearTimeout(killTimer);
 			options.signal?.removeEventListener("abort", onAbort);
 			done({
@@ -542,15 +595,37 @@ async function hashCandidateFile(hash: ReturnType<typeof createHash>, path: stri
 	});
 }
 
-async function captureGitSnapshot(cwd: string, additionalPaths: string[] = []): Promise<GitSnapshot> {
+async function resolveCandidateProjectPath(cwd: string, input: string): Promise<string> {
+	const relativePath = normalizeRelativePath(input);
+	if (!relativePath) throw new Error(`Path must be repository-relative: ${input}`);
+	const root = await realpath(cwd);
+	const lexical = resolve(root, relativePath);
+	if (!isInside(root, lexical)) throw new Error(`Path escapes the project root: ${input}`);
+	try {
+		const info = await lstat(lexical);
+		await assertNoSymlinkComponents(root, lexical, true);
+		if (!info.isFile() || info.isSymbolicLink()) throw new Error(`candidate path must be an existing regular non-symlink file or a tracked deletion: ${input}`);
+		const physical = await realpath(lexical);
+		if (!isInside(root, physical)) throw new Error(`Resolved path escapes the project root: ${input}`);
+		return relativePath;
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+		try { await runGit(cwd, ["ls-files", "--error-unmatch", "--", relativePath], 64 * 1024); }
+		catch { throw new Error(`candidate path must exist or be a tracked deletion: ${input}`); }
+		return relativePath;
+	}
+}
+
+async function captureGitSnapshot(cwd: string, candidatePaths: string[] = []): Promise<GitSnapshot> {
 	const head = (await runGit(cwd, ["rev-parse", "HEAD"])).trim();
 	const status = await runGit(cwd, ["status", "--porcelain=v1", "-z", "--untracked-files=all"]);
 	const changed = nulList(await runGit(cwd, ["diff", "--name-only", "-z", "HEAD", "--"]));
 	const untracked = nulList(await runGit(cwd, ["ls-files", "--others", "--exclude-standard", "-z"]));
-	const candidatePaths = [...new Set([...changed, ...untracked, ...additionalPaths])].sort();
-	const hash = createHash("sha256").update(head).update("\0").update(status);
+	const normalizedCandidates = uniqueSorted(candidatePaths);
+	const environmentPaths = uniqueSorted([...changed, ...untracked].filter((path) => !normalizedCandidates.includes(path)));
+	const hash = createHash("sha256").update(head).update("\0candidate\0");
 	let totalBytes = 0;
-	for (const path of candidatePaths) {
+	for (const path of normalizedCandidates) {
 		hash.update("\0").update(path).update("\0");
 		const absolute = resolve(cwd, path);
 		let info;
@@ -566,11 +641,15 @@ async function captureGitSnapshot(cwd: string, additionalPaths: string[] = []): 
 		else if (info.isDirectory()) throw new Error(`directory/gitlink candidate requires an OS-isolated or distinct-human review fallback: ${path}`);
 		else throw new Error(`unsupported candidate file type: ${path}`);
 	}
-	return { head, status, statusHash: sha256(status), candidateHash: hash.digest("hex"), candidatePaths };
+	return { head, status, statusHash: sha256(status), candidateHash: hash.digest("hex"), candidatePaths: normalizedCandidates, environmentPaths };
 }
 
-function snapshotsEqual(before: GitSnapshot, after: GitSnapshot): boolean {
-	return before.head === after.head && before.status === after.status && before.candidateHash === after.candidateHash;
+function candidateSnapshotsEqual(before: GitSnapshot, after: GitSnapshot): boolean {
+	return before.head === after.head && before.candidateHash === after.candidateHash && before.candidatePaths.join("\0") === after.candidatePaths.join("\0");
+}
+
+function gitStatusUnchanged(before: GitSnapshot, after: GitSnapshot): boolean {
+	return before.status === after.status && before.statusHash === after.statusHash;
 }
 
 async function collectUntrackedEvidence(cwd: string, paths: string[]): Promise<string> {
@@ -651,7 +730,7 @@ async function requirePassedRoundReview(cwd: string, path: string, roundId: stri
 	const decision = extractUniqueMetadata(text, "Decision");
 	const p0 = extractUniqueMetadata(text, "Unresolved P0");
 	const p1 = extractUniqueMetadata(text, "Unresolved P1");
-	if (role !== "per_round" || !round || !new RegExp(`^${roundId}(?:\\s|$|—|-)`).test(round) || decision !== "pass" || p0 !== "0" || p1 !== "0") {
+	if (role !== "per-round" || !round || !new RegExp(`^${roundId}(?:\\s|$|—|-)`).test(round) || decision !== "pass" || p0 !== "0" || p1 !== "0") {
 		throw new Error("final integrated Review requires a distinct passed per-Round artifact with zero unresolved P0/P1");
 	}
 }
@@ -671,8 +750,12 @@ function manualReviewFallback(input: {
 	workLogPath: string;
 	reviewArtifactPath: string;
 	baselineRef: string;
+	deliveryClass?: DeliveryClass;
+	candidatePaths?: string[];
+	contextPaths?: string[];
+	environmentPaths?: string[];
 }): string {
-	return `Manual Independent Review fallback (requires an Owner-approved human distinct from the Builder):\n- Round: ${input.roundId}\n- Role: ${input.role}\n- Read: AGENTS.md, ${input.planPath}, ${input.workLogPath}\n- Candidate: ${input.baselineRef}..working-tree\n- Review read-only; do not modify candidate files or write ${input.reviewArtifactPath}\n- Return P0/P1/P2 findings plus pass, changes_required, or blocked\n- Builder records reviewer identity, inputs, tool boundary, decision, P2 dispositions, and before/after Git immutability evidence in ${input.reviewArtifactPath}`;
+	return `Manual Independent Review fallback (requires an Owner-approved human distinct from the Builder):\n- Round: ${input.roundId}\n- Role: ${input.role}\n- Delivery class: ${input.deliveryClass ?? "not resolved"}\n- Read: AGENTS.md, ${input.planPath}, ${input.workLogPath}\n- Candidate baseline: ${input.baselineRef}\n- Candidate scope paths (only these receive P0/P1/P2): ${input.candidatePaths?.length ? input.candidatePaths.join(", ") : "not resolved"}\n- Context scope paths (read-only judgment inputs; not candidate): ${input.contextPaths?.length ? input.contextPaths.join(", ") : "not resolved"}\n- Environment / dirty-worktree scope (transparency/immutability only): ${input.environmentPaths?.length ? input.environmentPaths.join(", ") : "captured from Git status when available"}\n- Review read-only; do not modify candidate files or write ${input.reviewArtifactPath}\n- Return P0/P1/P2 findings plus pass, changes_required, or blocked\n- Builder records reviewer identity, inputs, tool boundary, decision, P2 dispositions, and before/after Git immutability evidence in ${input.reviewArtifactPath}`;
 }
 
 function reviewBlocked(reason: string, fallback: string, details: Record<string, unknown> = {}) {
@@ -686,23 +769,62 @@ function reviewBlocked(reason: string, fallback: string, details: Record<string,
 	});
 }
 
+function automatedReviewCapabilityBlocked(reason: string, fallback: string, details: Record<string, unknown> = {}) {
+	return reviewBlocked(`automated_review_capability_blocked: ${reason}`, fallback, {
+		automatedReviewCapabilityBlocked: true,
+		capabilityState: "automated_review_capability_blocked",
+		...details,
+	});
+}
+
 function buildReviewBundle(input: {
 	role: "per_round" | "final_integrated";
 	roundId: string;
+	deliveryClass: DeliveryClass;
 	planPath: string;
 	workLogPath: string;
 	reviewArtifactPath: string;
 	baselineRef: string;
 	candidateSummary: string;
 	validationSummary: string;
-	scopePaths: string[];
+	candidatePaths: string[];
+	contextPaths: string[];
+	environmentPaths: string[];
 	head: string;
 	status: string;
-	changedPaths: string[];
+	baselineChangedPaths: string[];
 	diff: string;
 	untrackedEvidence: string;
 }): string {
-	return `# Harness Independent Review Bundle\n\nReview role: ${input.role}\nOwning Round: ${input.roundId}\nPlan: ${input.planPath}\nWork log: ${input.workLogPath}\nDurable artifact target (Builder-only write): ${input.reviewArtifactPath}\nBaseline: ${input.baselineRef}\nCandidate HEAD: ${input.head}\n\n## Candidate Summary\n${input.candidateSummary}\n\n## Automated Validation Summary\n${input.validationSummary}\n\n## Required Scope Paths\n${bullets(input.scopePaths)}\n\n## Git Status Before Review\n\`\`\`text\n${input.status || "(clean)"}\n\`\`\`\n\n## Changed Paths\n${bullets(input.changedPaths)}\n\n## Baseline-To-Candidate Diff\n\`\`\`diff\n${input.diff}\n\`\`\`\n\n## Untracked Candidate Contents\n${input.untrackedEvidence || "(none)"}\n`;
+	return `# Harness Independent Review Bundle\n\nReview role: ${input.role}\nOwning Round: ${input.roundId}\nDelivery class: ${input.deliveryClass}\nPlan: ${input.planPath}\nWork log: ${input.workLogPath}\nDurable artifact target (Builder-only write): ${input.reviewArtifactPath}\nBaseline: ${input.baselineRef}\nCandidate HEAD: ${input.head}\n\n## Candidate Summary\n${input.candidateSummary}\n\n## Automated Validation Summary\n${input.validationSummary}\n\n## Candidate Scope Paths\nOnly these paths receive P0/P1/P2 candidate findings.\n${bullets(input.candidatePaths)}\n\n## Context Scope Paths\nRead-only judgment inputs; not candidate.\n${bullets(input.contextPaths)}\n\n## Environment / Dirty-Worktree Scope\nTransparency and immutability only; not candidate by bundle membership.\n${bullets(input.environmentPaths)}\n\n## Git Status Before Review\n\`\`\`text\n${input.status || "(clean)"}\n\`\`\`\n\n## Baseline-Changed Paths\n${bullets(input.baselineChangedPaths)}\n\n## Candidate Diff\n\`\`\`diff\n${input.diff}\n\`\`\`\n\n## Untracked Candidate Contents\n${input.untrackedEvidence || "(none)"}\n`;
+}
+
+async function copyReviewInputs(sourceRoot: string, reviewRoot: string, paths: string[]): Promise<void> {
+	for (const path of uniqueSorted(paths)) {
+		const source = resolve(sourceRoot, path);
+		const destination = resolve(reviewRoot, path);
+		if (!isInside(reviewRoot, destination)) throw new Error(`review input path escapes temporary root: ${path}`);
+		try {
+			const info = await lstat(source);
+			if (!info.isFile() || info.isSymbolicLink()) continue;
+			await mkdir(dirname(destination), { recursive: true });
+			await writeFile(destination, await readFile(source));
+		} catch (error) {
+			if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+		}
+	}
+}
+
+function blockingCount(record: Pick<ReviewAttemptRecord, "findings" | "decision">): number {
+	return record.findings.filter((finding) => finding.severity === "P0" || finding.severity === "P1").length + (record.decision === "blocked" ? 1 : 0);
+}
+
+function findSameHashConflict(attempts: ReviewAttemptRecord[], next: ReviewAttemptRecord): ReviewAttemptRecord | undefined {
+	return attempts.find((attempt) => attempt.reviewRole === next.reviewRole
+		&& attempt.roundId === next.roundId
+		&& attempt.candidateHash === next.candidateHash
+		&& attempt.findings.some((finding) => finding.severity === "P0" || finding.severity === "P1")
+		&& next.decision === "pass");
 }
 
 async function restoreParentAfterSubmissionFailure(
@@ -733,6 +855,29 @@ async function restoreParentAfterSubmissionFailure(
 
 export default function harnessFlow(pi: ExtensionAPI): void {
 	const pendingHandoffs = new Map<string, PendingHandoff>();
+	const reviewAttempts: ReviewAttemptRecord[] = [];
+	let roundProgress: RoundProgressState | undefined;
+
+	function persistRoundProgress(state: RoundProgressState): void {
+		roundProgress = state;
+		pi.appendEntry("harness-round-progress", state);
+	}
+
+	function reconstructRoundProgress(ctx: ExtensionContext): void {
+		roundProgress = undefined;
+		reviewAttempts.length = 0;
+		for (const entry of ctx.sessionManager.getBranch()) {
+			if (entry.type === "custom" && entry.customType === "harness-round-progress" && isRoundProgressState(entry.data)) roundProgress = entry.data;
+			if (entry.type === "custom" && entry.customType === "harness-review-attempt") {
+				const attempt = entry.data as ReviewAttemptRecord | undefined;
+				if (attempt?.runId && !reviewAttempts.some((item) => item.runId === attempt.runId)) reviewAttempts.push(attempt);
+			}
+		}
+		applyRoundProgressWidget(ctx, roundProgress);
+	}
+
+	pi.on("session_start", async (_event, ctx) => reconstructRoundProgress(ctx));
+	pi.on("session_tree", async (_event, ctx) => reconstructRoundProgress(ctx));
 
 	pi.registerTool({
 		name: "harness_request_plan_approval",
@@ -902,6 +1047,14 @@ export default function harnessFlow(pi: ExtensionAPI): void {
 
 				cleanupPending(pendingHandoffs);
 				const token = randomUUID();
+				const progressSeed: RoundProgressState = {
+					roundId: params.roundId,
+					sessionName: params.sessionName,
+					stage: "scope_dor",
+					status: "active",
+					message: `Seeded from approved Plan ${planFile.relativePath}`,
+					updatedAt: new Date().toISOString(),
+				};
 				pendingHandoffs.set(token, {
 					createdAt: Date.now(),
 					parentSession,
@@ -910,6 +1063,7 @@ export default function harnessFlow(pi: ExtensionAPI): void {
 					prompt,
 					fallback,
 				});
+				persistRoundProgress(progressSeed);
 				pi.sendUserMessage(`/harness-flow-continue ${token}`, {
 					deliverAs: "followUp",
 					expandPromptTemplates: true,
@@ -957,8 +1111,24 @@ export default function harnessFlow(pi: ExtensionAPI): void {
 					parentSession: handoff.parentSession,
 					setup: async (sessionManager) => {
 						sessionManager.appendSessionInfo(handoff.sessionName);
+						sessionManager.appendCustomEntry("harness-round-progress", {
+							roundId: handoff.roundId,
+							sessionName: handoff.sessionName,
+							stage: "scope_dor",
+							status: "active",
+							message: "Implementation handoff received; confirm Scope/DoR before editing.",
+							updatedAt: new Date().toISOString(),
+						} satisfies RoundProgressState);
 					},
 					withSession: async (replacementCtx) => {
+						applyRoundProgressWidget(replacementCtx, {
+							roundId: handoff.roundId,
+							sessionName: handoff.sessionName,
+							stage: "scope_dor",
+							status: "active",
+							message: "Implementation handoff received; confirm Scope/DoR before editing.",
+							updatedAt: new Date().toISOString(),
+						});
 						replacementCtx.ui.notify(`Starting ${handoff.sessionName} for ${handoff.roundId}`, "info");
 						try {
 							await replacementCtx.sendUserMessage(handoff.prompt);
@@ -984,6 +1154,51 @@ export default function harnessFlow(pi: ExtensionAPI): void {
 	});
 
 	pi.registerTool({
+		name: "harness_update_round_progress",
+		label: "Harness Round Progress",
+		description: "Update the current fixed-Round control-stage progress widget without writing project artifacts. Stages are truthful control gates, not completion percentages.",
+		promptSnippet: "Update fixed-Round Scope/DoR, Implementation, Verification, Review, Fix/Verify/Re-review, or Owner/Commit Gate progress",
+		promptGuidelines: [
+			"Use harness_update_round_progress in fixed-Round implementation sessions to show truthful control-stage movement without claiming fabricated percentages.",
+			"Use harness_update_round_progress for P0/P1 repair loops by moving from Review to Fix/Verify/Re-review, then back through Verification/Review.",
+		],
+		parameters: Type.Object({
+			roundId: Type.String({ maxLength: 20 }),
+			stage: StringEnum(["scope_dor", "implementation", "verification", "review", "fix_verify_rereview", "owner_commit_gate", "blocked"] as const),
+			status: StringEnum(["active", "done", "blocked"] as const),
+			message: Type.Optional(Type.String({ maxLength: 500 })),
+		}),
+		executionMode: "sequential",
+		async execute(_id, params, _signal, _update, ctx) {
+			try { validateRoundId(params.roundId); }
+			catch (error) { return textResult(`Round progress blocked: ${error instanceof Error ? error.message : String(error)}`, { status: "blocked" }); }
+			const previous = roundProgress;
+			if (previous && previous.roundId !== params.roundId) {
+				return textResult(`Round progress blocked: active widget belongs to ${previous.roundId}; refusing to create a hidden Round.`, { status: "blocked", previous });
+			}
+			if (!validRoundProgressTransition(previous?.stage, params.stage)) {
+				return textResult(`Round progress blocked: invalid control-stage transition ${previous?.stage ?? "none"} -> ${params.stage}.`, { status: "blocked", previous, requestedStage: params.stage });
+			}
+			const state: RoundProgressState = {
+				roundId: params.roundId,
+				sessionName: previous?.sessionName ?? pi.getSessionName() ?? `${params.roundId}-unknown`,
+				stage: params.stage,
+				status: params.status,
+				message: params.message ? redactSecrets(params.message).slice(0, 500) : undefined,
+				updatedAt: new Date().toISOString(),
+			};
+			persistRoundProgress(state);
+			applyRoundProgressWidget(ctx, state);
+			return textResult(`Round progress updated: ${params.roundId} -> ${stageLabel(params.stage)} (${params.status}).`, {
+				status: "updated",
+				progress: state,
+				projectWrites: false,
+				controlStagesOnly: true,
+			});
+		},
+	});
+
+	pi.registerTool({
 		name: "harness_run_independent_review",
 		label: "Harness Independent Review",
 		description: "Automatically run the required fixed-Round Independent Review after automated verification. Spawns a distinct non-interactive no-session Pi child with only read, grep, find, and ls; captures process/model/output evidence and Git immutability; returns P0/P1/P2 plus pass, changes_required, or blocked.",
@@ -997,13 +1212,21 @@ export default function harnessFlow(pi: ExtensionAPI): void {
 			reviewRole: StringEnum(["per_round", "final_integrated"] as const),
 			roundId: Type.String({ maxLength: 20 }),
 			planPath: Type.String({ maxLength: 500 }),
+			deliveryClass: StringEnum(["product", "governance_maintenance"] as const),
 			candidateSummary: Type.String({ maxLength: 20_000 }),
 			validationSummary: Type.String({ maxLength: 30_000 }),
-			scopePaths: Type.Array(Type.String({ maxLength: 500 }), { maxItems: 100 }),
+			candidatePaths: Type.Array(Type.String({ maxLength: 500 }), { maxItems: 100 }),
+			contextPaths: Type.Optional(Type.Array(Type.String({ maxLength: 500 }), { maxItems: 100 })),
+			environmentPaths: Type.Optional(Type.Array(Type.String({ maxLength: 500 }), { maxItems: 100 })),
+			fixEvidence: Type.Optional(Type.String({ maxLength: 4000, description: "Required when a changed-hash re-review pass closes prior P0/P1 findings" })),
+			scopePaths: Type.Optional(Type.Array(Type.String({ maxLength: 500 }), { maxItems: 100, description: "Legacy field; rejected to avoid candidate/context/environment scope guessing" })),
 			timeoutSeconds: Type.Optional(Type.Integer({ minimum: 30, maximum: 1800, default: 600 })),
 		}),
+		prepareArguments(args) {
+			return args;
+		},
 		executionMode: "sequential",
-		async execute(_id, params, signal, _update, ctx: ExtensionContext) {
+		async execute(_id, params, signal, onUpdate, ctx: ExtensionContext) {
 			let fallback = "Use an Owner-approved human distinct from the Builder to review the declared Round read-only and record P0/P1/P2 plus candidate immutability.";
 			try { validateRoundId(params.roundId); }
 			catch (error) { return reviewBlocked(error instanceof Error ? error.message : String(error), fallback); }
@@ -1017,12 +1240,19 @@ export default function harnessFlow(pi: ExtensionAPI): void {
 			let planText: string;
 			let expectedBaseline: string;
 			let reviewMode = "";
-			const scopePaths: string[] = [];
+			let deliveryClass: DeliveryClass = "product";
+			const candidatePaths: string[] = [];
+			const contextPaths: string[] = [];
+			const explicitEnvironmentPaths: string[] = [];
 			try {
+				if (params.scopePaths !== undefined) throw new Error("legacy scopePaths is unsupported; pass explicit candidatePaths plus optional contextPaths/environmentPaths");
 				const planFile = await resolveExistingProjectFile(ctx.cwd, params.planPath);
 				planPath = planFile.relativePath;
 				if (!planPath.startsWith("operations/planning/")) throw new Error("review requires a project-local Plan path");
 				planText = await readFile(planFile.absolutePath, "utf8");
+				const planDeliveryClass = parseDeliveryClass(extractUniqueMetadata(planText, "Delivery class")) ?? "product";
+				if (params.deliveryClass !== planDeliveryClass) throw new Error(`review deliveryClass ${params.deliveryClass} conflicts with approved Plan delivery class ${planDeliveryClass}`);
+				deliveryClass = planDeliveryClass;
 				if (!planIsApproved(planText)) throw new Error("review Plan lacks unique authoritative `Plan approval: approved` metadata");
 				const planRound = parsePlanRound(planText, params.roundId);
 				if (!planRound || planRound.status !== "in_progress") throw new Error(`Round ${params.roundId} must be declared uniquely as in_progress for Review`);
@@ -1050,65 +1280,129 @@ export default function harnessFlow(pi: ExtensionAPI): void {
 					if (ids.at(-1) !== params.roundId) throw new Error("final integrated Review must belong to the last planned Round");
 					for (const id of ids.slice(0, -1)) if (!effective.has(id)) throw new Error(`prior Round ${id} is not accepted effective`);
 				}
-				for (const item of params.scopePaths.slice(0, 100)) {
-					scopePaths.push((await resolveExistingProjectFile(ctx.cwd, item)).relativePath);
+				for (const item of params.candidatePaths.slice(0, 100)) {
+					const path = await resolveCandidateProjectPath(ctx.cwd, item);
+					if (deliveryClass === "product" && isGovernanceLayerPath(path)) throw new Error("product Review candidate cannot include .pi / harness governance-layer paths");
+					candidatePaths.push(path);
 				}
-				fallback = manualReviewFallback({ roundId: params.roundId, role: params.reviewRole, planPath, workLogPath, reviewArtifactPath, baselineRef: expectedBaseline });
+				if (candidatePaths.length === 0) throw new Error("review candidatePaths must declare at least one candidate file");
+				for (const item of (params.contextPaths ?? []).slice(0, 100)) contextPaths.push((await resolveExistingProjectFile(ctx.cwd, item)).relativePath);
+				for (const item of (params.environmentPaths ?? []).slice(0, 100)) explicitEnvironmentPaths.push((await resolveExistingProjectFile(ctx.cwd, item)).relativePath);
+				contextPaths.push("AGENTS.md", planPath, workLogPath);
+				fallback = manualReviewFallback({
+					roundId: params.roundId,
+					role: params.reviewRole,
+					planPath,
+					workLogPath,
+					reviewArtifactPath,
+					baselineRef: expectedBaseline,
+					deliveryClass,
+					candidatePaths: uniqueSorted(candidatePaths),
+					contextPaths: uniqueSorted(contextPaths),
+					environmentPaths: uniqueSorted(explicitEnvironmentPaths),
+				});
 			} catch (error) {
 				return reviewBlocked(redactSecrets(error instanceof Error ? error.message : String(error)).slice(0, 1200), fallback);
 			}
 			if (reviewMode !== "spawned_pi_process") return reviewBlocked("owning Round requires approved distinct human_review; automatic Pi spawn is not authorized", fallback);
 
-			const auth = await ctx.modelRegistry.getApiKeyAndHeaders(ctx.model);
-			if (!auth.ok) return reviewBlocked(`provider/auth unavailable: ${auth.error}`, fallback);
+			const reviewRunId = randomUUID();
+			let auth: { ok: true; apiKey?: string; env?: Record<string, string> } | undefined;
 
 			let before: GitSnapshot;
 			let baselineCommit: string;
 			let diff: string;
-			let changedPaths: string[];
+			let baselineChangedPaths: string[];
+			let environmentPaths: string[];
 			let untrackedEvidence: string;
 			try {
 				baselineCommit = (await runGit(ctx.cwd, ["rev-parse", "--verify", `${expectedBaseline}^{commit}`])).trim();
-				const rawDiff = await runGit(ctx.cwd, ["diff", "--raw", "--no-abbrev", "-z", baselineCommit, "--"]);
+				const rawDiff = await runGit(ctx.cwd, ["diff", "--raw", "--no-abbrev", "-z", baselineCommit, "--", ...candidatePaths]);
 				if (/(?:^|\0):(?:160000\s|\d{6}\s160000\s)/.test(rawDiff)) throw new Error("baseline candidate contains a gitlink conversion/deletion and requires distinct-human or OS-isolated review");
-				changedPaths = nulList(await runGit(ctx.cwd, ["diff", "--name-only", "-z", baselineCommit, "--"]));
-				before = await captureGitSnapshot(ctx.cwd, changedPaths);
-				changedPaths = [...new Set([...changedPaths, ...before.candidatePaths])].sort();
-				diff = await runGit(ctx.cwd, ["diff", "--no-ext-diff", "--binary", "--full-index", "--unified=60", baselineCommit, "--"]);
-				if (changedPaths.length === 0) throw new Error("review candidate is empty");
-				untrackedEvidence = await collectUntrackedEvidence(ctx.cwd, changedPaths);
+				baselineChangedPaths = nulList(await runGit(ctx.cwd, ["diff", "--name-only", "-z", baselineCommit, "--"]));
+				before = await captureGitSnapshot(ctx.cwd, candidatePaths);
+				environmentPaths = uniqueSorted([...baselineChangedPaths, ...before.environmentPaths, ...explicitEnvironmentPaths].filter((path) => !candidatePaths.includes(path)));
+				diff = await runGit(ctx.cwd, ["diff", "--no-ext-diff", "--binary", "--full-index", "--unified=60", baselineCommit, "--", ...candidatePaths]);
+				untrackedEvidence = await collectUntrackedEvidence(ctx.cwd, candidatePaths);
 			} catch (error) {
-				return reviewBlocked(`candidate snapshot failed: ${error instanceof Error ? error.message : String(error)}`, fallback);
+				return reviewBlocked(`candidate snapshot failed: ${error instanceof Error ? error.message : String(error)}`, fallback, { reviewRunId });
 			}
+			const authResult = await ctx.modelRegistry.getApiKeyAndHeaders(ctx.model);
+			if (!authResult.ok) {
+				const attempt: ReviewAttemptRecord = {
+					runId: reviewRunId,
+					reviewRole: params.reviewRole,
+					roundId: params.roundId,
+					candidateHash: before.candidateHash,
+					decision: "blocked",
+					blockingCount: 1,
+					findings: [],
+					createdAt: new Date().toISOString(),
+				};
+				reviewAttempts.push(attempt);
+				pi.appendEntry("harness-review-attempt", attempt);
+				return automatedReviewCapabilityBlocked(`provider/auth unavailable: ${authResult.error}`, fallback, { reviewRunId, attempt, immutability: { before, after: "not started", unchanged: true } });
+			}
+			auth = authResult;
 
 			let tempDir: string | undefined;
 			let processResult: ProcessResult | undefined;
 			let after: GitSnapshot | undefined;
+			const phaseHistory: Array<{ phase: string; at: string; elapsedMs?: number }> = [];
+			let reviewerPid: number | undefined;
+			let currentPreflight: Record<string, unknown> = {};
+			const markPhase = (phase: string, extra: Record<string, unknown> = {}) => {
+				phaseHistory.push({ phase, at: new Date().toISOString(), ...(typeof extra.elapsedMs === "number" ? { elapsedMs: extra.elapsedMs } : {}) });
+				onUpdate?.({ content: [{ type: "text", text: `Harness review phase: ${phase}` }], details: { phase, phaseHistory, reviewRunId, preflight: currentPreflight, reviewerPid, ...extra } });
+				if (ctx.hasUI) ctx.ui.setStatus("harness-review", `${params.roundId} ${params.reviewRole}: ${phase}`);
+			};
 			try {
 				tempDir = await mkdtemp(join(tmpdir(), "harness-flow-review-"));
 				const reviewRoot = join(tempDir, "review-root");
-				await prepareConfinedReviewRoot(ctx.cwd, reviewRoot, ["AGENTS.md", planPath, workLogPath, reviewArtifactPath, ...changedPaths, ...scopePaths]);
-				const bundlePath = join(reviewRoot, ".review", "review-bundle.md");
+				await mkdir(reviewRoot, { recursive: true });
+				const bundlePath = join(reviewRoot, "review-bundle.md");
+				await copyReviewInputs(ctx.cwd, reviewRoot, uniqueSorted([...candidatePaths, ...contextPaths]));
 				const bundle = buildReviewBundle({
 					role: params.reviewRole,
 					roundId: params.roundId,
+					deliveryClass,
 					planPath,
 					workLogPath,
 					reviewArtifactPath,
 					baselineRef: baselineCommit,
 					candidateSummary: redactSecrets(params.candidateSummary).slice(0, 20_000),
 					validationSummary: redactSecrets(params.validationSummary).slice(0, 30_000),
-					scopePaths,
+					candidatePaths: uniqueSorted(candidatePaths),
+					contextPaths: uniqueSorted(contextPaths),
+					environmentPaths,
 					head: before.head,
 					status: before.status.replaceAll("\0", "\n"),
-					changedPaths,
+					baselineChangedPaths,
 					diff,
 					untrackedEvidence,
 				});
-				await mkdir(dirname(bundlePath), { recursive: true, mode: 0o700 });
 				await writeFile(bundlePath, bundle, { encoding: "utf8", mode: 0o600 });
+				const estimatedSeconds = Math.min(params.timeoutSeconds ?? 600, Math.max(30, 20 + candidatePaths.length + contextPaths.length));
+				currentPreflight = {
+					reviewRole: params.reviewRole,
+					roundId: params.roundId,
+					deliveryClass,
+					method: "temporary_copied_review_root_with_bundle",
+					candidatePaths: uniqueSorted(candidatePaths),
+					contextPaths: uniqueSorted(contextPaths),
+					environmentPaths,
+					productGovernanceInclusion: deliveryClass === "governance_maintenance" ? "governance-layer candidate allowed by approved Plan metadata" : "product candidate excludes .pi / harness governance layer",
+					validationEvidenceSource: "caller validationSummary plus copied context inputs",
+					evidenceSource: "approved Plan, work log, candidate files, Git diff/status, and caller summaries",
+					timeoutSeconds: params.timeoutSeconds ?? 600,
+					timeoutReason: "bounded fixed-Round Independent Review child process",
+					estimatedSeconds,
+					reviewerModel: `${ctx.model.provider}/${ctx.model.id}`,
+					reviewerModelSource: "active Pi session resolved model",
+				};
+				markPhase(`preflight ready: role=${params.reviewRole}; round=${params.roundId}; delivery=${deliveryClass}; method=temporary_copied_review_root_with_bundle; candidate=${candidatePaths.length}; context=${uniqueSorted(contextPaths).length}; environment=${environmentPaths.length}; product-governance=${currentPreflight.productGovernanceInclusion}; evidence=${currentPreflight.evidenceSource}; validation=${currentPreflight.validationEvidenceSource}; model=${ctx.model.provider}/${ctx.model.id}; timeout=${params.timeoutSeconds ?? 600}s; timeoutReason=${currentPreflight.timeoutReason}; estimate=${estimatedSeconds}s`);
 
-				const reviewerPrompt = `Read AGENTS.md, ${planPath}, ${workLogPath}, every changed path listed in @.review/review-bundle.md, and every additional required scope path. Review the complete ${params.reviewRole} candidate read-only. The bundle contains the tracked baseline diff and bounded contents for every untracked candidate file. Do not modify files, run commands, commit, push, or write ${reviewArtifactPath}. Verify contract, correctness, regression, security, fallback, bootstrap, portability, evidence, and Round ownership. Findings must cite file/line or bundle evidence. End with exactly one single-line JSON record prefixed by ${REVIEW_MARKER} using this schema: {"decision":"pass|changes_required|blocked","findings":[{"severity":"P0|P1|P2","summary":"...","evidence":"..."}],"limitations":["..."]}. A pass requires zero P0/P1. Do not wrap the final JSON in a code fence.`;
+				const reviewerPrompt = `Read @${bundlePath}, AGENTS.md, ${planPath}, ${workLogPath}, and the Context Scope Paths in the bundle from the temporary review root. Review only the Candidate Scope Paths as the ${params.reviewRole} candidate; context and environment / dirty-worktree paths are not candidate and must not receive P0/P1/P2 merely by being in the bundle. Delivery class is ${deliveryClass}; product candidates must treat .pi / harness as non-goal unless explicitly approved governance_maintenance. Do not modify files, run commands, commit, push, or write ${reviewArtifactPath}. Verify contract, correctness, regression, security, fallback, bootstrap, portability, evidence, and Round ownership. Findings must cite file/line or bundle evidence. End with exactly one single-line JSON record prefixed by ${REVIEW_MARKER} using this schema: {"decision":"pass|changes_required|blocked","findings":[{"severity":"P0|P1|P2","summary":"...","evidence":"..."}],"limitations":["..."]}. A pass requires zero P0/P1. Do not wrap the final JSON in a code fence.`;
 				const args = [
 					"--no-session",
 					"--no-approve",
@@ -1124,34 +1418,38 @@ export default function harnessFlow(pi: ExtensionAPI): void {
 					"-p",
 					reviewerPrompt,
 				];
-				if (auth.apiKey) args.push("--api-key", auth.apiKey);
 				const invocation = getPiInvocation(args);
 				const env = buildReviewerEnv(auth);
+				markPhase("spawn reviewer");
 				processResult = await runProcess(invocation.command, invocation.args, {
 					cwd: reviewRoot,
 					env,
 					timeoutMs: (params.timeoutSeconds ?? 600) * 1000,
 					signal,
 					maxBytes: MAX_REVIEW_OUTPUT_BYTES,
+					onStart: (pid) => { reviewerPid = pid; markPhase(`reviewer running: pid=${pid ?? "unknown"}; elapsed=0ms; timeout=${params.timeoutSeconds ?? 600}s`, { reviewerPid: pid, elapsedMs: 0, timeoutSeconds: params.timeoutSeconds ?? 600 }); },
+					onProgress: (elapsedMs) => markPhase(`reviewer running: pid=${reviewerPid ?? "unknown"}; elapsed=${elapsedMs}ms; timeout=${params.timeoutSeconds ?? 600}s`, { reviewerPid, elapsedMs, timeoutSeconds: params.timeoutSeconds ?? 600 }),
 				});
-				after = await captureGitSnapshot(ctx.cwd, changedPaths);
-				const immutable = snapshotsEqual(before, after);
+				markPhase(`reviewer exited: pid=${processResult.pid ?? "unknown"}; elapsed=${processResult.durationMs}ms`);
+				after = await captureGitSnapshot(ctx.cwd, candidatePaths);
+				const candidateImmutable = candidateSnapshotsEqual(before, after);
+				const statusUnchanged = gitStatusUnchanged(before, after);
 				const processEvidence = {
 					builderPid: process.pid,
 					reviewerPid: processResult.pid,
 					distinctProcess: processResult.pid !== undefined && processResult.pid !== process.pid,
 					invocation: {
 						command: invocation.displayCommand,
-						args: redactReviewInvocationArgs(args, tempDir!),
+						args: args.map((arg) => arg.includes(tempDir!) ? arg.replaceAll(tempDir!, "<temporary-review-root>") : arg),
 					},
 					mode: "print",
+					method: "temporary_copied_review_root_with_bundle",
 					noSession: true,
 					projectResourcesDisabled: true,
 					toolBoundary: [...READ_ONLY_TOOLS],
 					writableShell: false,
 					environmentBoundary: "allowlisted runtime variables plus active provider auth only",
 					readConfinement: false,
-					readConfinementBoundary: "no OS-level sandbox; reviewer runs in a temporary copied review root with strict read-only Pi tools and no write/shell tools",
 					provider: ctx.model.provider,
 					model: ctx.model.id,
 					thinkingLevel: ctx.thinkingLevel ?? "medium",
@@ -1164,19 +1462,43 @@ export default function harnessFlow(pi: ExtensionAPI): void {
 					durationMs: processResult.durationMs,
 					stdout: processResult.stdout,
 					stderr: processResult.stderr,
+					phaseHistory,
+					preflight: currentPreflight,
 				};
-				const immutability = { before, after, unchanged: immutable };
+				const immutability = { before, after, unchanged: candidateImmutable, candidateUnchanged: candidateImmutable, gitStatusUnchanged: statusUnchanged };
+				const recordAttempt = (attemptDecision: "pass" | "changes_required" | "blocked", findings: ReviewFinding[] = []): ReviewAttemptRecord => {
+					const attempt: ReviewAttemptRecord = {
+						runId: reviewRunId,
+						reviewRole: params.reviewRole,
+						roundId: params.roundId,
+						candidateHash: before.candidateHash,
+						decision: attemptDecision,
+						blockingCount: findings.filter((finding) => finding.severity === "P0" || finding.severity === "P1").length + (attemptDecision === "blocked" ? 1 : 0),
+						findings,
+						createdAt: new Date().toISOString(),
+					};
+					reviewAttempts.push(attempt);
+					pi.appendEntry("harness-review-attempt", attempt);
+					return attempt;
+				};
 				if (!processEvidence.distinctProcess) {
-					return reviewBlocked("reviewer process was not distinct", fallback, { processEvidence, immutability });
+					const attempt = recordAttempt("blocked");
+					return automatedReviewCapabilityBlocked("reviewer process was not distinct", fallback, { processEvidence, immutability, attempt });
 				}
-				if (!immutable) {
-					return reviewBlocked("candidate changed during review", fallback, { processEvidence, immutability });
+				if (!candidateImmutable) {
+					const attempt = recordAttempt("blocked");
+					return reviewBlocked("candidate changed during review", fallback, { processEvidence, immutability, attempt });
 				}
 				if (processResult.code !== 0 || processResult.timedOut || processResult.aborted || processResult.truncated) {
-					return reviewBlocked("review child failed, timed out, was aborted, or produced truncated evidence", fallback, { processEvidence, immutability });
+					const attempt = recordAttempt("blocked");
+					return automatedReviewCapabilityBlocked("review child failed, timed out, was aborted, or produced truncated evidence", fallback, { processEvidence, immutability, attempt });
 				}
+				markPhase("parse structured result");
 				const parsed = parseReviewOutput(processResult.stdout);
-				if (!parsed) return reviewBlocked("review output did not contain the required structured result", fallback, { processEvidence, immutability });
+				if (!parsed) {
+					const attempt = recordAttempt("blocked");
+					return reviewBlocked("review output did not contain the required structured result", fallback, { processEvidence, immutability, attempt });
+				}
 				const counts = {
 					P0: parsed.findings.filter((item) => item.severity === "P0").length,
 					P1: parsed.findings.filter((item) => item.severity === "P1").length,
@@ -1184,6 +1506,33 @@ export default function harnessFlow(pi: ExtensionAPI): void {
 				};
 				let decision = parsed.decision;
 				if (decision === "pass" && (counts.P0 > 0 || counts.P1 > 0)) decision = "changes_required";
+				const priorBlockingDifferentHash = reviewAttempts.some((item) => item.reviewRole === params.reviewRole && item.roundId === params.roundId && item.candidateHash !== before.candidateHash && item.findings.some((finding) => finding.severity === "P0" || finding.severity === "P1"));
+				const fixEvidence = params.fixEvidence?.trim() ? redactSecrets(params.fixEvidence.trim()).slice(0, 4000) : undefined;
+				if (decision === "pass" && priorBlockingDifferentHash && !fixEvidence) {
+					const attempt = recordAttempt("blocked");
+					return reviewBlocked("missing_fix_evidence: changed-hash re-review pass cannot close prior P0/P1 findings without recorded Fix/disposition evidence", fallback, { processEvidence, immutability, attempt });
+				}
+				const attempt: ReviewAttemptRecord = {
+					runId: reviewRunId,
+					reviewRole: params.reviewRole,
+					roundId: params.roundId,
+					candidateHash: before.candidateHash,
+					decision,
+					blockingCount: counts.P0 + counts.P1 + (decision === "blocked" ? 1 : 0),
+					findings: parsed.findings,
+					fixEvidence,
+					createdAt: new Date().toISOString(),
+				};
+				const conflictingAttempt = findSameHashConflict(reviewAttempts, attempt);
+				if (conflictingAttempt) {
+					attempt.decision = "blocked";
+					attempt.blockingCount = Math.max(1, attempt.blockingCount);
+					reviewAttempts.push(attempt);
+					pi.appendEntry("harness-review-attempt", attempt);
+					return reviewBlocked("review_inconsistency: same candidate hash has conflicting blocking/pass decisions; do not use last-pass-wins", fallback, { processEvidence, immutability, attempt, conflictingAttempt, reviewInconsistency: true });
+				}
+				reviewAttempts.push(attempt);
+				pi.appendEntry("harness-review-attempt", attempt);
 				const nextAction = decision === "pass"
 					? "Builder must write the durable review artifact, disposition every P2, and continue to the declared acceptance gate."
 					: decision === "changes_required"
@@ -1197,14 +1546,16 @@ export default function harnessFlow(pi: ExtensionAPI): void {
 					counts,
 					processEvidence,
 					immutability,
+					attempt,
+					attemptHistory: reviewAttempts.filter((item) => item.roundId === params.roundId && item.reviewRole === params.reviewRole),
 					manualFallback: fallback,
 					nextAction,
 				});
 			} catch (error) {
-				try { after = await captureGitSnapshot(ctx.cwd, changedPaths); } catch { /* captured as unavailable */ }
+				try { after = await captureGitSnapshot(ctx.cwd, candidatePaths); } catch { /* captured as unavailable */ }
 				return reviewBlocked(error instanceof Error ? error.message : String(error), fallback, {
 					processEvidence: processResult,
-					immutability: after ? { before, after, unchanged: snapshotsEqual(before, after) } : { before, after: "unavailable", unchanged: false },
+					immutability: after ? { before, after, unchanged: candidateSnapshotsEqual(before, after), candidateUnchanged: candidateSnapshotsEqual(before, after), gitStatusUnchanged: gitStatusUnchanged(before, after) } : { before, after: "unavailable", unchanged: false },
 				});
 			} finally {
 				if (tempDir) await rm(tempDir, { recursive: true, force: true });

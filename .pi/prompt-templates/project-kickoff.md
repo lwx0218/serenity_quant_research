@@ -69,6 +69,8 @@ Every greenfield/no-baseline orchestration turn must end in exactly one state:
      - in-scope / out-of-scope
      - architecture and data/domain ownership decisions
      - files or surfaces expected to change
+     - `candidate scope`, `context scope`, and `environment / dirty-worktree scope`; bundle membership and Git changed/untracked paths do not define candidate scope
+     - governance-layer status: `.pi/` / harness is a product non-goal unless the Owner explicitly approves a separate governance maintenance task
      - acceptance criteria and exact validation strategy
      - assumptions, risks, and backlog
      - delivery route/rounds and review mode when justified
@@ -111,4 +113,8 @@ On cancellation/capability failure—or when the extension is unavailable—gene
 
 For non-fixed work use `/name build-<task-slug>`. The copyable manual handoff remains supported. Do not claim that local `harness-flow` is a public package, and never use mutable chat history as durable authority.
 
-`/new` is not Independent Review. A fixed-round Plan requires every Round's current Builder to automatically call `harness_run_independent_review` after verification. It must establish a distinct non-interactive/no-session/strict read-only child and Git immutability evidence, or return `blocked` / use an approved distinct `human_review` fallback. P0/P1 stays in the same Round through Fix/Verify/Re-review, and the last Round also requires a separate `final_integrated` Review before its pre-commit gate.
+`/new` is not Independent Review. A fixed-round Plan requires every Round's current Builder to automatically call `harness_run_independent_review` after verification. It must establish a distinct non-interactive/no-session/strict read-only child and Git immutability evidence, or mark `automated_review_capability_blocked` and report candidate/gate impact to the Owner. The Owner chooses a review limitation, approved distinct `human_review`, separate governance maintenance, review mode/Plan adjustment, or pause; if Independent Review remains required, a limitation is not a pass.
+
+Independent Review grades only `candidate scope`. `context scope` is read-only judgment input; `environment / dirty-worktree scope` is transparency/immutability evidence. 进入 review bundle 不等于进入 candidate scope。Git changed/untracked paths 不自动进入当前产品 Round / task 的验收范围。项目开发过程中，`.pi/` / harness 治理层问题不得被擅自修改；do not automatically repair Harness or repeat reload/re-review to fix tooling. Default Review does not require OS-level sandbox / bwrap.
+
+P0/P1 candidate findings stay in the same Round through Fix/Verify/Re-review, and the last Round also requires a separate `final_integrated` Review before its pre-commit gate.

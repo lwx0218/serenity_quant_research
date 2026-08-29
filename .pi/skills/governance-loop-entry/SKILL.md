@@ -135,10 +135,20 @@ When active:
 - `Round` is the sole acceptance-bearing unit; `Phase` may only be non-authoritative narrative grouping
 - each Round declares in its owning section: Round ID, one primary implementation session name, independently reviewable delivery boundary, non-goals, dependencies/Definition of Ready, expected change surfaces, exact validation strategy, distinct per-Round/final-integrated artifact paths when applicable, Independent Review mode, acceptance evidence, exact next gate, blockers/assumptions, and blocked/rebaseline conditions
 - a continuation such as `R1-<slug>-cont-2` remains in the same Round and cannot change its delivery or acceptance gate
-- the current Builder automatically starts required per-Round Independent Review after automated verification
-- P0/P1 remains in the Round through automatic Fix/Verify/Re-review; P2 receives a disposition
+- the implementation session may call `harness_update_round_progress` to show truthful control stages without project writes or fabricated percentages
+- the current Builder automatically starts required per-Round Independent Review after automated verification, passing explicit delivery class plus candidate/context/environment scope inputs
+- P0/P1 remains in the Round through automatic Fix/Verify/Re-review; P2 receives a disposition; same-hash blocking/pass inconsistency is recorded as `review_inconsistency` instead of last-pass-wins
 - after all planned delivery, the last Round runs a separate Final Integrated Independent Review before pre-commit acceptance; no hidden repair Round is created
-- inability to establish capability/auth/read-only reviewer isolation is `blocked` or uses an approved distinct-human fallback
+- inability to establish capability/auth/read-only reviewer isolation is `automated_review_capability_blocked`; stop automatic Harness repair/reload loops, report candidate/gate impact, and let the Owner select a limitation, approved distinct-human fallback, separate governance maintenance, review mode/Plan adjustment, or pause
+- if Independent Review remains required, a limitation is not a pass; default Review does not require OS-level sandbox / bwrap
+
+## Review Scope And Governance Layer
+
+Independent Review grades only `candidate scope`: the actual task/Round delivery submitted for acceptance. `context scope` is the read-only contract, Plan/spec, source, tests, baseline, and evidence needed for judgment. `environment / dirty-worktree scope` records changed/untracked, pre-existing local files, tooling dirs, and residue for transparency/immutability only.
+
+进入 review bundle 不等于进入 candidate scope。Git changed/untracked paths 不自动进入当前产品 Round / task 的验收范围。
+
+项目开发过程中，`.pi/` / harness 治理层问题不得被擅自修改。Treat `.pi/`, harness-flow, extensions, skills, prompts, settings, and handoff/review tooling as product non-goals unless the Owner explicitly approved governance maintenance. Record defects as a separate `governance maintenance issue` or `review limitation`; do not rewrite Plan/AGENTS/evidence, repair Harness, or repeat reload/re-review inside a product task. Severe blockers still require explicit Owner authorization and a separate governance maintenance candidate.
 
 ## Durable Evidence
 
@@ -155,7 +165,7 @@ State `bootstrap-ready` versus `runtime-ready` accurately.
 
 ## Session Handoff And Review
 
-After approved Plan persistence, read the fixed Round's declared primary implementation session name and call `harness_offer_session_handoff`. It validates durable Plan/Round/session metadata, shows the session/target/summary, requests one Owner confirmation, and on confirm creates a parent-linked session, names it, and submits the prompt once.
+After approved Plan persistence, read the fixed Round's declared primary implementation session name and call `harness_offer_session_handoff`. It validates durable Plan/Round/session metadata, shows the session/target/summary, requests one Owner confirmation, seeds the Round progress widget, and on confirm creates a parent-linked session, names it, and submits the prompt once.
 
 On cancel/capability failure, or if `harness-flow` is unavailable, generate `/session-handoff <declared-session-name>` and tell the human:
 

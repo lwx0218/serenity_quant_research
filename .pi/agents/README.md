@@ -15,4 +15,4 @@
 - `grill-*`：route 不稳定时按 distinct trigger 启用，共享 bounded question budget
 - `domain-modeling`：仅在 domain ambiguity material 时启用；approval 前 no-write，之后才 record
 
-默认不要求 planner、coder、reviewer 全量出场。只有 fixed-round Plan 才要求每个 Round 由当前 Builder 自动调用 `harness_run_independent_review` 发起 capability-checked distinct read-only child Review、在原 Round Fix/Verify/Re-review P0/P1，并在全部 delivery 完成后执行 Final Integrated Independent Review。child 不写 artifact；Builder 留痕。simple path 仍保持轻量；`/new` 不是 Review。
+默认不要求 planner、coder、reviewer 全量出场。只有 fixed-round Plan 才要求每个 Round 由当前 Builder 自动调用 `harness_run_independent_review` 发起 capability-checked distinct read-only child Review、显式声明 candidate/context/environment scope、在原 Round Fix/Verify/Re-review P0/P1，并在全部 delivery 完成后执行 Final Integrated Independent Review。child 不写 artifact；Builder 留痕。`harness_update_round_progress` 只显示 truthful control stages（不是百分比，且不写 project artifacts）。simple path 仍保持轻量；`/new` 不是 Review。

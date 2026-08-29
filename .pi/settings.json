@@ -3,10 +3,6 @@
   "project_root": ".",
   "instructions_file": "AGENTS.md",
   "agents_doc": ".pi/agents/README.md",
-  "skills_dir": ".pi/skills",
-  "prompt_templates_dir": ".pi/prompt-templates",
-  "prompts": [
-    "prompt-templates"
-  ],
+  "prompts": ["prompt-templates"],
   "enableSkillCommands": true
 }
