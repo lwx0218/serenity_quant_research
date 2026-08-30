@@ -2,8 +2,8 @@
 
 Plan approval: approved
 Git baseline: 7cf1b95d23a5da3dd53766049557a67ed18fae73
-Accepted-effective Rounds: R1, R2, R3, R4
-Active Round: none; next Round R5 requires separate Owner start decision
+Accepted-effective Rounds: R1, R2, R3, R4, R5
+Active Round: none; next Round R6 requires separate Owner start decision
 Branch: product-reboot
 Approval authority: Owner structured approval after complete Plan Preview
 Approval scope: persist this baseline and hand off R1; no implementation, commit, push, or automatic multi-Round progression
@@ -116,7 +116,7 @@ Out of scope:
 | R2 | R2-research-shell | 交付 root research entry、minimal research top navigation、research layout，并把 primary research navigation 与 secondary admin routes 分离。 | 1440px/1920px shell screenshots；root/navigation/admin-route assertions；full validation；Independent Review evidence 与 P2 dispositions | accepted |
 | R3 | R3-cpo-explorer-vertical-slice | 交付一个 production-quality SiPh PIC Flat/3D Explorer vertical slice。 | 1440px/1920px Flat/3D evidence；view-switch/reset/keyboard sequence；focused/full validation；Independent Review evidence 与 P2 dispositions | accepted |
 | R4 | R4-full-cpo-explorer | 将已接受的 Explorer interaction 扩展到完整 approved CPO taxonomy。 | Full component coverage matrix；1440px/1920px Explorer evidence；interaction recording；full validation；valid Attempt 3 review finding、P1 fix evidence 与 Owner-accepted post-fix re-review limitation | accepted |
-| R5 | R5-company-research-experience | 交付 Card/List Company Pool、context-preserving Quick Drawer 与 entity-centric Full Company Detail。 | 1440px/1920px Card/List/Drawer/Detail evidence；context/filter/scroll sequence；policy regression；full validation；Independent Review evidence 与 P2 dispositions | pending |
+| R5 | R5-company-research-experience | 交付 Card/List Company Pool、context-preserving Quick Drawer 与 entity-centric Full Company Detail。 | 1440px/1920px Card/List/Drawer/Detail evidence；context/filter/scroll sequence；policy regression；full validation；Independent Review evidence 与 P2 dispositions | accepted |
 | R6 | R6-readonly-research-workspace | 使用既有 relationships 交付 read-only linked-object Workspace。 | Schema-unchanged evidence；1440px/1920px component/company Workspace evidence；navigation/context sequence；full validation；Independent Review evidence 与 P2 dispositions | pending |
 | R7 | R7-reboot-integration-cleanup | 验证 Explorer-to-Company-to-Workspace journey，修复 Evidence review endpoint 的 human actor enforcement，并只删除 proven-unreferenced legacy frontend。 | End-to-end journey evidence；machine-reviewer rejection test；cleanup map；full regression/portability；per-Round 与 Final Integrated Independent Review evidence | pending |
 
@@ -247,8 +247,8 @@ Out of scope:
 - Primary Pi implementation session: R5-company-research-experience
 - Goal: 交付 approved three-depth company research experience，并保留 Explorer context 与 research states。
 - Handoff contracts: AGENTS.md; operations/orchestration/independent-review-and-round-scope-standard.md; src/SerenityQuantResearch/SerenityQuantResearch.Web/AGENTS.md; docs/product/README.md; docs/product/experience-map.md; docs/product/company-research-spec.md; docs/product/visual-language.md; docs/product/acceptance-contract.md; docs/research-baseline/evidence-contract.md; operations/planning/research-experience-reboot.md; operations/reviews/reboot-p3-code-disposition.md; operations/reviews/research-experience-reboot-r4-independent-review.md
-- Latest work log: operations/work_logs/research-experience-reboot-r4.md
-- Latest review: operations/reviews/research-experience-reboot-r4-independent-review.md
+- Latest work log: operations/work_logs/research-experience-reboot-r5.md
+- Latest review: operations/reviews/research-experience-reboot-r5-independent-review.md
 - Review work log: operations/work_logs/research-experience-reboot-r5.md
 - Non-goals: No Company Comparison; no default SleekGrid-first product; no default seven-tab detail; no change to exposure/evidence verification or audit semantics; no Workspace implementation
 - Dependencies / Definition of Ready: R4 is accepted-effective; Explorer context contract is stable; R1 disposition identifies reusable Company services, routes, and policies
@@ -266,8 +266,9 @@ Out of scope:
 - Round review: operations/reviews/research-experience-reboot-r5-independent-review.md
 - Final integrated review: operations/reviews/research-experience-reboot-final-integrated-review.md
 - Acceptance evidence: 1440px and 1920px Card/List/Drawer/Detail evidence; context/filter/scroll sequence; policy regression record; full automated validation record; Independent Review evidence and P2 dispositions
-- Product Owner acceptance gate: Owner accepts company experience before R6
-- Exact next gate: Product Owner R5 acceptance; authorized acceptance commit/post-commit verify if requested; stop. R6 requires separate Owner start decision.
+- R5 review decision: distinct read-only reviewer returned `OK` with no findings/blockers after the intermediate scroll-preservation failure was fixed and the final validation suite passed.
+- Product Owner acceptance gate: Owner accepted the R5 company experience on 2026-08-30 and authorized the acceptance commit.
+- Exact next gate: R5 accepted-effective closeout after authorized acceptance commit and post-commit verification; stop. R6 requires separate Owner start decision.
 - Blockers / assumptions: Existing service aggregation and stable IDs are reusable; Open Access remains local-only
 - Blocked / rebaseline conditions: Card/List → Quick Drawer → Full Detail path must change; persistent schema is required; evidence/audit semantics must change; new persistent writing is introduced
 

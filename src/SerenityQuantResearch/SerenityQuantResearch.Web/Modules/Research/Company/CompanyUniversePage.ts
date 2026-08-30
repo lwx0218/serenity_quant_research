@@ -1,7 +1,4 @@
-import { notifyError, notifySuccess, resolveUrl } from "@serenity-is/corelib";
-import { Column, FrozenLayout, SleekGrid } from "@serenity-is/sleekgrid";
-import { hasPermission, userDefinition } from "../../Administration/User/Authentication/Authorization";
-import { CompanyExposureService } from "../../ServerTypes/Research/CompanyExposureService";
+import { notifyError, resolveUrl } from "@serenity-is/corelib";
 import { CompanyUniverseService } from "../../ServerTypes/Research/CompanyUniverseService";
 import type { ChainNodeResearchResponse } from "../../ServerTypes/Research/Services.ChainNodeResearchResponse";
 import type { CompanyEvidenceSummary } from "../../ServerTypes/Research/Services.CompanyEvidenceSummary";
@@ -13,21 +10,44 @@ import type { CompanyUniverseRequest } from "../../ServerTypes/Research/Services
 import type { ResearchNamedLink } from "../../ServerTypes/Research/Services.ResearchNamedLink";
 import "./CompanyUniversePage.css";
 import {
-    CompanyTab,
     compareText,
-    companyTabLabels,
-    companyTabs,
+    defaultCompanyBrowseView,
+    isCompanyBrowseView,
     meaningfulStateLabel,
-    nextTab,
     normalizeCompanyFilters,
-    toggleComparison
+    stateTrustTone
 } from "./CompanyUniverseState";
+import type { CompanyBrowseView } from "./CompanyUniverseState";
 
 interface PageOptions {
     mode?: "universe" | "detail" | "chain";
     companyId?: string;
     chainNodeId?: string;
 }
+
+interface SourceContext {
+    source?: string;
+    componentId?: string;
+    partId?: string;
+    chainNodeId?: string;
+    searchText?: string;
+    role?: string;
+    countryRegion?: string;
+    verificationState?: string;
+    view?: CompanyBrowseView;
+}
+
+const componentLabels: Record<string, string> = {
+    "cpo.mod.thermal": "Thermal / 散热",
+    "cpo.mod.host-asic": "Host ASIC",
+    "cpo.mod.eic": "EIC",
+    "cpo.mod.pic": "SiPh PIC",
+    "cpo.mod.laser": "Laser",
+    "cpo.mod.receiver": "Receiver / TIA",
+    "cpo.mod.fiber-interface": "Fiber Interface",
+    "cpo.mod.cpa-substrate": "CPA / Substrate",
+    "cpo.mod.host-board": "Host Board / PCB"
+};
 
 export default async function pageInit(options?: PageOptions) {
     const app = document.querySelector<HTMLElement>("#company-research-app");
@@ -44,186 +64,153 @@ export default async function pageInit(options?: PageOptions) {
 }
 
 async function initUniverse() {
+    const app = document.querySelector<HTMLElement>("#company-research-app");
     const form = document.querySelector<HTMLFormElement>("#company-filters");
-    const gridHost = document.querySelector<HTMLElement>("#company-grid");
-    const gridError = document.querySelector<HTMLElement>("#company-grid-error");
-    const tableBody = document.querySelector<HTMLTableSectionElement>("#company-table-body");
+    const cardPanel = document.querySelector<HTMLElement>("#company-card-panel");
+    const cardList = document.querySelector<HTMLElement>("#company-card-list");
+    const listPanel = document.querySelector<HTMLElement>("#company-list-panel");
+    const listBody = document.querySelector<HTMLElement>("#company-list-body");
     const count = document.querySelector<HTMLElement>("#company-result-count");
-    const status = document.querySelector<HTMLElement>("#company-grid-status");
-    const comparison = document.querySelector<HTMLElement>("#company-comparison-content");
-    const comparisonStatus = document.querySelector<HTMLElement>("#company-comparison-status");
-    const clearComparison = document.querySelector<HTMLButtonElement>("#company-clear-comparison");
+    const status = document.querySelector<HTMLElement>("#company-pool-status");
     const clearFilters = document.querySelector<HTMLButtonElement>("#company-clear-filters");
-    if (!form || !gridHost || !gridError || !tableBody || !status || !comparison || !comparisonStatus || !clearComparison || !clearFilters)
+    const contextNodes = document.querySelectorAll<HTMLElement>("[data-company-source-context]");
+    const viewButtons = document.querySelectorAll<HTMLButtonElement>("[data-company-view]");
+    const drawer = document.querySelector<HTMLElement>("#company-quick-drawer");
+    const drawerContent = document.querySelector<HTMLElement>("#company-quick-drawer-content");
+    const drawerClose = document.querySelector<HTMLButtonElement>("#company-quick-drawer-close");
+    if (!app || !form || !cardPanel || !cardList || !listPanel || !listBody || !status || !clearFilters || !drawer || !drawerContent || !drawerClose)
         return;
 
     let companies: CompanyUniverseItem[] = [];
-    let selected: string[] = [];
-    let grid: SleekGrid<CompanyUniverseItem> | undefined;
+    let activeView: CompanyBrowseView = defaultCompanyBrowseView;
     let filterOptionsLoaded = false;
     let requestGeneration = 0;
     let searchTimer: ReturnType<typeof setTimeout> | undefined;
-    const forceTable = new URLSearchParams(location.search).get("view") === "table";
+    let drawerOpen = false;
+    let returnFocus: HTMLElement | undefined;
+    let pendingActivationScrollY: number | undefined;
+    let useSourceFilterDefaults = true;
+    const sourceContext = readSourceContext(location.search);
+    if (sourceContext.view)
+        activeView = sourceContext.view;
 
-    const updateComparison = () => {
-        comparison.replaceChildren();
-        clearComparison.disabled = selected.length === 0;
-        comparisonStatus.textContent = selected.length === 0
-            ? "尚未选择公司。可在 SleekGrid 或 fallback 表格中用复选框选择。"
-            : `已选择 ${selected.length}/5 家公司；比较不包含股价、涨跌幅或市场表现排名。`;
-        if (selected.length) {
-            const selectedCompanies = selected.map(id => companies.find(x => x.CompanyId === id)).filter(Boolean) as CompanyUniverseItem[];
-            const table = document.createElement("table");
-            table.className = "table table-sm company-comparison-table";
-            const head = document.createElement("thead");
-            head.innerHTML = "<tr><th>公司</th><th>层级 / 优先级</th><th>角色</th><th>核验状态</th><th>证据覆盖</th><th>新鲜度</th><th>详情</th></tr>";
-            const body = document.createElement("tbody");
-            for (const company of selectedCompanies) {
-                const row = document.createElement("tr");
-                row.append(td(company.Name), td(`${company.UniverseLayer} / ${company.CoveragePriority}`),
-                    td(joinOrGap(company.Roles)), stateCell(company.VerificationStates),
-                    td(`${meaningfulStateLabel(company.EvidenceCoverage)} (${company.ReviewedEvidenceCount}/${company.EvidenceCount})`),
-                    td(meaningfulStateLabel(company.Freshness)), linkCell(companyUrl(company.CompanyId), "打开详情"));
-                body.append(row);
-            }
-            table.append(head, body);
-            const wrap = el("div", undefined, "table-responsive");
-            wrap.append(table);
-            comparison.append(wrap);
+    const refreshContext = () => {
+        const text = sourceContextLabel(sourceContext, form);
+        for (const node of contextNodes)
+            node.textContent = text;
+        app.dataset.sourceContext = text;
+    };
+
+    const setView = (view: CompanyBrowseView) => {
+        activeView = view;
+        app.dataset.view = view;
+        cardPanel.hidden = view !== "card";
+        listPanel.hidden = view !== "list";
+        for (const button of viewButtons) {
+            const active = button.dataset.companyView === view;
+            button.classList.toggle("is-active", active);
+            button.setAttribute("aria-pressed", String(active));
         }
-        syncCheckboxes(selected);
-        grid?.invalidate();
+        status.textContent = view === "card"
+            ? `${companies.length} 家公司 · Card View 默认浏览`
+            : `${companies.length} 家公司 · List View 使用相同筛选与来源 context`;
     };
 
-    const toggle = (companyId: string, checked: boolean) => {
-        const before = selected;
-        selected = checked ? toggleComparison(selected, companyId) : selected.filter(id => id !== companyId);
-        if (checked && before.length === selected.length && !selected.includes(companyId))
-            notifyError("一次最多比较 5 家公司");
-        updateComparison();
-    };
-
-    const renderFallback = () => {
-        tableBody.replaceChildren();
-        if (!companies.length) {
-            const row = document.createElement("tr");
-            const cell = td("没有公司符合当前筛选；该空缺不表示研究对象不存在。");
-            cell.colSpan = 9;
-            cell.className = "company-gap";
-            row.append(cell);
-            tableBody.append(row);
+    const closeDrawer = () => {
+        if (!drawerOpen)
             return;
-        }
-        for (const company of companies) {
-            const row = document.createElement("tr");
-            row.dataset.companyId = company.CompanyId;
-            const selectCell = document.createElement("td");
-            selectCell.append(comparisonCheckbox(company, selected.includes(company.CompanyId), toggle, "fallback"));
-            const identity = document.createElement("td");
-            const link = document.createElement("a");
-            link.href = companyUrl(company.CompanyId);
-            link.textContent = company.Name ?? company.CompanyId;
-            link.dataset.companyId = company.CompanyId;
-            identity.append(link, el("code", company.CompanyId, "company-stable-id"));
-            row.append(selectCell, identity, td(company.Ticker), td(company.Exchange), td(company.CountryRegion),
-                td(joinOrGap(company.Roles)), stateCell(company.VerificationStates),
-                td(`${meaningfulStateLabel(company.EvidenceCoverage)} (${company.ReviewedEvidenceCount}/${company.EvidenceCount})`),
-                td(meaningfulStateLabel(company.Freshness)));
-            tableBody.append(row);
-        }
+        drawerOpen = false;
+        drawer.classList.remove("is-open");
+        drawer.setAttribute("aria-hidden", "true");
+        drawer.hidden = true;
+        app.classList.remove("has-company-drawer");
+        app.dataset.drawerCompanyId = "";
+        returnFocus?.focus({ preventScroll: true });
+        returnFocus = undefined;
     };
 
-    const renderGrid = () => {
-        grid?.destroy();
-        grid = undefined;
-        gridHost.replaceChildren();
-        if (forceTable) {
-            gridHost.hidden = true;
-            gridError.hidden = false;
-            gridError.textContent = "当前使用显式原生表格 fallback 模式；所有公司仍可通过键盘访问。";
-            status.textContent = "表格 fallback 模式";
-            return;
-        }
+    const restoreScroll = (scrollY: number) => {
+        const restore = () => window.scrollTo({ top: scrollY });
+        restore();
+        requestAnimationFrame(restore);
+        setTimeout(restore, 0);
+        setTimeout(restore, 80);
+        setTimeout(restore, 180);
+    };
+
+    const openDrawer = async (companyId: string, trigger?: HTMLElement, activationScrollY = window.scrollY) => {
+        const scrollY = activationScrollY;
+        drawerOpen = true;
+        returnFocus = trigger;
+        drawer.hidden = false;
+        drawer.setAttribute("aria-hidden", "false");
+        drawer.classList.add("is-open");
+        app.classList.add("has-company-drawer");
+        app.dataset.drawerCompanyId = companyId;
+        drawerContent.replaceChildren(el("p", "正在读取 Quick Company Drawer…", "company-loading"));
+        drawerClose.focus({ preventScroll: true });
+        restoreScroll(scrollY);
         try {
-            gridHost.hidden = false;
-            gridError.hidden = true;
-            const columns: Column<CompanyUniverseItem>[] = [
-                { id: "compare", name: "比较", width: 58, minWidth: 58, frozen: true, sortable: false,
-                    format: ctx => comparisonCheckbox(ctx.item!, selected.includes(ctx.item!.CompanyId!), toggle, "grid") },
-                { id: "Name", field: "Name", name: "公司", width: 220, minWidth: 170, frozen: true, sortable: true,
-                    format: ctx => companyLink(ctx.item!) },
-                { id: "Ticker", field: "Ticker", name: "Ticker", width: 88, frozen: true, sortable: true },
-                { id: "Exchange", field: "Exchange", name: "市场", width: 92, sortable: true },
-                { id: "CountryRegion", field: "CountryRegion", name: "地区", width: 85, sortable: true },
-                { id: "UniverseLayer", field: "UniverseLayer", name: "公司池层级", width: 125, sortable: true },
-                { id: "CoveragePriority", field: "CoveragePriority", name: "覆盖优先级", width: 105, sortable: true },
-                { id: "Roles", name: "角色", width: 145, sortable: true, format: ctx => joinOrGap(ctx.item?.Roles) },
-                { id: "VerificationStates", name: "核验状态", width: 180, sortable: true,
-                    format: ctx => meaningfulStateLabel(ctx.item?.VerificationStates?.[0]) },
-                { id: "EvidenceCoverage", field: "EvidenceCoverage", name: "证据覆盖", width: 150, sortable: true,
-                    format: ctx => `${meaningfulStateLabel(ctx.item?.EvidenceCoverage)} (${ctx.item?.ReviewedEvidenceCount}/${ctx.item?.EvidenceCount})` },
-                { id: "Freshness", field: "Freshness", name: "新鲜度", width: 145, sortable: true,
-                    format: ctx => meaningfulStateLabel(ctx.item?.Freshness) },
-                { id: "CoverageNote", field: "CoverageNote", name: "范围 / 研究缺口", width: 340, sortable: false }
-            ];
-            grid = new SleekGrid(gridHost, companies, columns, {
-                enableCellNavigation: true,
-                enableTabKeyNavigation: true,
-                enableTextSelectionOnCells: true,
-                frozenColumns: 3,
-                layoutEngine: new FrozenLayout(),
-                forceFitColumns: false,
-                autoHeight: false,
-                rowHeight: 42
-            });
-            grid.onSort.subscribe((_event, args) => {
-                const columnId = args.sortCol.id ?? "Name";
-                companies.sort((left, right) => compareCompanyField(left, right, columnId, args.sortAsc));
-                grid?.setData(companies, true);
-                grid?.invalidate();
-                grid?.render();
-                renderFallback();
-            });
-            status.textContent = `${companies.length} 行 · 前 3 列冻结 · 可排序`;
+            const response = await CompanyUniverseService.Retrieve({ CompanyId: companyId });
+            if (app.dataset.drawerCompanyId === companyId) {
+                renderQuickDrawer(drawerContent, response, sourceContext, form, activeView);
+                restoreScroll(scrollY);
+            }
         }
         catch (error) {
-            gridHost.hidden = true;
-            gridError.hidden = false;
-            gridError.textContent = `SleekGrid 无法初始化：${error instanceof Error ? error.message : "未知错误"}。请使用下方原生表格。`;
-            status.textContent = "SleekGrid 初始化失败，fallback 可用";
+            renderPageError(drawerContent, `无法读取 ${companyId} 的 Quick Drawer`, error);
+            restoreScroll(scrollY);
         }
+    };
+
+    const rememberActivationScroll = () => {
+        pendingActivationScrollY = window.scrollY;
+    };
+
+    const activateCompany = (companyId: string, trigger: HTMLElement) => {
+        const activationScrollY = pendingActivationScrollY ?? window.scrollY;
+        pendingActivationScrollY = undefined;
+        void openDrawer(companyId, trigger, activationScrollY);
+    };
+
+    const renderPool = () => {
+        refreshContext();
+        renderCards(cardList, companies, sourceContext, form, activateCompany, rememberActivationScroll);
+        renderList(listBody, companies, sourceContext, form, activateCompany, rememberActivationScroll);
+        setView(activeView);
     };
 
     const load = async () => {
         const generation = ++requestGeneration;
-        status.textContent = "正在筛选…";
+        closeDrawer();
+        status.textContent = "正在筛选公司池…";
         form.setAttribute("aria-busy", "true");
         try {
-            const response = await CompanyUniverseService.List(readFilters(form));
+            const response = await CompanyUniverseService.List(readFilters(form, useSourceFilterDefaults ? sourceContext : undefined));
             if (generation !== requestGeneration)
                 return;
             companies = response.Companies ?? [];
-            selected = selected.filter(id => companies.some(x => x.CompanyId === id));
             if (!filterOptionsLoaded) {
                 populateFilters(form, response.Filters);
+                applySourceDefaults(form, sourceContext);
                 filterOptionsLoaded = true;
             }
+            useSourceFilterDefaults = false;
+            companies.sort((left, right) => compareText(left.Name, right.Name));
             if (count)
-                count.textContent = `${companies.length} / ${response.TotalCount ?? 20} 家公司 · as of ${formatDate(response.AsOfUtc)}`;
-            renderGrid();
-            renderFallback();
-            updateComparison();
+                count.textContent = `${companies.length} / ${response.TotalCount ?? companies.length} 家公司 · as of ${formatDate(response.AsOfUtc)}`;
+            renderPool();
         }
         catch (error) {
             if (generation !== requestGeneration)
                 return;
             companies = [];
-            renderFallback();
-            gridHost.hidden = true;
-            gridError.hidden = false;
-            gridError.textContent = `公司池读取失败：${error instanceof Error ? error.message : "请检查服务与权限"}。`;
+            renderPool();
             status.textContent = "读取失败";
             notifyError("CompanyUniverseService 读取失败");
+            const alert = el("div", undefined, "alert alert-warning");
+            alert.append(el("strong", "公司池读取失败"), document.createTextNode(`：${serviceErrorMessage(error, "请检查服务与权限")}`));
+            cardList.replaceChildren(alert);
         }
         finally {
             if (generation === requestGeneration)
@@ -231,21 +218,156 @@ async function initUniverse() {
         }
     };
 
-    form.addEventListener("change", () => void load());
+    form.addEventListener("change", () => {
+        useSourceFilterDefaults = false;
+        void load();
+    });
     form.querySelector<HTMLInputElement>('input[name="SearchText"]')?.addEventListener("input", () => {
+        useSourceFilterDefaults = false;
         clearTimeout(searchTimer);
         searchTimer = setTimeout(() => void load(), 180);
     });
     clearFilters.addEventListener("click", () => {
         form.reset();
+        useSourceFilterDefaults = false;
         void load();
         form.querySelector<HTMLInputElement>('input[name="SearchText"]')?.focus();
     });
-    clearComparison.addEventListener("click", () => {
-        selected = [];
-        updateComparison();
+    for (const button of viewButtons) {
+        const view = button.dataset.companyView;
+        if (!isCompanyBrowseView(view))
+            continue;
+        button.addEventListener("click", () => setView(view));
+    }
+    drawerClose.addEventListener("click", closeDrawer);
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape")
+            closeDrawer();
     });
+    document.addEventListener("pointerdown", event => {
+        const target = event.target as Node | null;
+        if (!drawerOpen || !target || drawer.contains(target) || isCompanyActivationTarget(target))
+            return;
+        closeDrawer();
+    });
+
+    refreshContext();
+    setView(activeView);
     await load();
+}
+
+function renderCards(target: HTMLElement, companies: CompanyUniverseItem[], context: SourceContext, form: HTMLFormElement,
+    onOpen: (companyId: string, trigger: HTMLElement) => void, onActivationStart: () => void) {
+    target.replaceChildren();
+    if (!companies.length) {
+        target.append(gap("没有公司符合当前轻量筛选；该空缺不表示研究对象不存在。"));
+        return;
+    }
+    for (const company of companies) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "company-card";
+        button.dataset.companyCard = "true";
+        button.dataset.companyId = company.CompanyId;
+        button.setAttribute("aria-label", `打开 ${company.Name ?? company.CompanyId} Quick Company Drawer`);
+        button.addEventListener("pointerdown", event => {
+            onActivationStart();
+            event.preventDefault();
+            event.stopPropagation();
+        });
+        button.addEventListener("click", event => {
+            event.preventDefault();
+            event.stopPropagation();
+            onOpen(company.CompanyId!, button);
+        });
+
+        const heading = el("span", undefined, "company-card-heading");
+        const identity = el("span", undefined, "company-card-identity");
+        identity.append(el("strong", company.Name ?? company.CompanyId), el("code", company.CompanyId, "company-stable-id"));
+        heading.append(identity, el("span", tickerMarket(company), "company-card-market"));
+        button.append(heading);
+
+        const badges = el("span", undefined, "company-badges");
+        for (const state of company.VerificationStates?.length ? company.VerificationStates : ["unknown"])
+            badges.append(badge(meaningfulStateLabel(state), state));
+        for (const role of company.Roles?.slice(0, 3) ?? [])
+            badges.append(badge(role));
+        button.append(badges,
+            el("span", evidenceCoverageText(company), "company-evidence-line"),
+            el("span", whyCompanyAppears(company, context, form), "company-why"));
+        target.append(button);
+    }
+}
+
+function renderList(target: HTMLElement, companies: CompanyUniverseItem[], context: SourceContext, form: HTMLFormElement,
+    onOpen: (companyId: string, trigger: HTMLElement) => void, onActivationStart: () => void) {
+    target.replaceChildren();
+    if (!companies.length) {
+        target.append(gap("没有公司符合当前轻量筛选；List View 与 Card View 使用同一公司集合。"));
+        return;
+    }
+    for (const company of companies) {
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "company-list-row";
+        row.dataset.companyRow = "true";
+        row.dataset.companyId = company.CompanyId;
+        row.setAttribute("aria-label", `打开 ${company.Name ?? company.CompanyId} Quick Company Drawer`);
+        row.addEventListener("pointerdown", event => {
+            onActivationStart();
+            event.preventDefault();
+            event.stopPropagation();
+        });
+        row.addEventListener("click", event => {
+            event.preventDefault();
+            event.stopPropagation();
+            onOpen(company.CompanyId!, row);
+        });
+        row.append(el("strong", company.Name ?? company.CompanyId), el("span", tickerMarket(company)),
+            el("span", joinOrGap(company.Roles)), stateSummary(company.VerificationStates),
+            el("span", evidenceCoverageText(company)), el("span", whyCompanyAppears(company, context, form)));
+        target.append(row);
+    }
+}
+
+function renderQuickDrawer(target: HTMLElement, response: CompanyResearchResponse, context: SourceContext, form: HTMLFormElement, view: CompanyBrowseView) {
+    target.replaceChildren();
+    const company = response.Company!;
+    const header = el("header", undefined, "company-drawer-header");
+    header.append(el("code", company.CompanyId, "company-stable-id"), el("h2", company.Name ?? company.CompanyId),
+        el("p", `${tickerMarket(company)} · ${company.CountryRegion || "地区未记录"}`));
+    const badges = el("div", undefined, "company-badges");
+    for (const state of company.VerificationStates?.length ? company.VerificationStates : ["unknown"])
+        badges.append(badge(meaningfulStateLabel(state), state));
+    header.append(badges);
+
+    const summary = el("section", undefined, "company-drawer-section");
+    summary.append(el("h3", "Why it appears here"), el("p", whyCompanyAppears(company, context, form)),
+        el("p", company.CoverageNote || "Coverage note 未记录；不得补写供应、客户、份额或产能事实。", "company-scope-note"));
+
+    const metrics = el("dl", undefined, "company-drawer-metrics");
+    appendDefinition(metrics, "Evidence coverage", evidenceCoverageText(company));
+    appendDefinition(metrics, "Evidence review states", evidenceReviewStateText(response));
+    appendDefinition(metrics, "Unknown-state rule", meaningfulStateLabel("unknown"));
+    appendDefinition(metrics, "Open questions", String(response.ResearchGaps?.length ?? 0));
+    appendDefinition(metrics, "Source context", sourceContextLabel(context, form, response.LinkOptions));
+    summary.append(metrics);
+
+    const exposure = el("section", undefined, "company-drawer-section");
+    exposure.append(el("h3", "Exposure tags"));
+    appendExposurePreview(exposure, company.Exposures, response.LinkOptions);
+
+    const links = el("section", undefined, "company-drawer-section company-drawer-actions");
+    links.append(el("h3", "Quick links / sections"));
+    const sectionList = el("ul", undefined, "company-drawer-section-list");
+    for (const label of ["Company Overview", "Industry-chain Exposure", "Key Evidence", "Open Questions", "Material Events / Financial Evidence"])
+        sectionList.append(el("li", label));
+    const expand = nativeLink(companyUrl(company.CompanyId, contextFromForm(context, form, view)), "↗ Expand to Full Company Detail");
+    expand.className = "btn btn-primary btn-sm company-expand-link";
+    expand.setAttribute("aria-label", `Expand ${company.Name ?? company.CompanyId} to Full Company Detail`);
+    links.append(sectionList, expand, nativeLink("#company-card-panel", "返回 Company Pool 当前筛选"));
+
+    target.append(header, summary, exposure, links);
 }
 
 async function initCompanyDetail(companyId?: string) {
@@ -254,7 +376,9 @@ async function initCompanyDetail(companyId?: string) {
         return;
     try {
         const response = await CompanyUniverseService.Retrieve({ CompanyId: companyId });
-        renderCompanyDetail(target, response);
+        const context = readSourceContext(location.search);
+        renderCompanyDetail(target, response, context);
+        syncCompanyBackLink(context);
         document.title = `${response.Company?.Name ?? companyId} - 公司研究详情`;
     }
     catch (error) {
@@ -281,218 +405,72 @@ async function initChainNode(chainNodeId?: string) {
     }
 }
 
-function renderCompanyDetail(target: HTMLElement, response: CompanyResearchResponse) {
+function renderCompanyDetail(target: HTMLElement, response: CompanyResearchResponse, context: SourceContext) {
     target.replaceChildren();
     const company = response.Company!;
     const header = el("header", undefined, "company-detail-header");
-    header.append(el("code", company.CompanyId, "company-stable-id"), el("h2", company.Name),
-        el("p", `${company.EnglishName || "英文名未记录"} · ${company.Ticker || "ticker 未记录"} · ${company.Exchange || "市场未记录"} · ${company.CountryRegion}`));
+    header.append(el("code", company.CompanyId, "company-stable-id"), el("h2", company.Name ?? company.CompanyId),
+        el("p", `${company.EnglishName || "英文名未记录"} · ${tickerMarket(company)} · ${company.CountryRegion || "地区未记录"}`));
     const badges = el("div", undefined, "company-badges");
     badges.append(badge(company.UniverseLayer), badge(company.CoveragePriority));
-    for (const state of company.VerificationStates ?? [])
+    for (const state of company.VerificationStates?.length ? company.VerificationStates : ["unknown"])
         badges.append(badge(meaningfulStateLabel(state), state));
-    header.append(badges, el("p", company.CoverageNote, "company-scope-note"));
+    header.append(badges, el("p", company.CoverageNote || "Coverage note 未记录；不得补写未来源化事实。", "company-scope-note"));
     target.append(header);
 
-    const tabs = el("div", undefined, "company-tabs");
-    tabs.setAttribute("role", "tablist");
-    tabs.setAttribute("aria-label", "公司研究详情栏目");
-    const panels = el("div", undefined, "company-tab-panels");
-    const activate = (tab: CompanyTab, focus = false) => {
-        tabs.querySelectorAll<HTMLButtonElement>("[role=tab]").forEach(button => {
-            const active = button.dataset.tab === tab;
-            button.setAttribute("aria-selected", String(active));
-            button.tabIndex = active ? 0 : -1;
-            if (active && focus)
-                button.focus();
-        });
-        panels.querySelectorAll<HTMLElement>("[role=tabpanel]").forEach(panel => panel.hidden = panel.dataset.tab !== tab);
-    };
-    for (const tab of companyTabs) {
-        const button = el("button", companyTabLabels[tab], "company-tab");
-        button.type = "button";
-        button.id = `company-tab-${tab}`;
-        button.dataset.tab = tab;
-        button.setAttribute("role", "tab");
-        button.setAttribute("aria-controls", `company-panel-${tab}`);
-        button.setAttribute("aria-selected", String(tab === "overview"));
-        button.tabIndex = tab === "overview" ? 0 : -1;
-        button.addEventListener("click", () => activate(tab));
-        button.addEventListener("keydown", event => {
-            const destination = nextTab(tab, event.key);
-            if (destination === tab)
-                return;
-            event.preventDefault();
-            activate(destination, true);
-        });
-        tabs.append(button);
-        const panel = el("section", undefined, "company-tab-panel");
-        panel.id = `company-panel-${tab}`;
-        panel.dataset.tab = tab;
-        panel.setAttribute("role", "tabpanel");
-        panel.setAttribute("aria-labelledby", button.id);
-        panel.tabIndex = 0;
-        panel.hidden = tab !== "overview";
-        renderTab(panel, tab, response);
-        panels.append(panel);
-    }
-    target.append(tabs, panels);
-}
+    const contextSection = detailSection("Current Research Context");
+    contextSection.append(el("p", sourceContextLabel(context, undefined, response.LinkOptions)), gap("R5 保留 Explorer/Company Pool 来源路径，但不创建 Workspace 写入、比较视图或新的研究实体。"));
 
-function renderTab(panel: HTMLElement, tab: CompanyTab, response: CompanyResearchResponse) {
-    const company = response.Company!;
-    if (tab === "overview") {
-        panel.append(sectionTitle("Overview / 公司身份与覆盖"));
-        const dl = el("dl", undefined, "company-overview-grid");
-        appendDefinition(dl, "Stable company ID", company.CompanyId);
-        appendDefinition(dl, "证券 / 市场", `${company.Ticker || "未记录"} · ${company.Exchange || "未记录"}`);
-        appendDefinition(dl, "地区", company.CountryRegion);
-        appendDefinition(dl, "公司池层级", company.UniverseLayer);
-        appendDefinition(dl, "覆盖优先级", company.CoveragePriority);
-        appendDefinition(dl, "Evidence coverage", `${meaningfulStateLabel(company.EvidenceCoverage)} · reviewed ${company.ReviewedEvidenceCount}/${company.EvidenceCount}`);
-        appendDefinition(dl, "Freshness", meaningfulStateLabel(company.Freshness));
-        panel.append(dl);
-        if (company.OfficialUrl) {
-            const official = document.createElement("a");
-            official.href = company.OfficialUrl;
-            official.target = "_blank";
-            official.rel = "noopener noreferrer";
-            official.textContent = "打开官方研究入口 ↗";
-            panel.append(official);
-        }
-        panel.append(gapsBlock(response.ResearchGaps ?? []));
-        return;
+    const overview = detailSection("Company Overview");
+    const dl = el("dl", undefined, "company-overview-grid");
+    appendDefinition(dl, "Stable company ID", company.CompanyId);
+    appendDefinition(dl, "证券 / 市场", tickerMarket(company));
+    appendDefinition(dl, "地区", company.CountryRegion);
+    appendDefinition(dl, "公司池层级", company.UniverseLayer);
+    appendDefinition(dl, "覆盖优先级", company.CoveragePriority);
+    appendDefinition(dl, "Evidence coverage", evidenceCoverageText(company));
+    appendDefinition(dl, "Evidence review states", evidenceReviewStateText(response));
+    appendDefinition(dl, "Unknown-state rule", meaningfulStateLabel("unknown"));
+    appendDefinition(dl, "Freshness", meaningfulStateLabel(company.Freshness));
+    overview.append(dl);
+    if (company.OfficialUrl) {
+        const official = nativeLink(company.OfficialUrl, "打开官方研究入口 ↗");
+        official.target = "_blank";
+        official.rel = "noopener noreferrer";
+        overview.append(official);
     }
-    if (tab === "exposure") {
-        panel.append(sectionTitle("Industry-chain Exposure / 显式关系"));
-        if (!company.Exposures?.length) {
-            panel.append(gap("尚无 CompanyExposure 记录。不得由公司名称、产品分类或关键词推导 part / chain 关系。"));
-            return;
-        }
-        for (const exposure of company.Exposures)
-            panel.append(exposureCard(company.CompanyId!, exposure, response.LinkOptions));
-        return;
-    }
-    if (tab === "financial") {
-        panel.append(sectionTitle("Earnings & Financial Evidence"));
-        renderEvidenceList(panel, response.EarningsFinancialEvidence, "当前没有经类型化关系确认的 earnings / financial evidence；不做关键词分类。 ");
-        return;
-    }
-    if (tab === "capex") {
-        panel.append(sectionTitle("Capex & Investment"));
-        renderEvidenceList(panel, response.CapexInvestmentEvidence, "当前没有经类型化关系确认的 Capex / investment evidence；不推断投资、订单或收入。 ");
-        return;
-    }
-    if (tab === "events") {
-        panel.append(sectionTitle("Events"));
-        if (!response.Events?.length)
-            panel.append(gap("尚无与该 stable company ID 显式关联的事件记录。"));
-        else
-            response.Events.forEach(item => panel.append(record(`${item.EventId} · ${item.EventType}`, item.Title, `${formatDate(item.EventTime)} · ${item.Description || "无描述"}`)));
-        return;
-    }
-    if (tab === "conclusions") {
-        panel.append(sectionTitle("Research Conclusions"));
-        if (!response.Conclusions?.length)
-            panel.append(gap("尚无通过 evidence 关系解析到该公司的 research conclusion；P3 不创建或发布结论。"));
-        else
-            response.Conclusions.forEach(item => panel.append(record(`${item.ConclusionId}@v${item.Version}`, item.Statement, `${item.PublicationState} · ${item.Confidence}`)));
-        return;
-    }
-    panel.append(sectionTitle("Sources & Audit"));
-    renderEvidenceList(panel, response.SourcesAudit, "尚无显式关联的 source / evidence audit 记录。");
-    const audit = el("div", undefined, "company-audit");
-    audit.append(el("strong", "Company audit metadata"), el("p", `insert user ${company.InsertUserId ?? "—"} · ${formatDate(company.InsertDate)}; update user ${company.UpdateUserId ?? "—"} · ${formatDate(company.UpdateDate)}`));
-    panel.append(audit);
-}
 
-function exposureCard(companyId: string, exposure: CompanyExposureDetail, options?: CompanyFilterOptions) {
-    const card = el("article", undefined, "company-exposure-card");
-    const heading = el("div", undefined, "company-record-heading");
-    heading.append(el("h3", `${exposure.Role} · ${exposure.Relevance}`), badge(meaningfulStateLabel(exposure.VerificationState), exposure.VerificationState));
-    card.append(heading, el("p", `Confidence: ${exposure.Confidence} · verified-policy evidence: ${exposure.MeetsVerifiedPolicy ? "满足" : "不满足"}`, "company-meta"));
-    const links = el("div", undefined, "company-cross-links");
-    if (exposure.Part)
-        links.append(nativeLink(partUrl(exposure.Part.Id), `物理部件：${exposure.Part.Name}`));
+    const exposure = detailSection("Industry-chain Exposure");
+    if (!company.Exposures?.length)
+        exposure.append(gap("尚无 CompanyExposure 记录。不得由公司名称、产品分类或关键词推导 part / chain 关系。"));
     else
-        links.append(gap("未关联物理部件"));
-    if (exposure.ChainNode)
-        links.append(nativeLink(chainUrl(exposure.ChainNode.Id), `产业链节点：${exposure.ChainNode.Name}`));
-    else
-        links.append(gap("未关联产业链节点"));
-    card.append(links, el("p", exposure.ScopeNote || "范围说明缺失", "company-scope-note"));
-    card.append(evidenceGroup("Supporting evidence", exposure.SupportingEvidence),
-        evidenceGroup("Contradicting evidence", exposure.ContradictingEvidence),
-        evidenceGroup("Context evidence", exposure.ContextEvidence));
-    card.append(el("p", `Audit: insert user ${exposure.InsertUserId ?? "—"} · ${formatDate(exposure.InsertDate)}; update user ${exposure.UpdateUserId ?? "—"} · ${formatDate(exposure.UpdateDate)}`, "company-audit"));
-    if (hasPermission("Research:Review") && userDefinition().ActorType === "human")
-        card.append(exposureEditor(companyId, exposure, options));
-    return card;
-}
+        company.Exposures.forEach(item => exposure.append(exposureCard(item, response.LinkOptions)));
 
-function exposureEditor(companyId: string, exposure: CompanyExposureDetail, options?: CompanyFilterOptions) {
-    const details = document.createElement("details");
-    details.className = "company-exposure-editor";
-    const summary = document.createElement("summary");
-    summary.textContent = "编辑暴露记录（Research:Review）";
-    const form = document.createElement("form");
-    form.className = "company-exposure-form";
-    form.append(selectField("物理部件", "PartId", options?.Parts, exposure.Part?.Id, true),
-        selectField("产业链节点", "ChainNodeId", options?.ChainNodes, exposure.ChainNode?.Id, true),
-        stringSelectField("角色", "Role", ["demand_owner", "platform_vendor", "chip_vendor", "component_vendor", "module_vendor", "substrate_pcb", "thermal_structure", "test_equipment", "system_vendor"], exposure.Role),
-        stringSelectField("相关性", "Relevance", ["direct", "adjacent", "industry_anchor", "context", "unknown"], exposure.Relevance),
-        stringSelectField("置信度", "Confidence", ["low", "medium", "high"], exposure.Confidence),
-        stringSelectField("核验状态", "VerificationState", ["discovery", "candidate", "verified", "rejected", "stale"], exposure.VerificationState));
-    const noteLabel = el("label", "Scope note");
-    const note = document.createElement("textarea");
-    note.name = "ScopeNote";
-    note.className = "form-control form-control-sm";
-    note.maxLength = 2000;
-    note.required = true;
-    note.value = exposure.ScopeNote ?? "";
-    noteLabel.append(note);
-    const status = el("div", "候选/发现不得显示为已核验；verified 由服务端强制要求 reviewed Level A/B supporting evidence。", "company-editor-policy");
-    status.setAttribute("role", "status");
-    const submit = el("button", "保存并写入审计", "btn btn-primary btn-sm");
-    submit.type = "submit";
-    form.append(noteLabel, status, submit);
-    form.addEventListener("submit", async event => {
-        event.preventDefault();
-        submit.disabled = true;
-        status.textContent = "正在验证 exposure policy…";
-        const data = new FormData(form);
-        try {
-            await CompanyExposureService.Update({
-                ExposureId: exposure.ExposureId,
-                CompanyId: companyId,
-                PartId: String(data.get("PartId") ?? "") || null,
-                ChainNodeId: String(data.get("ChainNodeId") ?? "") || null,
-                Role: String(data.get("Role") ?? ""),
-                Relevance: String(data.get("Relevance") ?? ""),
-                Confidence: String(data.get("Confidence") ?? ""),
-                VerificationState: String(data.get("VerificationState") ?? ""),
-                ScopeNote: String(data.get("ScopeNote") ?? "")
-            });
-            notifySuccess("公司暴露记录已按权限与审计约定更新");
-            await initCompanyDetail(companyId);
-        }
-        catch (error) {
-            status.textContent = serviceErrorMessage(error, "服务端拒绝了本次状态或字段更新。");
-            status.classList.add("is-error");
-        }
-        finally {
-            submit.disabled = false;
-        }
-    });
-    details.append(summary, form);
-    return details;
+    const keyEvidence = detailSection("Key Evidence");
+    renderEvidenceList(keyEvidence, response.SourcesAudit?.slice(0, 6), "尚无显式关联 source/evidence audit 记录。空缺不表示已经确认无风险或无关系。 ");
+
+    const openQuestions = detailSection("Open Questions");
+    openQuestions.append(gapsBlock(response.ResearchGaps ?? []));
+
+    const eventsFinancial = detailSection("Material Events / Financial Evidence");
+    if (!response.Events?.length)
+        eventsFinancial.append(gap("尚无与该 stable company ID 显式关联的事件记录。"));
+    else
+        response.Events.forEach(item => eventsFinancial.append(record(`${item.EventId} · ${item.EventType}`, item.Title, `${formatDate(item.EventTime)} · ${item.Description || "无描述"}`)));
+    renderEvidenceList(eventsFinancial, response.EarningsFinancialEvidence, "当前没有经类型化关系确认的 earnings / financial evidence；不做关键词分类。 ");
+    renderEvidenceList(eventsFinancial, response.CapexInvestmentEvidence, "当前没有经类型化关系确认的 Capex / investment evidence；不推断投资、订单或收入。 ");
+
+    const workspace = detailSection("Link to Research Workspace");
+    workspace.append(gap("Workspace implementation remains out of scope for R5；此处仅提供上下文跳转，不提供写入。"), nativeLink(resolveUrl("~/Research/Workspace"), "打开 Research Workspace placeholder"));
+
+    target.append(contextSection, overview, exposure, keyEvidence, openQuestions, eventsFinancial, workspace);
 }
 
 function renderChainNode(target: HTMLElement, response: ChainNodeResearchResponse) {
     target.replaceChildren();
     const header = el("header", undefined, "company-detail-header");
     header.append(el("code", response.Node?.Id ?? "", "company-stable-id"), el("h2", response.Node?.Name ?? "产业链节点"),
-        el("p", "该页面仅提供 P3 稳定 cross-navigation；关系来自数据库显式映射。"));
+        el("p", "该页面仅提供 stable cross-navigation；关系来自数据库显式映射。"));
     target.append(header, sectionTitle(`相关物理部件 (${response.Parts?.length ?? 0})`));
     const parts = el("div", undefined, "company-cross-links");
     if (!response.Parts?.length)
@@ -512,6 +490,55 @@ function renderChainNode(target: HTMLElement, response: ChainNodeResearchRespons
         });
     }
     target.append(companies, gapsBlock(response.ResearchGaps ?? []));
+}
+
+function exposureCard(exposure: CompanyExposureDetail, options?: CompanyFilterOptions) {
+    const card = el("article", undefined, "company-exposure-card");
+    const heading = el("div", undefined, "company-record-heading");
+    heading.append(el("h3", `${exposure.Role || "role unknown"} · ${exposure.Relevance || "relevance unknown"}`),
+        badge(meaningfulStateLabel(exposure.VerificationState), exposure.VerificationState));
+    card.append(heading, el("p", `Confidence: ${exposure.Confidence || "unknown"} · verified-policy evidence: ${exposure.MeetsVerifiedPolicy ? "满足" : "不满足"}`, "company-meta"));
+    const links = el("div", undefined, "company-cross-links");
+    if (exposure.Part)
+        links.append(nativeLink(partUrl(exposure.Part.Id), `物理部件：${exposure.Part.Name}`));
+    else
+        links.append(gap("未关联物理部件"));
+    if (exposure.ChainNode)
+        links.append(nativeLink(chainUrl(exposure.ChainNode.Id), `产业链节点：${exposure.ChainNode.Name}`));
+    else
+        links.append(gap("未关联产业链节点"));
+    card.append(links, el("p", exposure.ScopeNote || "范围说明缺失", "company-scope-note"));
+    card.append(evidenceGroup("Supporting evidence", exposure.SupportingEvidence),
+        evidenceGroup("Contradicting evidence", exposure.ContradictingEvidence),
+        evidenceGroup("Context evidence", exposure.ContextEvidence));
+    card.append(el("p", `Audit: insert user ${exposure.InsertUserId ?? "—"} · ${formatDate(exposure.InsertDate)}; update user ${exposure.UpdateUserId ?? "—"} · ${formatDate(exposure.UpdateDate)}`, "company-audit"));
+    if (options?.Parts || options?.ChainNodes) {
+        // options are accepted for service contract continuity; R5 deliberately provides no write editor.
+    }
+    return card;
+}
+
+function appendExposurePreview(target: HTMLElement, exposures?: CompanyExposureDetail[], options?: CompanyFilterOptions) {
+    if (!exposures?.length) {
+        target.append(gap("尚无 CompanyExposure 记录；unknown/discovery 不会被显示成 verified。"));
+        return;
+    }
+    const list = el("div", undefined, "company-drawer-exposures");
+    for (const exposure of exposures.slice(0, 4)) {
+        const item = el("article", undefined, "company-drawer-exposure");
+        item.append(el("strong", `${exposure.Role || "role unknown"} · ${exposure.Relevance || "unknown"}`),
+            badge(meaningfulStateLabel(exposure.VerificationState), exposure.VerificationState),
+            el("p", exposure.ScopeNote || "Scope note 未记录"));
+        if (exposure.Part || exposure.ChainNode)
+            item.append(el("small", [exposure.Part?.Name, exposure.ChainNode?.Name].filter(Boolean).join(" → ")));
+        list.append(item);
+    }
+    target.append(list);
+    if ((exposures.length ?? 0) > 4)
+        target.append(el("p", `另有 ${exposures.length - 4} 条显式 exposure；请展开 Full Detail 查看。`, "company-meta"));
+    if (options?.Roles) {
+        // keep generated DTO referenced without creating additional UI semantics.
+    }
 }
 
 function renderEvidenceList(target: HTMLElement, items: CompanyEvidenceSummary[] | undefined, empty: string) {
@@ -544,21 +571,23 @@ function evidenceGroup(title: string, items?: CompanyEvidenceSummary[]) {
     return section;
 }
 
-function readFilters(form: HTMLFormElement): CompanyUniverseRequest {
-    return normalizeCompanyFilters(new FormData(form).entries()) as CompanyUniverseRequest;
+function readFilters(form: HTMLFormElement, context?: SourceContext): CompanyUniverseRequest {
+    return normalizeCompanyFilters(new FormData(form).entries(), {
+        SearchText: context?.searchText,
+        PartId: context?.partId,
+        ChainNodeId: context?.chainNodeId,
+        Role: context?.role,
+        CountryRegion: context?.countryRegion,
+        VerificationState: context?.verificationState
+    }) as CompanyUniverseRequest;
 }
 
 function populateFilters(form: HTMLFormElement, options?: CompanyFilterOptions) {
     setNamedLinkOptions(form, "PartId", options?.Parts);
     setNamedLinkOptions(form, "ChainNodeId", options?.ChainNodes);
     setStringOptions(form, "Role", options?.Roles);
-    setStringOptions(form, "Exchange", options?.Exchanges);
     setStringOptions(form, "CountryRegion", options?.CountriesRegions);
-    setStringOptions(form, "UniverseLayer", options?.UniverseLayers);
-    setStringOptions(form, "CoveragePriority", options?.CoveragePriorities);
     setStringOptions(form, "VerificationState", options?.VerificationStates, meaningfulStateLabel);
-    setStringOptions(form, "EvidenceCoverage", options?.EvidenceCoverageStates, meaningfulStateLabel);
-    setStringOptions(form, "Freshness", options?.FreshnessStates, meaningfulStateLabel);
 }
 
 function setNamedLinkOptions(form: HTMLFormElement, name: string, items?: ResearchNamedLink[]) {
@@ -577,54 +606,167 @@ function setStringOptions(form: HTMLFormElement, name: string, items?: string[],
         select.append(option(item, label(item)));
 }
 
-function comparisonCheckbox(company: CompanyUniverseItem, checked: boolean,
-    onChange: (companyId: string, checked: boolean) => void, source: string) {
-    const input = document.createElement("input");
-    input.type = "checkbox";
-    input.className = "form-check-input company-compare-check";
-    input.checked = checked;
-    input.dataset.companyId = company.CompanyId;
-    input.dataset.source = source;
-    input.setAttribute("aria-label", `比较 ${company.Name}`);
-    input.addEventListener("change", () => onChange(company.CompanyId!, input.checked));
-    return input;
+function applySourceDefaults(form: HTMLFormElement, context: SourceContext) {
+    setInputIfPresent(form, "SearchText", context.searchText);
+    setSelectIfPresent(form, "PartId", context.partId);
+    setSelectIfPresent(form, "ChainNodeId", context.chainNodeId);
+    setSelectIfPresent(form, "Role", context.role);
+    setSelectIfPresent(form, "CountryRegion", context.countryRegion);
+    setSelectIfPresent(form, "VerificationState", context.verificationState);
 }
 
-function syncCheckboxes(selected: string[]) {
-    document.querySelectorAll<HTMLInputElement>(".company-compare-check").forEach(input =>
-        input.checked = selected.includes(input.dataset.companyId ?? ""));
+function setInputIfPresent(form: HTMLFormElement, name: string, value?: string) {
+    if (!value)
+        return;
+    const input = form.elements.namedItem(name) as HTMLInputElement | null;
+    if (input)
+        input.value = value;
 }
 
-function companyLink(company: CompanyUniverseItem) {
-    const wrap = el("span", undefined, "company-grid-identity");
-    wrap.append(nativeLink(companyUrl(company.CompanyId), company.Name), el("small", company.CompanyId));
-    return wrap;
+function setSelectIfPresent(form: HTMLFormElement, name: string, value?: string) {
+    if (!value)
+        return;
+    const select = form.elements.namedItem(name) as HTMLSelectElement | null;
+    if (select && [...select.options].some(item => item.value === value))
+        select.value = value;
 }
 
-function compareCompanyField(left: CompanyUniverseItem, right: CompanyUniverseItem, field: string, ascending: boolean) {
-    const value = (item: CompanyUniverseItem): string => {
-        if (field === "Roles") return joinOrGap(item.Roles);
-        if (field === "VerificationStates") return item.VerificationStates?.[0] ?? "";
-        return String((item as unknown as Record<string, unknown>)[field] ?? "");
+function readSourceContext(search: string): SourceContext {
+    const params = new URLSearchParams(search);
+    return {
+        source: params.get("source") || undefined,
+        componentId: params.get("componentId") || undefined,
+        partId: params.get("partId") || params.get("PartId") || undefined,
+        chainNodeId: params.get("chainNodeId") || params.get("ChainNodeId") || undefined,
+        searchText: params.get("SearchText") || params.get("searchText") || undefined,
+        role: params.get("Role") || params.get("role") || undefined,
+        countryRegion: params.get("CountryRegion") || params.get("countryRegion") || undefined,
+        verificationState: params.get("VerificationState") || params.get("verificationState") || undefined,
+        view: isCompanyBrowseView(params.get("view") || undefined) ? params.get("view") as CompanyBrowseView : undefined
     };
-    return compareText(value(left), value(right), ascending);
 }
 
-function selectField(label: string, name: string, items: ResearchNamedLink[] | undefined, selected?: string, optional = false) {
-    const wrapper = el("label", label);
-    const select = document.createElement("select");
-    select.name = name;
-    select.className = "form-select form-select-sm";
-    if (optional)
-        select.append(option("", "未关联"));
-    for (const item of items ?? [])
-        select.append(option(item.Id, item.Name, item.Id === selected));
-    wrapper.append(select);
-    return wrapper;
+function contextFromForm(context: SourceContext, form: HTMLFormElement, view?: CompanyBrowseView): SourceContext {
+    return {
+        ...context,
+        searchText: ((form.elements.namedItem("SearchText") as HTMLInputElement | null)?.value || context.searchText),
+        partId: ((form.elements.namedItem("PartId") as HTMLSelectElement | null)?.value || context.partId),
+        chainNodeId: ((form.elements.namedItem("ChainNodeId") as HTMLSelectElement | null)?.value || context.chainNodeId),
+        role: ((form.elements.namedItem("Role") as HTMLSelectElement | null)?.value || context.role),
+        countryRegion: ((form.elements.namedItem("CountryRegion") as HTMLSelectElement | null)?.value || context.countryRegion),
+        verificationState: ((form.elements.namedItem("VerificationState") as HTMLSelectElement | null)?.value || context.verificationState),
+        view: view ?? context.view
+    };
 }
 
-function stringSelectField(label: string, name: string, values: string[], selected?: string) {
-    return selectField(label, name, values.map(value => ({ Id: value, Name: meaningfulStateLabel(value) })), selected);
+function sourceContextLabel(context?: SourceContext, form?: HTMLFormElement, options?: CompanyFilterOptions) {
+    const parts = [context?.source === "cpo-explorer" ? "CPO Explorer" : "Company Pool"];
+    if (context?.componentId)
+        parts.push(componentLabels[context.componentId] ?? context.componentId);
+    const partId = selectedOptionValue(form, "PartId") || context?.partId;
+    const chainNodeId = selectedOptionValue(form, "ChainNodeId") || context?.chainNodeId;
+    const partLabel = selectedOptionLabel(form, "PartId", namedLinkLabel(options?.Parts, partId) ?? partId);
+    const chainLabel = selectedOptionLabel(form, "ChainNodeId", namedLinkLabel(options?.ChainNodes, chainNodeId) ?? chainNodeId);
+    if (partId || partLabel)
+        parts.push(contextPathSegment(partLabel, partId));
+    if (chainNodeId || chainLabel)
+        parts.push(contextPathSegment(chainLabel, chainNodeId));
+    return parts.join(" → ");
+}
+
+function selectedOptionValue(form: HTMLFormElement | undefined, name: string) {
+    const select = form?.elements.namedItem(name) as HTMLSelectElement | null;
+    return select?.value || undefined;
+}
+
+function contextPathSegment(label?: string, stableId?: string) {
+    if (!label)
+        return stableId ?? "";
+    if (!stableId || label === stableId)
+        return label;
+    return `${label} (${stableId})`;
+}
+
+function selectedOptionLabel(form: HTMLFormElement | undefined, name: string, fallback?: string) {
+    const select = form?.elements.namedItem(name) as HTMLSelectElement | null;
+    if (select?.value) {
+        const label = select.selectedOptions[0]?.textContent?.trim();
+        if (label && label !== "全部")
+            return label;
+    }
+    return fallback;
+}
+
+function namedLinkLabel(items: ResearchNamedLink[] | undefined, id?: string) {
+    return items?.find(item => item.Id === id)?.Name;
+}
+
+function whyCompanyAppears(company: CompanyUniverseItem, context: SourceContext, form: HTMLFormElement) {
+    const partId = (form.elements.namedItem("PartId") as HTMLSelectElement | null)?.value || context.partId;
+    const chainNodeId = (form.elements.namedItem("ChainNodeId") as HTMLSelectElement | null)?.value || context.chainNodeId;
+    const matchingExposure = company.Exposures?.find(item =>
+        (partId && item.Part?.Id === partId) || (chainNodeId && item.ChainNode?.Id === chainNodeId));
+    if (matchingExposure)
+        return `因显式 CompanyExposure 连接到当前来源 context：${[matchingExposure.Part?.Name, matchingExposure.ChainNode?.Name].filter(Boolean).join(" → ")}；状态 ${meaningfulStateLabel(matchingExposure.VerificationState)}。`;
+    return company.CoverageNote || "来自 CompanyUniverseService 的稳定 company ID；未由 prototype/mock 推导事实。";
+}
+
+function queryForContext(context?: SourceContext) {
+    const params = new URLSearchParams();
+    if (context?.source)
+        params.set("source", context.source);
+    if (context?.componentId)
+        params.set("componentId", context.componentId);
+    if (context?.partId)
+        params.set("partId", context.partId);
+    if (context?.chainNodeId)
+        params.set("chainNodeId", context.chainNodeId);
+    if (context?.searchText)
+        params.set("SearchText", context.searchText);
+    if (context?.role)
+        params.set("Role", context.role);
+    if (context?.countryRegion)
+        params.set("CountryRegion", context.countryRegion);
+    if (context?.verificationState)
+        params.set("VerificationState", context.verificationState);
+    if (context?.view)
+        params.set("view", context.view);
+    const query = params.toString();
+    return query ? `?${query}` : "";
+}
+
+function tickerMarket(company: CompanyUniverseItem) {
+    return `${company.Ticker || "ticker 未记录"} · ${company.Exchange || "市场未记录"}`;
+}
+
+function evidenceCoverageText(company: CompanyUniverseItem) {
+    return `${meaningfulStateLabel(company.EvidenceCoverage)} · reviewed ${company.ReviewedEvidenceCount ?? 0}/${company.EvidenceCount ?? 0}`;
+}
+
+function evidenceReviewStateText(response: CompanyResearchResponse) {
+    const states = new Set<string>();
+    for (const item of response.SourcesAudit ?? [])
+        states.add(item.ReviewState || "unknown");
+    for (const item of response.EarningsFinancialEvidence ?? [])
+        states.add(item.ReviewState || "unknown");
+    for (const item of response.CapexInvestmentEvidence ?? [])
+        states.add(item.ReviewState || "unknown");
+    for (const exposure of response.Company?.Exposures ?? []) {
+        for (const item of exposure.SupportingEvidence ?? [])
+            states.add(item.ReviewState || "unknown");
+        for (const item of exposure.ContradictingEvidence ?? [])
+            states.add(item.ReviewState || "unknown");
+        for (const item of exposure.ContextEvidence ?? [])
+            states.add(item.ReviewState || "unknown");
+    }
+    return states.size ? [...states].sort().map(meaningfulStateLabel).join(" · ") : "Unknown / 未记录（不可视为已核验）";
+}
+
+function stateSummary(states?: string[]) {
+    const wrap = el("span", undefined, "company-state-list");
+    for (const state of states?.length ? states : ["unknown"])
+        wrap.append(badge(meaningfulStateLabel(state), state));
+    return wrap;
 }
 
 function option(value?: string, text?: string, selected = false) {
@@ -643,17 +785,16 @@ function sectionTitle(text: string) {
     return el("h2", text, "company-section-title");
 }
 
-function stateCell(states?: string[]) {
-    const cell = document.createElement("td");
-    const list = el("div", undefined, "company-state-list");
-    for (const state of states ?? ["unknown"])
-        list.append(badge(meaningfulStateLabel(state), state));
-    cell.append(list);
-    return cell;
+function detailSection(title: string) {
+    const section = el("section", undefined, "company-detail-section");
+    section.append(sectionTitle(title));
+    return section;
 }
 
 function badge(text?: string, state?: string) {
-    return el("span", text || "Unknown / 未记录", `company-badge state-${state || "unknown"}`);
+    const node = el("span", text || "Unknown / 未记录", `company-badge state-${state || "unknown"}`);
+    node.dataset.trustTone = stateTrustTone(state);
+    return node;
 }
 
 function gap(text: string) {
@@ -678,12 +819,6 @@ function record(kicker?: string, title?: string, meta?: string) {
     return article;
 }
 
-function linkCell(href: string, text: string) {
-    const cell = document.createElement("td");
-    cell.append(nativeLink(href, text));
-    return cell;
-}
-
 function nativeLink(href: string, text?: string) {
     const link = document.createElement("a");
     link.href = href;
@@ -691,16 +826,18 @@ function nativeLink(href: string, text?: string) {
     return link;
 }
 
-function td(text?: string) {
-    return el("td", text || "—");
-}
-
 function joinOrGap(values?: string[]) {
     return values?.length ? values.join(", ") : "研究缺口";
 }
 
-function companyUrl(companyId?: string) {
-    return resolveUrl(`~/Research/Companies/${encodeURIComponent(companyId ?? "")}`);
+function companyUrl(companyId?: string, context?: SourceContext) {
+    return resolveUrl(`~/Research/Companies/${encodeURIComponent(companyId ?? "")}${queryForContext(context)}`);
+}
+
+function syncCompanyBackLink(context: SourceContext) {
+    const link = document.querySelector<HTMLAnchorElement>(".company-back-link");
+    if (link)
+        link.href = resolveUrl(`~/Research/Companies${queryForContext(context)}`);
 }
 
 function partUrl(partId?: string) {
@@ -729,6 +866,10 @@ function serviceErrorMessage(error: unknown, fallback: string) {
         return error.message;
     const response = error as { Error?: { Message?: string; Code?: string }; error?: { message?: string; code?: string } } | null;
     return response?.Error?.Message ?? response?.error?.message ?? response?.Error?.Code ?? response?.error?.code ?? fallback;
+}
+
+function isCompanyActivationTarget(target: Node) {
+    return target instanceof Element && !!target.closest('[data-company-card="true"], [data-company-row="true"]');
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string, className?: string): HTMLElementTagNameMap[K] {

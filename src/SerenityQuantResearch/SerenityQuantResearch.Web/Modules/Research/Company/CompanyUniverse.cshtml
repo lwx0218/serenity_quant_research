@@ -6,62 +6,65 @@
 @section ContentHeader {
     <div class="company-page-heading">
         <div>
-            <span class="company-eyebrow">PHASE 1 · COMPANY UNIVERSE</span>
-            <h1>CPO 公司研究池与比较</h1>
-            <p>只呈现稳定 ID 和显式 CompanyExposure / Evidence 关系；不按股价或市场表现排名。</p>
+            <span class="company-eyebrow">R5 · COMPANY POOL</span>
+            <h1>CPO 公司研究池</h1>
+            <p>Card View 默认浏览；List View 共享同一公司集合、轻量筛选和 Explorer 来源 context。</p>
         </div>
-        <span id="company-result-count" class="company-count" aria-live="polite">正在读取 20 家 seed 公司…</span>
+        <span id="company-result-count" class="company-count" aria-live="polite">正在读取 seed 公司…</span>
     </div>
 }
 
-<main id="company-research-app" class="company-research-app" data-mode="universe">
-    <form id="company-filters" class="company-filter-panel" aria-label="公司研究池筛选">
+<main id="company-research-app" class="company-research-app" data-mode="universe" data-view="card">
+    <section class="company-context-ribbon" aria-label="Explorer source context">
+        <span class="company-eyebrow">SOURCE CONTEXT</span>
+        <strong data-company-source-context>Company Pool</strong>
+        <p>来源路径可驱动初始筛选、排序解释、Quick Drawer 与 Full Detail；不会把 prototype/mock 内容升级为研究事实。</p>
+    </section>
+
+    <form id="company-filters" class="company-filter-panel" aria-label="公司研究池轻量筛选">
         <label class="company-filter-wide">搜索
             <input name="SearchText" class="form-control form-control-sm" type="search" placeholder="公司、ticker 或稳定 ID" autocomplete="off" />
         </label>
-        <label>物理部件<select name="PartId" class="form-select form-select-sm"><option value="">全部</option></select></label>
+        <label>部件 / 材料组<select name="PartId" class="form-select form-select-sm"><option value="">全部</option></select></label>
         <label>产业链节点<select name="ChainNodeId" class="form-select form-select-sm"><option value="">全部</option></select></label>
         <label>公司角色<select name="Role" class="form-select form-select-sm"><option value="">全部</option></select></label>
-        <label>交易所 / 市场<select name="Exchange" class="form-select form-select-sm"><option value="">全部</option></select></label>
-        <label>地区<select name="CountryRegion" class="form-select form-select-sm"><option value="">全部</option></select></label>
-        <label>公司池层级<select name="UniverseLayer" class="form-select form-select-sm"><option value="">全部</option></select></label>
-        <label>覆盖优先级<select name="CoveragePriority" class="form-select form-select-sm"><option value="">全部</option></select></label>
-        <label>核验状态<select name="VerificationState" class="form-select form-select-sm"><option value="">全部</option></select></label>
-        <label>证据覆盖<select name="EvidenceCoverage" class="form-select form-select-sm"><option value="">全部</option></select></label>
-        <label>新鲜度<select name="Freshness" class="form-select form-select-sm"><option value="">全部</option></select></label>
+        <label>市场 / 地区<select name="CountryRegion" class="form-select form-select-sm"><option value="">全部</option></select></label>
+        <label>暴露状态<select name="VerificationState" class="form-select form-select-sm"><option value="">全部</option></select></label>
         <div class="company-filter-actions">
             <button id="company-clear-filters" class="btn btn-outline-secondary btn-sm" type="button">清除筛选</button>
-            <a class="btn btn-link btn-sm" href="?view=table">表格 fallback 模式</a>
         </div>
     </form>
 
-    <section class="company-grid-panel" aria-labelledby="company-grid-title">
+    <section class="company-pool-panel" aria-labelledby="company-pool-title">
         <div class="company-panel-heading">
-            <div><span class="company-eyebrow">SLEEKGRID FIRST</span><h2 id="company-grid-title">高密度公司池</h2></div>
-            <span id="company-grid-status" role="status" aria-live="polite">加载中…</span>
+            <div>
+                <span class="company-eyebrow">CARD-FIRST RESEARCH BROWSE</span>
+                <h2 id="company-pool-title">Company Pool</h2>
+                <p data-company-source-context>Company Pool</p>
+            </div>
+            <div class="company-view-switch" role="group" aria-label="Company Pool view">
+                <button class="btn btn-primary btn-sm is-active" type="button" data-company-view="card" aria-pressed="true">Card View</button>
+                <button class="btn btn-outline-secondary btn-sm" type="button" data-company-view="list" aria-pressed="false">List View</button>
+            </div>
         </div>
-        <div id="company-grid" class="company-sleek-grid" aria-label="公司研究池 SleekGrid；方向键移动，Tab 进入单元格控件"></div>
-        <div id="company-grid-error" class="alert alert-warning" role="alert" hidden>SleekGrid 无法初始化；请使用下方原生表格。</div>
+        <p id="company-pool-status" class="company-pool-status" role="status" aria-live="polite">加载中…</p>
+        <div id="company-card-panel" class="company-card-panel">
+            <div id="company-card-list" class="company-card-list" aria-label="公司卡片列表"></div>
+        </div>
+        <div id="company-list-panel" class="company-list-panel" hidden>
+            <div class="company-list-header" aria-hidden="true"><span>公司</span><span>市场</span><span>角色</span><span>状态</span><span>证据</span><span>出现原因</span></div>
+            <div id="company-list-body" class="company-list-body" aria-label="公司紧凑列表"></div>
+        </div>
     </section>
 
-    <section id="company-comparison" class="company-comparison" aria-labelledby="company-comparison-title">
-        <div class="company-panel-heading">
-            <div><span class="company-eyebrow">BOUNDED COMPARISON · MAX 5</span><h2 id="company-comparison-title">多公司比较</h2></div>
-            <button id="company-clear-comparison" class="btn btn-outline-secondary btn-sm" type="button" disabled>清除比较</button>
+    <aside id="company-quick-drawer" class="company-quick-drawer" role="dialog" aria-modal="false" aria-labelledby="company-quick-drawer-title" aria-hidden="true" hidden>
+        <div class="company-drawer-toolbar">
+            <span class="company-eyebrow">QUICK COMPANY DRAWER</span>
+            <button id="company-quick-drawer-close" class="btn btn-outline-secondary btn-sm" type="button" aria-label="关闭 Quick Company Drawer">×</button>
         </div>
-        <p id="company-comparison-status" class="company-gap" aria-live="polite">尚未选择公司。可在 SleekGrid 或 fallback 表格中用复选框选择。</p>
-        <div id="company-comparison-content"></div>
-    </section>
-
-    <details id="company-table-fallback" class="company-fallback" open>
-        <summary><strong>非网格 / 原生表格 fallback</strong><span>键盘与非指针访问始终可用</span></summary>
-        <div class="table-responsive">
-            <table class="table table-sm company-table">
-                <thead><tr><th scope="col">比较</th><th scope="col">公司</th><th scope="col">Ticker</th><th scope="col">市场</th><th scope="col">地区</th><th scope="col">角色</th><th scope="col">核验状态</th><th scope="col">证据覆盖</th><th scope="col">新鲜度</th></tr></thead>
-                <tbody id="company-table-body"></tbody>
-            </table>
-        </div>
-    </details>
+        <h2 id="company-quick-drawer-title" class="visually-hidden">Quick Company Drawer</h2>
+        <div id="company-quick-drawer-content"></div>
+    </aside>
 </main>
 
 <noscript><div class="alert alert-warning">请启用 JavaScript 以从 CompanyUniverseService 读取公司池。</div></noscript>

@@ -1,24 +1,6 @@
-export const companyTabs = [
-    "overview",
-    "exposure",
-    "financial",
-    "capex",
-    "events",
-    "conclusions",
-    "sources"
-] as const;
-
-export type CompanyTab = typeof companyTabs[number];
-
-export const companyTabLabels: Record<CompanyTab, string> = {
-    overview: "Overview",
-    exposure: "Industry-chain Exposure",
-    financial: "Earnings & Financial Evidence",
-    capex: "Capex & Investment",
-    events: "Events",
-    conclusions: "Research Conclusions",
-    sources: "Sources & Audit"
-};
+export const companyBrowseViews = ["card", "list"] as const;
+export type CompanyBrowseView = typeof companyBrowseViews[number];
+export const defaultCompanyBrowseView: CompanyBrowseView = "card";
 
 const stateLabels: Record<string, string> = {
     discovery: "Discovery / 发现线索（未核验）",
@@ -37,40 +19,46 @@ const stateLabels: Record<string, string> = {
     fresh: "Fresh / 180 天内捕获",
     review_due: "Review due / 需复核",
     historical: "Historical fact / 历史事实（不自动失效）",
-    unknown: "Unknown / 无可用时间数据"
+    unknown: "Unknown / 未知（不可视为已核验）"
 };
+
+const unverifiedStates = new Set(["discovery", "candidate", "draft", "in_review", "unknown", "unmapped", "none", "unreviewed", "mixed"]);
+const verifiedStates = new Set(["verified", "reviewed"]);
+const rejectedStates = new Set(["rejected", "stale", "superseded"]);
 
 export function meaningfulStateLabel(state?: string): string {
     if (!state)
-        return "Unknown / 未记录";
+        return "Unknown / 未记录（不可视为已核验）";
     return stateLabels[state] ?? state.replaceAll("_", " ");
 }
 
-export function nextTab(current: CompanyTab, key: string): CompanyTab {
-    const index = companyTabs.indexOf(current);
-    if (key === "Home")
-        return companyTabs[0];
-    if (key === "End")
-        return companyTabs[companyTabs.length - 1];
-    if (key === "ArrowRight" || key === "ArrowDown")
-        return companyTabs[(index + 1) % companyTabs.length];
-    if (key === "ArrowLeft" || key === "ArrowUp")
-        return companyTabs[(index - 1 + companyTabs.length) % companyTabs.length];
-    return current;
+export function stateTrustTone(state?: string): "verified" | "unverified" | "rejected" | "neutral" {
+    if (!state)
+        return "unverified";
+    if (verifiedStates.has(state))
+        return "verified";
+    if (rejectedStates.has(state))
+        return "rejected";
+    if (unverifiedStates.has(state))
+        return "unverified";
+    return "neutral";
 }
 
-export function toggleComparison(selected: readonly string[], companyId: string, limit = 5): string[] {
-    if (selected.includes(companyId))
-        return selected.filter(id => id !== companyId);
-    if (selected.length >= limit)
-        return [...selected];
-    return [...selected, companyId];
+export function isCompanyBrowseView(value?: string): value is CompanyBrowseView {
+    return companyBrowseViews.includes(value as CompanyBrowseView);
 }
 
-export function normalizeCompanyFilters(entries: Iterable<[string, FormDataEntryValue]>): Record<string, string> {
+export function normalizeCompanyFilters(
+    entries: Iterable<[string, FormDataEntryValue]>,
+    defaults: Partial<Record<string, string | undefined>> = {}
+): Record<string, string> {
     const request: Record<string, string> = {};
     for (const [key, value] of entries)
         request[key] = String(value).trim();
+    for (const [key, value] of Object.entries(defaults)) {
+        if (value && !request[key])
+            request[key] = value;
+    }
     return request;
 }
 
