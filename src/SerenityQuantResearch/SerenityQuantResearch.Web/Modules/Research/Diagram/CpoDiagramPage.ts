@@ -436,7 +436,7 @@ function renderModuleDrawer(target: HTMLElement, module: ResearchModuleSummary, 
     if (companies.length) {
         const list = el("div", undefined, "cpo-record-list");
         for (const company of companies)
-            list.append(companyCard(company, module.Id));
+            list.append(companyCard(company, module.Id, selectedChild?.part.Id));
         companySection.append(list);
     }
     else {
@@ -451,16 +451,24 @@ function renderModuleDrawer(target: HTMLElement, module: ResearchModuleSummary, 
     action.href = resolveUrl(`~/Research/Companies?source=cpo-explorer&componentId=${encodeURIComponent(module.Id ?? "")}${partParam}`);
     action.textContent = `进入 Company Pool（保留 CPO → ${module.Name ?? module.Id} context） →`;
 
+    const workspaceAction = document.createElement("a");
+    workspaceAction.className = "cpo-company-pool-link cpo-workspace-link";
+    const workspaceType = selectedChild?.part.Id ? "part" : "component";
+    const workspaceObject = selectedChild?.part.Id ?? module.Id ?? "";
+    workspaceAction.href = resolveUrl(`~/Research/Workspace?objectType=${workspaceType}&objectId=${encodeURIComponent(workspaceObject)}&source=cpo-explorer&componentId=${encodeURIComponent(module.Id ?? "")}${partParam}`);
+    workspaceAction.textContent = `Open Research Workspace（read-only · ${selectedChild?.part.Name ?? module.Name ?? workspaceObject}） →`;
+
     const evidenceSectionNode = evidenceSummarySection(evidence, warnings, hasRetrievalFailure);
 
-    replaceChildren(target, ...[header, childSection, failureSection, chainSection, technologySection, materialSection, companySection, evidenceSectionNode, action].filter((x): x is Node => !!x));
+    replaceChildren(target, ...[header, childSection, failureSection, chainSection, technologySection, materialSection, companySection, evidenceSectionNode, action, workspaceAction].filter((x): x is Node => !!x));
 }
 
-function companyCard(company: CompanyExposureSummary, moduleId?: string) {
+function companyCard(company: CompanyExposureSummary, moduleId?: string, partId?: string) {
     const article = el("article", undefined, "cpo-record cpo-company-card");
     const heading = el("div", undefined, "cpo-record-heading");
     const companyLink = document.createElement("a");
-    companyLink.href = resolveUrl(`~/Research/Companies/${encodeURIComponent(company.CompanyId ?? "")}?source=cpo-explorer&componentId=${encodeURIComponent(moduleId ?? "")}`);
+    const partParam = partId ? `&partId=${encodeURIComponent(partId)}` : "";
+    companyLink.href = resolveUrl(`~/Research/Companies/${encodeURIComponent(company.CompanyId ?? "")}?source=cpo-explorer&componentId=${encodeURIComponent(moduleId ?? "")}${partParam}`);
     companyLink.textContent = company.CompanyName ?? company.CompanyId ?? "未知公司";
     heading.append(companyLink, badge(company.VerificationState ?? "unknown", "verification"));
     article.append(heading,

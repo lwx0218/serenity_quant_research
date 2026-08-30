@@ -6,6 +6,7 @@ public static partial class ESM
     public const string CpoDiagramPage = "~/esm/Modules/Research/Diagram/CpoDiagramPage.js";
     public const string LanguagePage = "~/esm/Modules/Administration/Language/LanguagePage.js";
     public const string LoginPage = "~/esm/Modules/Membership/Account/Login/LoginPage.js";
+    public const string ResearchWorkspacePage = "~/esm/Modules/Research/Workspace/ResearchWorkspacePage.js";
     public const string RolePage = "~/esm/Modules/Administration/Role/RolePage.js";
     public const string ScriptInit = "~/esm/Modules/Common/ScriptInit.js";
     public const string SignUpPage = "~/esm/Modules/Membership/Account/SignUp/SignUpPage.js";
@@ -68,6 +69,11 @@ public static partial class ESM
             public static partial class Diagram
             {
                 public const string CpoDiagramPage = "~/esm/Modules/Research/Diagram/CpoDiagramPage.js";
+            }
+
+            public static partial class Workspace
+            {
+                public const string ResearchWorkspacePage = "~/esm/Modules/Research/Workspace/ResearchWorkspacePage.js";
             }
         }
     }

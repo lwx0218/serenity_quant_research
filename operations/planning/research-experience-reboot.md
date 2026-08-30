@@ -2,8 +2,8 @@
 
 Plan approval: approved
 Git baseline: 7cf1b95d23a5da3dd53766049557a67ed18fae73
-Accepted-effective Rounds: R1, R2, R3, R4, R5
-Active Round: none; next Round R6 requires separate Owner start decision
+Accepted-effective Rounds: R1, R2, R3, R4, R5, R6
+Active Round: none; next Round R7 requires separate Owner start decision
 Branch: product-reboot
 Approval authority: Owner structured approval after complete Plan Preview
 Approval scope: persist this baseline and hand off R1; no implementation, commit, push, or automatic multi-Round progression
@@ -117,7 +117,7 @@ Out of scope:
 | R3 | R3-cpo-explorer-vertical-slice | 交付一个 production-quality SiPh PIC Flat/3D Explorer vertical slice。 | 1440px/1920px Flat/3D evidence；view-switch/reset/keyboard sequence；focused/full validation；Independent Review evidence 与 P2 dispositions | accepted |
 | R4 | R4-full-cpo-explorer | 将已接受的 Explorer interaction 扩展到完整 approved CPO taxonomy。 | Full component coverage matrix；1440px/1920px Explorer evidence；interaction recording；full validation；valid Attempt 3 review finding、P1 fix evidence 与 Owner-accepted post-fix re-review limitation | accepted |
 | R5 | R5-company-research-experience | 交付 Card/List Company Pool、context-preserving Quick Drawer 与 entity-centric Full Company Detail。 | 1440px/1920px Card/List/Drawer/Detail evidence；context/filter/scroll sequence；policy regression；full validation；Independent Review evidence 与 P2 dispositions | accepted |
-| R6 | R6-readonly-research-workspace | 使用既有 relationships 交付 read-only linked-object Workspace。 | Schema-unchanged evidence；1440px/1920px component/company Workspace evidence；navigation/context sequence；full validation；Independent Review evidence 与 P2 dispositions | pending |
+| R6 | R6-readonly-research-workspace | 使用既有 relationships 交付 read-only linked-object Workspace。 | Schema-unchanged evidence；1440px/1920px component/company Workspace evidence；navigation/context sequence；full validation；development review/re-review evidence；documented Owner-accepted formal review limitation | accepted |
 | R7 | R7-reboot-integration-cleanup | 验证 Explorer-to-Company-to-Workspace journey，修复 Evidence review endpoint 的 human actor enforcement，并只删除 proven-unreferenced legacy frontend。 | End-to-end journey evidence；machine-reviewer rejection test；cleanup map；full regression/portability；per-Round 与 Final Integrated Independent Review evidence | pending |
 
 ## R1 — P0–P3 Code Disposition And Domain Audit
@@ -278,8 +278,8 @@ Out of scope:
 - Primary Pi implementation session: R6-readonly-research-workspace
 - Goal: 使用既有 persistent objects 与 relationships 验证 knowledge-centric、linked-object-first Workspace。
 - Handoff contracts: AGENTS.md; operations/orchestration/independent-review-and-round-scope-standard.md; src/SerenityQuantResearch/SerenityQuantResearch.Web/AGENTS.md; docs/product/README.md; docs/product/experience-map.md; docs/product/research-workspace-spec.md; docs/product/visual-language.md; docs/product/acceptance-contract.md; docs/research-baseline/evidence-contract.md; operations/planning/research-experience-reboot.md; operations/reviews/reboot-p3-code-disposition.md; operations/reviews/research-experience-reboot-r5-independent-review.md
-- Latest work log: operations/work_logs/research-experience-reboot-r5.md
-- Latest review: operations/reviews/research-experience-reboot-r5-independent-review.md
+- Latest work log: operations/work_logs/research-experience-reboot-r6.md
+- Latest review: operations/reviews/research-experience-reboot-r6-independent-review.md
 - Review work log: operations/work_logs/research-experience-reboot-r6.md
 - Non-goals: No ResearchNote, OpenQuestion, or Backlink persistent entity; no writing; no Graph; no New Note; no Markdown, collaboration, or plugin system
 - Dependencies / Definition of Ready: R5 is accepted-effective; R1 proves existing objects can support read-only projection; component/company routes can carry stable source context
@@ -294,11 +294,12 @@ Out of scope:
 - Screenshot / recording requirements: 1440px and 1920px component and company states; navigation sequences from Explorer and Full Company Detail
 - Independent Review mode: spawned_pi_process
 - Review fallback rule: If automated spawned review capability is blocked, use Owner-approved distinct human_review fallback or explicit Owner review-mode/acceptance change; do not edit `.pi/` / harness inside the product Round.
+- R6 review limitation decision: Owner explicitly modified/waived the formal review gate for R6 only after two `harness_run_independent_review` attempts returned `not_applicable` because the current harness runtime remained simple/passive. Owner accepted R6 with this limitation documented; after an independent supervision revalidation and evidence-P2 correction, Owner separately authorized the R6 acceptance commit. The limitation does not change later Round review obligations.
 - Round review: operations/reviews/research-experience-reboot-r6-independent-review.md
 - Final integrated review: operations/reviews/research-experience-reboot-final-integrated-review.md
-- Acceptance evidence: Schema-unchanged evidence; 1440px and 1920px component/company Workspace evidence; navigation/context sequence; full automated validation record; Independent Review evidence and P2 dispositions
-- Product Owner acceptance gate: Owner accepts Workspace v1 before R7
-- Exact next gate: Product Owner R6 acceptance; authorized acceptance commit/post-commit verify if requested; stop. R7 requires separate Owner start decision.
+- Acceptance evidence: Schema-unchanged evidence; 1440px and 1920px component/company Workspace evidence; navigation/context sequence; full automated validation record; development fresh review/re-review with no remaining findings; documented Owner-accepted formal review limitation and evidence-P2 disposition
+- Product Owner acceptance gate: Owner accepted Workspace v1 with documented formal review limitation on 2026-08-30 and separately authorized the acceptance commit after supervision revalidation.
+- Exact next gate: R6 accepted-effective closeout requires this authorized acceptance commit and successful post-commit verification; stop. R7 requires a separate Owner start decision.
 - Blockers / assumptions: Existing unresolved questions may be derived read-only; derived backlinks are query/view-model results; unsupported values remain Unknown/Not reviewed/Candidate/omitted
 - Blocked / rebaseline conditions: Persistent writing or new entity becomes necessary; identity/author attribution must change; evidence/audit semantics change; graph/knowledge-management backend becomes required
 

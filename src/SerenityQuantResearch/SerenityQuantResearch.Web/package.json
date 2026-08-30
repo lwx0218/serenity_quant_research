@@ -27,9 +27,10 @@
     "build:watch": "node ./tsbuild.js --watch",
     "test:ui": "npm run test:ui:unit && npm run test:ui:browser",
     "test:ui:unit": "node --test tests-ui/*.test.mjs",
-    "test:ui:browser": "bash tests-ui/run-browser-smoke.sh && bash tests-ui/run-r5-company-browser-smoke.sh",
+    "test:ui:browser": "bash tests-ui/run-browser-smoke.sh && bash tests-ui/run-r5-company-browser-smoke.sh && bash tests-ui/run-r6-workspace-browser-smoke.sh",
     "test:ui:browser:r4": "bash tests-ui/run-browser-smoke.sh",
     "test:ui:browser:r5": "bash tests-ui/run-r5-company-browser-smoke.sh",
+    "test:ui:browser:r6": "bash tests-ui/run-r6-workspace-browser-smoke.sh",
     "pnpm:devPreinstall": "dotnet build -target:RestoreNodeTypes",
     "preinstall": "dotnet build -target:RestoreNodeTypes",
     "tsc": "tsc"

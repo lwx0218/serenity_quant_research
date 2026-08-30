@@ -51,6 +51,7 @@ public static partial class Views
 
         public static partial class Workspace
         {
+            public const string ResearchWorkspace = "~/Modules/Research/Workspace/ResearchWorkspace.cshtml";
             public const string ResearchWorkspacePlaceholder = "~/Modules/Research/Workspace/ResearchWorkspacePlaceholder.cshtml";
         }
     }

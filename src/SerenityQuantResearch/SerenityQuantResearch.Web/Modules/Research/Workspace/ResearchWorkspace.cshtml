@@ -1,0 +1,29 @@
+@{
+    ViewData["Title"] = "Research Workspace";
+    ViewData["PageId"] = "ResearchWorkspace";
+}
+
+@section ContentHeader {
+    <div class="workspace-page-heading">
+        <div>
+            <span class="workspace-eyebrow">R6 · READ-ONLY LINKED WORKSPACE</span>
+            <h1>Research Workspace</h1>
+            <p>Knowledge-centric reading layer for existing components, technologies, companies, evidence, and derived relationship context.</p>
+        </div>
+        <a class="workspace-return-link" href="~/Research/Cpo">← CPO Explorer</a>
+    </div>
+}
+
+<main id="research-workspace-app" class="research-workspace-app" aria-live="polite" aria-busy="true">
+    <aside class="workspace-tree" aria-label="Research object tree">
+        <div class="workspace-loading">Loading existing research objects…</div>
+    </aside>
+    <article class="workspace-current-object">
+        <div class="workspace-loading">Loading read-only Workspace projection…</div>
+    </article>
+    <aside class="workspace-context" aria-label="Linked objects and derived backlinks">
+        <div class="workspace-loading">Loading relationship context…</div>
+    </aside>
+</main>
+
+@Html.ModulePageInit("~/esm/Modules/Research/Workspace/ResearchWorkspacePage.js", new { })

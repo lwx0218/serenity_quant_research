@@ -96,6 +96,7 @@ public partial class Startup
         services.AddSingleton<IResearchSeedImporter, ResearchSeedImporter>();
         services.AddTransient<IPartResearchService, PartResearchService>();
         services.AddTransient<ICompanyUniverseService, CompanyUniverseService>();
+        services.AddTransient<IResearchWorkspaceService, ResearchWorkspaceService>();
         services.AddTransient<IEvidenceWorkflowService, EvidenceWorkflowService>();
 
         services.AddClamAVUploadScanner()

@@ -365,7 +365,10 @@ function renderQuickDrawer(target: HTMLElement, response: CompanyResearchRespons
     const expand = nativeLink(companyUrl(company.CompanyId, contextFromForm(context, form, view)), "↗ Expand to Full Company Detail");
     expand.className = "btn btn-primary btn-sm company-expand-link";
     expand.setAttribute("aria-label", `Expand ${company.Name ?? company.CompanyId} to Full Company Detail`);
-    links.append(sectionList, expand, nativeLink("#company-card-panel", "返回 Company Pool 当前筛选"));
+    const workspace = nativeLink(companyWorkspaceUrl(company.CompanyId, contextFromForm(context, form, view), "company-pool"), "Open in Research Workspace");
+    workspace.className = "btn btn-outline-secondary btn-sm company-workspace-link";
+    workspace.setAttribute("aria-label", `Open ${company.Name ?? company.CompanyId} in read-only Research Workspace`);
+    links.append(sectionList, expand, workspace, nativeLink("#company-card-panel", "返回 Company Pool 当前筛选"));
 
     target.append(header, summary, exposure, links);
 }
@@ -461,7 +464,7 @@ function renderCompanyDetail(target: HTMLElement, response: CompanyResearchRespo
     renderEvidenceList(eventsFinancial, response.CapexInvestmentEvidence, "当前没有经类型化关系确认的 Capex / investment evidence；不推断投资、订单或收入。 ");
 
     const workspace = detailSection("Link to Research Workspace");
-    workspace.append(gap("Workspace implementation remains out of scope for R5；此处仅提供上下文跳转，不提供写入。"), nativeLink(resolveUrl("~/Research/Workspace"), "打开 Research Workspace placeholder"));
+    workspace.append(gap("Open the same stable company ID in the read-only linked-object Workspace. Source context is preserved; no writing controls are exposed."), nativeLink(companyWorkspaceUrl(company.CompanyId, context, "company-detail"), "Open in Research Workspace"));
 
     target.append(contextSection, overview, exposure, keyEvidence, openQuestions, eventsFinancial, workspace);
 }
@@ -711,7 +714,23 @@ function whyCompanyAppears(company: CompanyUniverseItem, context: SourceContext,
     return company.CoverageNote || "来自 CompanyUniverseService 的稳定 company ID；未由 prototype/mock 推导事实。";
 }
 
+function companyWorkspaceUrl(companyId: string | undefined, context?: SourceContext, fallbackSource = "company-pool") {
+    const params = contextParams(context);
+    params.set("objectType", "company");
+    params.set("objectId", companyId ?? "");
+    params.set("companyId", companyId ?? "");
+    if (!params.has("source"))
+        params.set("source", fallbackSource);
+    return resolveUrl(`~/Research/Workspace?${params.toString()}`);
+}
+
 function queryForContext(context?: SourceContext) {
+    const params = contextParams(context);
+    const query = params.toString();
+    return query ? `?${query}` : "";
+}
+
+function contextParams(context?: SourceContext) {
     const params = new URLSearchParams();
     if (context?.source)
         params.set("source", context.source);
@@ -731,8 +750,7 @@ function queryForContext(context?: SourceContext) {
         params.set("VerificationState", context.verificationState);
     if (context?.view)
         params.set("view", context.view);
-    const query = params.toString();
-    return query ? `?${query}` : "";
+    return params;
 }
 
 function tickerMarket(company: CompanyUniverseItem) {

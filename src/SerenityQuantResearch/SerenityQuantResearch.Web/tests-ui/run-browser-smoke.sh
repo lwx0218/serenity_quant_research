@@ -147,11 +147,13 @@ async function assertR2RegressionSurface() {
         await assertResearchShell('Company Pool');
     }
     await navigate(`${base}/Research/Workspace`);
-    await waitFor(`document.querySelector('[data-testid="research-primary-nav"]') && document.querySelector('.research-placeholder')`, 'workspace placeholder route');
+    await waitFor(`document.querySelector('[data-testid="research-primary-nav"]') && document.querySelector('#research-workspace-app')?.dataset.readOnly === 'true'`, 'read-only workspace route');
     await assertResearchShell('Research Workspace');
-    let state = await evaluate(`({text:document.querySelector('.research-placeholder')?.innerText??'',writeControls:[...document.querySelectorAll('button,a,input,textarea')].map(x=>x.textContent || x.getAttribute('aria-label') || x.name || '').join('\\n')})`);
-    assert(state.text.includes('does not provide writing') || state.text.includes('不提供写入'), 'workspace placeholder must state no writing');
-    assert(!/New Note|Graph|ResearchNote/.test(state.writeControls), 'deferred workspace controls leaked into placeholder');
+    let state = await evaluate(`({text:document.body.innerText,app:document.querySelector('#research-workspace-app')?.dataset,writeControls:[...document.querySelectorAll('button,input,textarea,[contenteditable="true"]')].map(x=>x.textContent || x.getAttribute('aria-label') || x.name || '').join('\\n'),editable:!!document.querySelector('textarea,[contenteditable="true"]')})`);
+    assert(state.app.objectType === 'component' && state.app.objectId === 'cpo.mod.pic', 'default Workspace object changed');
+    assert(state.text.includes('read-only') || state.text.includes('Read-only'), 'Workspace route must state read-only mode');
+    assert(!state.editable, 'editable surface leaked into read-only Workspace');
+    assert(!/New Note|Graph|ResearchNote|OpenQuestion|Backlink|Save|Create|Publish|Assign|Resolve/i.test(state.writeControls), 'deferred workspace controls leaked into read-only Workspace');
     await navigate(`${base}/Administration/User`);
     await waitFor(`document.querySelector('#s-sidebar') && !document.querySelector('[data-testid="research-primary-nav"]')`, 'secondary admin route shell separation');
     state = await evaluate(`({path:location.pathname,sidebar:!!document.querySelector('#s-sidebar'),researchNav:!!document.querySelector('[data-testid="research-primary-nav"]')})`);
