@@ -1,5 +1,14 @@
 # serenity_quant_research Harness Manual
 
+## Metadata
+
+- Project: serenity_quant_research
+- Document type: human-manual
+- Status: active
+- Owner: project owner
+- Last updated: 2026-08-30
+- Source of truth: AGENTS.md
+
 这份文件是项目本地的人类操作入口。模型执行合同以 `AGENTS.md` 为准。
 
 ## 默认路径
@@ -34,6 +43,8 @@ Plan Preview 必须让 Owner 能检查 goal、scope、non-goals、assumptions、
 - `operations/reviews/`
 
 普通 simple task 不强制写 evidence。需要记录时写最小、可复验内容。
+
+新增或实质更新 Markdown 前，先按 `docs/manual/document-governance.md` 判断应放入 `docs/**`、`operations/**` 还是 `assets/templates/**`。
 
 ## Update Governance Surface
 

@@ -1,0 +1,178 @@
+{
+  "canonicalPlans": [
+    "operations/planning/research-experience-reboot.md"
+  ],
+  "supersededPlanPointers": [
+    "operations/planning/phase-1-mvp.md",
+    "operations/planning/reboot-mvp.md"
+  ],
+  "legacyExceptions": [
+    {
+      "path": "operations/archive/README.md",
+      "rules": ["metadata", "naming", "links"],
+      "reason": "Archive navigation preserves historical structure and is excluded from active navigation by default.",
+      "lifecycle": "permanent",
+      "permanent reason": "Archive body and navigation are historical evidence and should not be bulk-normalized."
+    },
+    {
+      "path": "operations/archive/phase-1-mvp-p0-p3.md",
+      "rules": ["metadata", "naming", "links"],
+      "reason": "Archived Phase 1 P0-P3 evidence must preserve original body and audit context.",
+      "lifecycle": "permanent",
+      "permanent reason": "Historical archive content remains reference-only unless a dedicated archive migration is approved."
+    },
+    {
+      "path": "operations/planning/2026-08-28-starter-governance-update.md",
+      "rules": ["metadata"],
+      "reason": "Accepted ad-hoc governance Plan predates this metadata standard; do not fabricate event timestamp.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "next substantive edit to this file"
+    },
+    {
+      "path": "operations/planning/serenity-bootstrap.md",
+      "rules": ["metadata", "naming"],
+      "reason": "Historical technical bootstrap evidence has real 2026-08-24 decisions and should not be reinterpreted as normalization.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "next substantive bootstrap governance edit"
+    },
+    {
+      "path": "operations/reviews/phase-1-p2-independent-review.md",
+      "rules": ["metadata", "naming"],
+      "reason": "Accepted legacy review evidence; no style-only date rename or metadata rewrite.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "next substantive edit to this review"
+    },
+    {
+      "path": "operations/reviews/phase-1-p3-independent-review.md",
+      "rules": ["metadata", "naming"],
+      "reason": "Accepted legacy review evidence; no style-only date rename or metadata rewrite.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "next substantive edit to this review"
+    },
+    {
+      "path": "operations/reviews/product-reboot-consistency-review.md",
+      "rules": ["metadata", "naming"],
+      "reason": "Package consistency input is preserved for provenance and is not the current acceptance gate.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "next substantive edit to this review"
+    },
+    {
+      "path": "operations/reviews/reboot-p3-code-disposition.md",
+      "rules": ["metadata", "naming"],
+      "reason": "Accepted reboot disposition evidence; preserve provenance and parser-sensitive labels.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "next substantive edit to this disposition"
+    },
+    {
+      "path": "operations/reviews/research-experience-reboot-r1-independent-review.md",
+      "rules": ["metadata"],
+      "reason": "Accepted fixed-Round R1 review; preserve audit chain and decision/count labels.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "new integrated review migration task"
+    },
+    {
+      "path": "operations/reviews/research-experience-reboot-r2-independent-review.md",
+      "rules": ["metadata"],
+      "reason": "Accepted fixed-Round R2 review; preserve audit chain and decision/count labels.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "new integrated review migration task"
+    },
+    {
+      "path": "operations/reviews/research-experience-reboot-r3-independent-review.md",
+      "rules": ["metadata"],
+      "reason": "Accepted fixed-Round R3 review has pre-existing closeout dirty state; do not mix cleanup.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "new integrated review migration task"
+    },
+    {
+      "path": "operations/reviews/research-experience-reboot-r4-independent-review.md",
+      "rules": ["metadata"],
+      "reason": "Accepted fixed-Round R4 review and screenshot references are preserved as evidence.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "new integrated review migration task"
+    },
+    {
+      "path": "operations/reviews/research-experience-reboot-r5-independent-review.md",
+      "rules": ["metadata"],
+      "reason": "Accepted fixed-Round R5 review; preserve Decision and unresolved count labels.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "new integrated review migration task"
+    },
+    {
+      "path": "operations/work_logs/2026-08-28-starter-governance-update.md",
+      "rules": ["metadata"],
+      "reason": "Accepted ad-hoc work log predates this standard; do not fabricate event metadata.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "next substantive edit to this work log"
+    },
+    {
+      "path": "operations/work_logs/open-access-mode.md",
+      "rules": ["metadata", "naming"],
+      "reason": "Accepted legacy work log; no date-prefix rewrite without a separate migration.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "next substantive edit to this work log"
+    },
+    {
+      "path": "operations/work_logs/phase-1-p1.md",
+      "rules": ["metadata", "naming"],
+      "reason": "Accepted legacy work log; no style-only rename.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "next substantive edit to this work log"
+    },
+    {
+      "path": "operations/work_logs/phase-1-p2.md",
+      "rules": ["metadata", "naming"],
+      "reason": "Accepted legacy work log; no style-only rename.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "next substantive edit to this work log"
+    },
+    {
+      "path": "operations/work_logs/phase-1-p3.md",
+      "rules": ["metadata", "naming"],
+      "reason": "Accepted legacy work log; no style-only rename.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "next substantive edit to this work log"
+    },
+    {
+      "path": "operations/work_logs/research-experience-reboot-r1.md",
+      "rules": ["metadata"],
+      "reason": "Accepted fixed-Round R1 work log; preserve chain and name.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "new integrated review migration task"
+    },
+    {
+      "path": "operations/work_logs/research-experience-reboot-r2.md",
+      "rules": ["metadata"],
+      "reason": "Accepted fixed-Round R2 work log; preserve chain and name.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "new integrated review migration task"
+    },
+    {
+      "path": "operations/work_logs/research-experience-reboot-r3.md",
+      "rules": ["metadata"],
+      "reason": "Accepted fixed-Round R3 work log; preserve chain and name.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "new integrated review migration task"
+    },
+    {
+      "path": "operations/work_logs/research-experience-reboot-r4.md",
+      "rules": ["metadata"],
+      "reason": "Accepted fixed-Round R4 work log and screenshot references; preserve evidence chain.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "new integrated review migration task"
+    },
+    {
+      "path": "operations/work_logs/research-experience-reboot-r5.md",
+      "rules": ["metadata"],
+      "reason": "Accepted fixed-Round R5 work log; preserve Round and Plan labels.",
+      "lifecycle": "legacy-preserve",
+      "review-after": "new integrated review migration task"
+    }
+  ],
+  "excluded": [
+    ".pi/**",
+    "src/**",
+    "host/**",
+    "operations/reviews/research-experience-reboot-r4-screenshots/**"
+  ]
+}

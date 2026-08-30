@@ -53,6 +53,12 @@ skills、domain modeling、subagent 和 reviewer 均为按需能力，不是默�
 <!-- HARNESS:MANAGED:END -->
 
 <!-- PROJECT:OWNED:START -->
+## Project Document Governance
+
+Project-local Markdown governance is defined in `docs/manual/document-governance.md`. For new or substantively updated governance/evidence documents, prefer project-local paths under `docs/**`, `operations/**`, and `assets/templates/**`; do not depend on external workspace paths or historical archive conventions as active policy.
+
+Canonical product delivery authority remains `operations/planning/research-experience-reboot.md`. Document-format cleanup must not change product authority, research facts, evidence/review/audit semantics, accepted Round state, or R6 start requirements.
+
 ## Product Reboot Gate
 
 当前 approved product baseline 是 **Research Experience Reboot**。P0–P3 工程实现、tests、work logs 和 reviews 继续作为有效工程历史；与 `docs/product/` 冲突的 research-facing UI / UX 不再是产品事实源。旧 P4 不得继续；当前交付到 Explorer → Company → read-only Workspace，完整长期闭环仍保留 Workspace → Evidence → Review → Conclusion → Report。
