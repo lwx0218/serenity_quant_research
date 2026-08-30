@@ -1,5 +1,14 @@
 # Reboot MVP Plan — 已由 canonical Plan supersede
 
+## Metadata
+
+- Project: serenity_quant_research
+- Document type: plan-pointer
+- Status: superseded
+- Owner: project owner
+- Last updated: 2026-08-30
+- Source of truth: operations/planning/research-experience-reboot.md
+
 早期 package draft 中的 `R0 / R0.5 / R1...R6` 不再是当前交付权威，因为它早于本仓库 canonical fixed-Round contract。
 
 当前使用：

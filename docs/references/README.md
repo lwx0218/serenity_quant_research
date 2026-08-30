@@ -1,5 +1,14 @@
 # 长期参考材料
 
+## Metadata
+
+- Project: serenity_quant_research
+- Document type: index
+- Status: active
+- Owner: project owner
+- Last updated: 2026-08-30
+- Source of truth: docs/research-baseline/evidence-contract.md
+
 本目录保存会被研究基线引用、但本身不构成已核验证据或当前产品事实的输入材料。
 
 | 文件 | 说明 | 使用限制 |

@@ -1,5 +1,14 @@
 # Serenity Quant Research
 
+## Metadata
+
+- Project: serenity_quant_research
+- Document type: index
+- Status: active
+- Owner: project owner
+- Last updated: 2026-08-30
+- Source of truth: AGENTS.md
+
 Finance-first 产业链投研工作台，基于 `serenity-is/Serenity`。首个主题为光模块 / CPO。
 
 ## Current Status — Research Experience Reboot
@@ -41,7 +50,7 @@ Evidence Timeline/Review、Conclusion publishing 和 Report generation 没有被
 - Orchestration：`operations/orchestration/research-experience-reboot.md`
 - Legacy plan：`operations/archive/phase-1-mvp-p0-p3.md`
 
-当前第一个实现 Round 是只读审计：`R1 — P0–P3 Code Disposition And Domain Audit`。不要自动进入 Research Shell。
+当前 Round 状态以 canonical Plan 为准：R1–R5 已 accepted-effective；Active Round 为 none。下一轮 `R6 — R6-readonly-research-workspace` 仍为 pending，必须等待单独 Owner start decision；不得自动启动 R6。
 
 ## Product Areas
 

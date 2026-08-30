@@ -1,5 +1,14 @@
 # 研究证据、引用与发布 Contract
 
+## Metadata
+
+- Project: serenity_quant_research
+- Document type: research-baseline
+- Status: active
+- Owner: project owner
+- Last updated: 2026-08-30
+- Source of truth: AGENTS.md
+
 ## 1. 目的和强制边界
 
 本 contract 约束 Phase 1 的 `SourceDocument`、`Event`、`Evidence`、`CompanyExposure`、`ResearchConclusion` 和 `ResearchReport`。

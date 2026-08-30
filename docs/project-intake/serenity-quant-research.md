@@ -3,6 +3,11 @@
 ## Metadata
 
 - Project: serenity_quant_research
+- Document type: intake
+- Status: active
+- Owner: project owner
+- Last updated: 2026-08-30
+- Source of truth: AGENTS.md
 - Project slug: serenity-quant-research
 - Source-of-truth location: `.`
 - Governance mode: external-first, PI-first
@@ -10,7 +15,7 @@
 - Runtime readiness: runtime-ready
 - Product maturity: approved Research Experience Reboot baseline
 - Legacy engineering maturity: P0–P3 implemented and reviewed
-- Active Round: R1 — P0–P3 Code Disposition And Domain Audit
+- Active Round: none; R1–R5 accepted-effective; next Round R6 requires separate Owner start decision
 - Legacy P4: paused
 
 ## Project Role
@@ -79,4 +84,4 @@ Workspace v1 adds no ResearchNote, OpenQuestion, Backlink, Graph, or editor pers
 
 ## Next Action
 
-Start only `R1-code-disposition-audit` from the approved Plan. R1 writes audit/review evidence but does not modify production application code, schema, tests, seed, or runtime config. Stop at the R1 Product Owner gate.
+No Round is currently active. R1–R5 are accepted-effective; next Round `R6-readonly-research-workspace` remains pending and must not start without a separate Owner start decision. Do not modify production application code, schema, tests, seed, runtime config, research facts, or R6 state in governance-maintenance tasks.

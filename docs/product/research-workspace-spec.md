@@ -1,5 +1,14 @@
 # Research Workspace Product & Interaction Specification
 
+## Metadata
+
+- Project: serenity_quant_research
+- Document type: product-spec
+- Status: approved
+- Owner: project owner
+- Last updated: 2026-08-30
+- Source of truth: docs/product/README.md
+
 ## Status
 
 - Spec state: **approved v1 direction baseline**

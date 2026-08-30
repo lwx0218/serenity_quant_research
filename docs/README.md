@@ -1,11 +1,21 @@
 # 文档目录
 
+## Metadata
+
+- Project: serenity_quant_research
+- Document type: index
+- Status: active
+- Owner: project owner
+- Last updated: 2026-08-30
+- Source of truth: AGENTS.md
+
 本目录保存项目级产品合同、研究事实基线、项目入口信息和长期参考材料。交付过程、计划、工作日志与评审证据统一放在 `operations/`，不与本目录混放。
 
 ## 目录结构
 
 | 路径 | 用途 | 权威边界 |
 |---|---|---|
+| `manual/` | 项目本地文档治理、操作 reference 和长期维护标准 | 文档放置、命名、Metadata、legacy exception 与 checker 规则；入口见 `manual/document-governance.md` |
 | `product/` | Research Experience Reboot 的产品目标、体验地图、页面规范、视觉语言、验收合同和原型 | research-facing UI / UX 的产品事实源；具体优先级见 `product/README.md` |
 | `project-intake/` | 项目入口、边界、当前基线和稳定输入 | 项目概览，不替代产品合同或执行计划 |
 | `research-baseline/` | CPO taxonomy、公司候选池、evidence/review/publication 语义 | 研究事实与证据状态的基线；不由 Prototype mock data 覆盖 |
@@ -43,9 +53,10 @@
 涉及治理、Round、handoff 或 Independent Review 时，优先读取：
 
 1. 根 `AGENTS.md`
-2. `operations/orchestration/independent-review-and-round-scope-standard.md`
-3. 当前 approved Plan
-4. 当前 work log / review artifact
+2. `manual/document-governance.md`（仅文档治理/格式维护时）
+3. `operations/orchestration/independent-review-and-round-scope-standard.md`
+4. 当前 approved Plan
+5. 当前 work log / review artifact
 
 ## 维护约定
 

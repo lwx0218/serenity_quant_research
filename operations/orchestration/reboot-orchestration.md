@@ -1,5 +1,14 @@
 # Reboot Orchestration — 已 supersede 指针
 
+## Metadata
+
+- Project: serenity_quant_research
+- Document type: orchestration
+- Status: superseded
+- Owner: project owner
+- Last updated: 2026-08-30
+- Source of truth: operations/orchestration/research-experience-reboot.md
+
 本文件来自早期 package draft，仅作为历史输入保留，不再是当前执行权威。
 
 当前权威：

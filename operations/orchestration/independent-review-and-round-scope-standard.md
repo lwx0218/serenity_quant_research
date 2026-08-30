@@ -1,5 +1,14 @@
 # Independent Review 与 Round Scope 标准
 
+## Metadata
+
+- Project: serenity_quant_research
+- Document type: orchestration
+- Status: approved
+- Owner: project owner
+- Last updated: 2026-08-30
+- Source of truth: AGENTS.md
+
 ## 状态
 
 - 状态：approved governance standard

@@ -1,5 +1,14 @@
 # CPO 公司候选池
 
+## Metadata
+
+- Project: serenity_quant_research
+- Document type: research-baseline
+- Status: active
+- Owner: project owner
+- Last updated: 2026-08-30
+- Source of truth: docs/research-baseline/evidence-contract.md
+
 ## 1. 状态与用途
 
 - 状态：Phase 1 P0 seed candidate baseline

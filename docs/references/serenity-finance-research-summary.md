@@ -1,5 +1,14 @@
 # Serenity Framework 投研工作台调研总结（标准版）
 
+## Metadata
+
+- Project: serenity_quant_research
+- Document type: external-reference-summary
+- Status: external-reference
+- Owner: project owner
+- Last updated: 2026-08-30
+- Source of truth: docs/research-baseline/evidence-contract.md
+
 ## 0 结论总览
 
 | 决策项 | 结论 |

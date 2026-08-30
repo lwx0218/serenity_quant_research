@@ -1,5 +1,14 @@
 # Product Acceptance Contract
 
+## Metadata
+
+- Project: serenity_quant_research
+- Document type: product-contract
+- Status: approved
+- Owner: project owner
+- Last updated: 2026-08-30
+- Source of truth: AGENTS.md
+
 ## 状态
 
 - State：**mandatory reboot gate**

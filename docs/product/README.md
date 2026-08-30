@@ -1,9 +1,18 @@
 # Serenity Quant Research — Product Reboot Baseline
 
+## Metadata
+
+- Project: serenity_quant_research
+- Document type: index
+- Status: approved
+- Owner: project owner
+- Last updated: 2026-08-30
+- Source of truth: AGENTS.md
+
 ## Status
 
 - Product state: **Approved Research Experience Reboot baseline**
-- Current engineering state: P0–P3 implemented; R1 code/domain disposition audit is next
+- Current engineering state: R1–R5 accepted-effective; Active Round none; R6 remains pending and requires a separate Owner start decision
 - Current product/UI state: **P0–P3 research-facing UI baseline is superseded**
 - Legacy P4: **paused**
 - Current reboot acceptance boundary: Explorer → Company → read-only Workspace
@@ -305,8 +314,13 @@ Pi should implement the approved behavior and design intent using the production
 [✓] write reboot MVP plan
 [✓] write reboot orchestration
 [✓] update repository entry documents and approve canonical fixed-Round Plan
-[ ] perform R1 P0–P3 code disposition audit
-[ ] begin R2 reboot implementation only after R1 Owner acceptance
+[✓] accept R1 P0–P3 code disposition audit
+[✓] accept R2 research shell
+[✓] accept R3 CPO Explorer vertical slice
+[✓] accept R4 full CPO Explorer
+[✓] accept R5 company research experience
+[ ] R6 read-only Research Workspace remains pending; do not start without separate Owner decision
+[ ] R7 integration cleanup remains pending after R6 acceptance and separate Owner decision
 ```
 
 ## 13. Decision Owner

@@ -1,5 +1,14 @@
 # Governance Maintenance Backlog
 
+## Metadata
+
+- Project: serenity_quant_research
+- Document type: orchestration
+- Status: active
+- Owner: project owner
+- Last updated: 2026-08-30
+- Source of truth: operations/orchestration/independent-review-and-round-scope-standard.md
+
 ## 状态
 
 - 状态：active governance backlog

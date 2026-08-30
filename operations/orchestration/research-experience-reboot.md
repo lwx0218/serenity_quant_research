@@ -1,5 +1,14 @@
 # Research Experience Reboot — 编排合同
 
+## Metadata
+
+- Project: serenity_quant_research
+- Document type: orchestration
+- Status: approved
+- Owner: project owner
+- Last updated: 2026-08-30
+- Source of truth: operations/planning/research-experience-reboot.md
+
 ## 状态
 
 - Plan approval: approved
