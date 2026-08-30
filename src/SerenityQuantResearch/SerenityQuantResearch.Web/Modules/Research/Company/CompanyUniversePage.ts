@@ -136,6 +136,8 @@ async function initUniverse() {
         setTimeout(restore, 0);
         setTimeout(restore, 80);
         setTimeout(restore, 180);
+        setTimeout(restore, 240);
+        setTimeout(restore, 360);
     };
 
     const openDrawer = async (companyId: string, trigger?: HTMLElement, activationScrollY = window.scrollY) => {

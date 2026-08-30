@@ -2,8 +2,8 @@
 
 Plan approval: approved
 Git baseline: 7cf1b95d23a5da3dd53766049557a67ed18fae73
-Accepted-effective Rounds: R1, R2, R3, R4, R5, R6
-Active Round: none; next Round R7 requires separate Owner start decision
+Accepted-effective Rounds: R1, R2, R3, R4, R5, R6, R7
+Active Round: none
 Branch: product-reboot
 Approval authority: Owner structured approval after complete Plan Preview
 Approval scope: persist this baseline and hand off R1; no implementation, commit, push, or automatic multi-Round progression
@@ -18,7 +18,7 @@ Approval scope: persist this baseline and hand off R1; no implementation, commit
 - Canonical Plan: `operations/planning/research-experience-reboot.md`
 - Canonical orchestration: `operations/orchestration/research-experience-reboot.md`
 - Independent Review / Round scope standard: `operations/orchestration/independent-review-and-round-scope-standard.md`
-- Final integrated review: `operations/reviews/research-experience-reboot-final-integrated-review.md`
+- Final integrated review: `operations/reviews/2026-08-30-research-experience-reboot-final-integrated-review.md`
 
 本 Plan 的 machine-readable metadata、Round ledger 与字段标签保留英文，以兼容 handoff/review 工具解析；正文、目标、边界和状态说明使用中文。Round ID 从 R1 开始，因为 project-local handoff/review validator 接受 `R[1-9][0-9]*` 形式。早期 fractional audit 已规范化为 R1；这是编号规范化，不新增或删除已批准交付边界。
 
@@ -118,7 +118,7 @@ Out of scope:
 | R4 | R4-full-cpo-explorer | 将已接受的 Explorer interaction 扩展到完整 approved CPO taxonomy。 | Full component coverage matrix；1440px/1920px Explorer evidence；interaction recording；full validation；valid Attempt 3 review finding、P1 fix evidence 与 Owner-accepted post-fix re-review limitation | accepted |
 | R5 | R5-company-research-experience | 交付 Card/List Company Pool、context-preserving Quick Drawer 与 entity-centric Full Company Detail。 | 1440px/1920px Card/List/Drawer/Detail evidence；context/filter/scroll sequence；policy regression；full validation；Independent Review evidence 与 P2 dispositions | accepted |
 | R6 | R6-readonly-research-workspace | 使用既有 relationships 交付 read-only linked-object Workspace。 | Schema-unchanged evidence；1440px/1920px component/company Workspace evidence；navigation/context sequence；full validation；development review/re-review evidence；documented Owner-accepted formal review limitation | accepted |
-| R7 | R7-reboot-integration-cleanup | 验证 Explorer-to-Company-to-Workspace journey，修复 Evidence review endpoint 的 human actor enforcement，并只删除 proven-unreferenced legacy frontend。 | End-to-end journey evidence；machine-reviewer rejection test；cleanup map；full regression/portability；per-Round 与 Final Integrated Independent Review evidence | pending |
+| R7 | R7-reboot-integration-cleanup | 验证 Explorer-to-Company-to-Workspace journey，修复 Evidence review endpoint 的 human actor enforcement，并只删除 proven-unreferenced legacy frontend。 | End-to-end journey evidence；machine-reviewer rejection test；cleanup map；full regression/portability；Owner-modified formal review limitation evidence | accepted |
 
 ## R1 — P0–P3 Code Disposition And Domain Audit
 
@@ -143,7 +143,7 @@ Out of scope:
 - Independent Review mode: spawned_pi_process
 - Review fallback rule: If automated spawned review capability is blocked, use Owner-approved distinct human_review fallback or explicit Owner review-mode/acceptance change; do not edit `.pi/` / harness inside the product Round.
 - Round review: operations/reviews/research-experience-reboot-r1-independent-review.md
-- Final integrated review: operations/reviews/research-experience-reboot-final-integrated-review.md
+- Final integrated review: operations/reviews/2026-08-30-research-experience-reboot-final-integrated-review.md
 - Acceptance evidence: Complete disposition matrix; child/material relationship capability and gap finding; unchanged production-path evidence; automated validation record; Independent Review/fallback evidence and P2 dispositions
 - Product Owner acceptance gate: Owner accepts the disposition map before R2 begins
 - Exact next gate: R1 accepted by Owner on 2026-08-28; acceptance commit/post-commit verify is authorized if requested; stop. R2 handoff requires a separate Owner start decision.
@@ -173,7 +173,7 @@ Out of scope:
 - Independent Review mode: spawned_pi_process
 - Review fallback rule: If automated spawned review capability is blocked, use Owner-approved distinct human_review fallback or explicit Owner review-mode/acceptance change; do not edit `.pi/` / harness inside the product Round.
 - Round review: operations/reviews/research-experience-reboot-r2-independent-review.md
-- Final integrated review: operations/reviews/research-experience-reboot-final-integrated-review.md
+- Final integrated review: operations/reviews/2026-08-30-research-experience-reboot-final-integrated-review.md
 - Acceptance evidence: 1440px/1920px shell screenshots；root/navigation/admin-route assertions；full validation；Independent Review evidence 与 P2 dispositions
 - Product Owner acceptance gate: Owner accepts shell objective, IA, visual hierarchy, and admin separation before R3
 - Exact next gate: R2 accepted-effective after Owner acceptance, authorized acceptance commit, and post-commit verification on 2026-08-28; stop. R3 requires separate Owner start decision.
@@ -203,7 +203,7 @@ Out of scope:
 - Independent Review mode: spawned_pi_process
 - Review fallback rule: If automated spawned review capability is blocked, use Owner-approved distinct human_review fallback or explicit Owner review-mode/acceptance change; do not edit `.pi/` / harness inside the product Round.
 - Round review: operations/reviews/research-experience-reboot-r3-independent-review.md
-- Final integrated review: operations/reviews/research-experience-reboot-final-integrated-review.md
+- Final integrated review: operations/reviews/2026-08-30-research-experience-reboot-final-integrated-review.md
 - Acceptance evidence: 1440px/1920px Flat/3D evidence；view-switch/reset/keyboard sequence；focused/full validation；Independent Review evidence 与 P2 dispositions
 - Product Owner acceptance gate: Owner accepts vertical-slice behavior and visual direction before R4
 - Exact next gate: R3 accepted-effective closeout; stop. R4 requires separate Owner start decision.
@@ -234,7 +234,7 @@ Out of scope:
 - Review fallback rule: If automated spawned review capability is blocked, use Owner-approved distinct human_review fallback or explicit Owner review-mode/acceptance change; do not edit `.pi/` / harness inside the product Round.
 - R4 Owner review limitation decision: Owner explicitly chose review-mode/acceptance option 2 for R4 only. Attempt 3 was a valid distinct spawned review with P1=1; Builder fixed the P1 and reran full validation successfully; Attempt 4 was capability-blocked because it lacked the required structured result marker and is not an Independent Review pass. Owner accepts the residual risk of lacking an effective post-fix Independent Re-review decision. Decision vocabulary for R4 closeout is `owner_accepted_with_review_limitation`, not `pass`.
 - Round review: operations/reviews/research-experience-reboot-r4-independent-review.md
-- Final integrated review: operations/reviews/research-experience-reboot-final-integrated-review.md
+- Final integrated review: operations/reviews/2026-08-30-research-experience-reboot-final-integrated-review.md
 - Acceptance evidence: Full component coverage matrix；1440px/1920px Explorer evidence；interaction recording；full validation；valid Attempt 3 review evidence；P1 fix/verify evidence；documented Owner-accepted post-fix re-review limitation；P2 dispositions if any
 - Product Owner acceptance gate: Owner accepted full Explorer and the documented R4 review limitation on 2026-08-29; acceptance commit authorized.
 - Exact next gate: R4 accepted-effective closeout complete after authorized acceptance commit and post-commit verification; stop. R5 requires separate Owner start decision.
@@ -264,7 +264,7 @@ Out of scope:
 - Independent Review mode: spawned_pi_process
 - Review fallback rule: If automated spawned review capability is blocked, use Owner-approved distinct human_review fallback or explicit Owner review-mode/acceptance change; do not edit `.pi/` / harness inside the product Round.
 - Round review: operations/reviews/research-experience-reboot-r5-independent-review.md
-- Final integrated review: operations/reviews/research-experience-reboot-final-integrated-review.md
+- Final integrated review: operations/reviews/2026-08-30-research-experience-reboot-final-integrated-review.md
 - Acceptance evidence: 1440px and 1920px Card/List/Drawer/Detail evidence; context/filter/scroll sequence; policy regression record; full automated validation record; Independent Review evidence and P2 dispositions
 - R5 review decision: distinct read-only reviewer returned `OK` with no findings/blockers after the intermediate scroll-preservation failure was fixed and the final validation suite passed.
 - Product Owner acceptance gate: Owner accepted the R5 company experience on 2026-08-30 and authorized the acceptance commit.
@@ -296,7 +296,7 @@ Out of scope:
 - Review fallback rule: If automated spawned review capability is blocked, use Owner-approved distinct human_review fallback or explicit Owner review-mode/acceptance change; do not edit `.pi/` / harness inside the product Round.
 - R6 review limitation decision: Owner explicitly modified/waived the formal review gate for R6 only after two `harness_run_independent_review` attempts returned `not_applicable` because the current harness runtime remained simple/passive. Owner accepted R6 with this limitation documented; after an independent supervision revalidation and evidence-P2 correction, Owner separately authorized the R6 acceptance commit. The limitation does not change later Round review obligations.
 - Round review: operations/reviews/research-experience-reboot-r6-independent-review.md
-- Final integrated review: operations/reviews/research-experience-reboot-final-integrated-review.md
+- Final integrated review: operations/reviews/2026-08-30-research-experience-reboot-final-integrated-review.md
 - Acceptance evidence: Schema-unchanged evidence; 1440px and 1920px component/company Workspace evidence; navigation/context sequence; full automated validation record; development fresh review/re-review with no remaining findings; documented Owner-accepted formal review limitation and evidence-P2 disposition
 - Product Owner acceptance gate: Owner accepted Workspace v1 with documented formal review limitation on 2026-08-30 and separately authorized the acceptance commit after supervision revalidation.
 - Exact next gate: R6 accepted-effective closeout requires this authorized acceptance commit and successful post-commit verification; stop. R7 requires a separate Owner start decision.
@@ -309,8 +309,8 @@ Out of scope:
 - Primary Pi implementation session: R7-reboot-integration-cleanup
 - Goal: 验证完整 Research Experience Reboot，修复 Evidence workflow endpoint 的 human reviewer contract enforcement，并只删除 proven-unreferenced legacy research-facing frontend paths。
 - Handoff contracts: AGENTS.md; operations/orchestration/independent-review-and-round-scope-standard.md; src/SerenityQuantResearch/SerenityQuantResearch.Web/AGENTS.md; docs/product/README.md; docs/product/experience-map.md; docs/product/cpo-explorer-spec.md; docs/product/company-research-spec.md; docs/product/research-workspace-spec.md; docs/product/visual-language.md; docs/product/acceptance-contract.md; docs/research-baseline/evidence-contract.md; operations/planning/research-experience-reboot.md; operations/reviews/reboot-p3-code-disposition.md; operations/reviews/research-experience-reboot-r6-independent-review.md
-- Latest work log: operations/work_logs/research-experience-reboot-r6.md
-- Latest review: operations/reviews/research-experience-reboot-r6-independent-review.md
+- Latest work log: operations/work_logs/research-experience-reboot-r7.md
+- Latest review: operations/reviews/research-experience-reboot-r7-independent-review.md
 - Review work log: operations/work_logs/research-experience-reboot-r7.md
 - Non-goals: Do not implement Evidence, Conclusion, or Report UI; do not delete history, migrations, domain services, evidence policy, or admin backend; do not change review semantics or add product scope; machine principals must never be upgraded to human by permission possession alone
 - Dependencies / Definition of Ready: R1–R6 are accepted-effective; every DELETE LATER candidate has proven replacement and no-reference evidence; all product-visible evidence can be reproduced
@@ -326,10 +326,10 @@ Out of scope:
 - Independent Review mode: spawned_pi_process
 - Review fallback rule: R7 also requires Final Integrated Independent Review before pre-commit gate; if automated spawned review capability is blocked, use Owner-approved distinct human_review fallback or explicit Owner review-mode/acceptance change; do not edit `.pi/` / harness inside the product Round.
 - Round review: operations/reviews/research-experience-reboot-r7-independent-review.md
-- Final integrated review: operations/reviews/research-experience-reboot-final-integrated-review.md
-- Acceptance evidence: End-to-end journey evidence; machine-reviewer rejection test; bounded cleanup map; clean full regression and portability record; per-Round Independent Review evidence; Final Integrated Independent Review evidence and P2 dispositions
-- Product Owner acceptance gate: Owner accepts integrated journey, endpoint enforcement, cleanup proof, and final integrated review before accepted-effective
-- Exact next gate: Product Owner R7 acceptance; authorized acceptance commit/post-commit verify if requested; stop. Later Evidence/Conclusion/Report UI requires a new Plan.
+- Final integrated review: operations/reviews/2026-08-30-research-experience-reboot-final-integrated-review.md
+- Acceptance evidence: End-to-end journey evidence; machine-reviewer rejection test; bounded cleanup map; clean full regression and portability record; documented Owner-modified formal review limitation for per-Round and Final Integrated review.
+- Product Owner acceptance gate: Owner accepted R7 with documented formal review limitation on 2026-08-30 and separately authorized an acceptance commit without push.
+- Exact next gate: R7 accepted-effective closeout after authorized acceptance commit and successful post-commit verification; stop. Later Evidence/Conclusion/Report UI requires a new Plan.
 - Blockers / assumptions: R1–R6 accepted evidence remains reproducible; endpoint identity can reuse P3 actor-type infrastructure; cleanup is limited to proven-dead frontend
 - Blocked / rebaseline conditions: Evidence semantics would change; schema/migration is required; cleanup would remove admin/backend/history; deferred UI scope is needed; Final Integrated Review cannot be completed or approved fallback is unavailable
 

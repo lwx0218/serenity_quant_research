@@ -81,6 +81,27 @@ public sealed class OpenAccessIntegrationTests
     }
 
     [Fact]
+    public async Task Root_dashboard_redirect_and_admin_maintenance_routes_are_available()
+    {
+        using var factory = new OpenAccessApplicationFactory();
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+        var root = await client.GetAsync("/");
+        Assert.Equal(HttpStatusCode.OK, root.StatusCode);
+        Assert.Contains("cpo-explorer-app", await root.Content.ReadAsStringAsync());
+
+        var dashboard = await client.GetAsync("/Dashboard");
+        Assert.Equal(HttpStatusCode.Redirect, dashboard.StatusCode);
+        Assert.Equal("/", dashboard.Headers.Location?.ToString());
+
+        foreach (var path in new[] { "/Administration/User", "/Administration/Role" })
+        {
+            var response = await client.GetAsync(path);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+    }
+
+    [Fact]
     public async Task Login_page_is_bypassed_when_open_access_is_enabled()
     {
         using var factory = new OpenAccessApplicationFactory();

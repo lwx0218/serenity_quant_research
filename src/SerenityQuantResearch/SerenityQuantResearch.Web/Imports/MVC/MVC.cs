@@ -3,14 +3,6 @@ namespace SerenityQuantResearch.MVC;
 
 public static partial class Views
 {
-    public static partial class Common
-    {
-        public static partial class Dashboard
-        {
-            public const string DashboardIndex = "~/Modules/Common/Dashboard/DashboardIndex.cshtml";
-        }
-    }
-
     public static partial class Errors
     {
         public const string AccessDenied = "~/Views/Errors/AccessDenied.cshtml";
