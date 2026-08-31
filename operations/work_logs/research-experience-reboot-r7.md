@@ -8,7 +8,7 @@ Git baseline: 2c10022af1ca13a41acc362a9994062fe684a45e
 
 - Project: serenity_quant_research
 - Document type: other
-- Status: active
+- Status: approved
 - Owner: project owner
 - Last updated: 2026-08-30
 - Source of truth: operations/planning/research-experience-reboot.md
@@ -18,9 +18,9 @@ Git baseline: 2c10022af1ca13a41acc362a9994062fe684a45e
 - Round：`R7 — Integrated Journey, Regression, And Legacy Cleanup`
 - Primary session：`R7-reboot-integration-cleanup`
 - Owner start decision：Owner 已明确正式启动且仅启动 canonical final Round R7。
-- 当前状态：`owner_accepted_commit_authorized`；R7 candidate、full validation、development review/fix/re-review 均已完成；Owner 已明确修改/豁免 R7 formal review gate with limitation，并已验收 R7、授权 acceptance commit（不 push）。
-- 前序状态：R1–R6 accepted-effective；acceptance commit HEAD 为 `2c10022af1ca13a41acc362a9994062fe684a45e`。
-- Commit / push：未授权；不得自动 commit 或 push。
+- 当前状态：`accepted_effective`；Owner 已明确修改/豁免 R7 formal review gate with limitation、验收 R7，并授权 acceptance commit；commit 与 post-commit verification 均已完成。
+- Acceptance commit / HEAD：`730eeee50c9e07997828f2bb7e6017a955092caa`。
+- Commit / push：R7 acceptance commit 已按授权创建；未 push。当前 governance-only correction 不授权新 commit 或 push。
 - Progression：R7 完成后停止；Evidence/Conclusion/Report UI 必须使用后续新 Plan，当前不得启动。
 
 ## Round-start baseline
@@ -192,7 +192,7 @@ PASS: git diff --exit-code -- src/SerenityQuantResearch/SerenityQuantResearch.We
 PASS: git diff --cached --name-only (no staged files)
 ```
 
-R7 canonical screenshot evidence remains under `operations/reviews/research-experience-reboot-r7-screenshots/` and contains 10 PNGs：Explorer selected, Company Pool, Company Drawer, Company Detail, and Workspace Company at both 1440×980 and 1920×1080. The full UI regression run redirected R4/R5/R6/R7 screenshot output to `/tmp/serenity-r7-full-ui-screenshots` to avoid modifying protected pre-existing R4 screenshot files while preserving canonical R7 evidence from the focused R7 smoke.
+R7 canonical screenshot evidence remains under `operations/reviews/research-experience-reboot-r7-screenshots/` and contains 10 PNGs：Explorer selected, Company Pool, Company Drawer, Company Detail, and Workspace Company at both 1440×980 and 1920×1080. Later redirected full-suite runs preserved canonical R7 evidence, but an earlier R7 validation invocation had already overwritten the 16 pre-existing dirty R4 screenshot files；详见下方 evidence-integrity incident。
 
 ## Cleanup / no-reference / protected proof
 
@@ -219,7 +219,14 @@ migration tracked-file hash bundle: 2cc7fdd58d1d8cbc032809a9d6e2238f3be5b0826895
 seed tracked-file hash bundle: 17a236f1629ca4b2fed69a58db2e9079fcec7a014e64c59a47c3dcaab91ce116
 ```
 
-Portability scan over live candidate files found no `/home/`、`/project/data_science`、`/tmp/pi-subagents`、`computer://`、provider key/secret strings.
+### Screenshot environment / evidence-integrity incident
+
+- R7 round-start 时，`operations/reviews/research-experience-reboot-r4-screenshots/**` 的 16 个 PNG 已处于 dirty 状态，bundle 为 `2d328ae7fb60de83298654919ab6d4129d9e90c648ac150cd44adf3550c701e2`。
+- R7 validation 曾覆盖这 16 个文件；当前 bundle 为 `5527a738b525afe88c84d7d151c8320f51c308838a4ae75d3c3d6f3fbb569a13`。pre-R7 dirty content 没有安全可恢复副本，因此保持当前状态并禁止盲目 `restore`/`reset`。此前关于 `protected hashes unchanged` 的通知不准确。
+- 这是 environment / evidence integrity incident，不是 R7 product candidate failure；R4 文件不属于 R7 acceptance commit。
+- R6 单文件 `operations/reviews/research-experience-reboot-r6-screenshots/r6-nav-explorer-selected-component-1440.png` 在本次 correction 前新增 dirty；Owner 仅授权恢复该 exact path 到 HEAD。恢复前 SHA-256 为 `0557580c19b1cac811df7978724c5043cdafef77a22a137413c5997b197a67f6`，恢复后/HEAD SHA-256 为 `ef7e23a977a54bde57cad17255814df4e85d78283fc9cc9b7139cc11ce22474e`。
+
+Portability scan over live candidate files found no `/home/`、`/project/data_science`、`/tmp/pi-subagents`、`computer://`、provider key/secret strings。
 
 ## Final candidate manifest
 
@@ -274,6 +281,13 @@ tests/SerenityQuantResearch.Tests/EvidenceWorkflowEndpointPolicyTests.cs
 tests/SerenityQuantResearch.Tests/OpenAccessIntegrationTests.cs
 ```
 
+## Acceptance commit / post-commit closeout
+
+- Acceptance commit：`730eeee50c9e07997828f2bb7e6017a955092caa`（parent `2c10022af1ca13a41acc362a9994062fe684a45e`）。
+- Commit 恰含 24 个路径；仅包含 R7 canonical screenshot 目录的 10 个 PNG，未夹带 R4、R6 或其他历史 screenshot 路径。
+- Post-commit verification passed；HEAD 保持上述 acceptance commit；未 push。
+- R7 已 accepted-effective，Active Round 为 none。后续 Evidence/Conclusion/Report 或其他 UI 工作必须使用新 Plan。
+
 ## Formal review readiness / blocker
 
 Prepared formal review packets:
@@ -281,15 +295,15 @@ Prepared formal review packets:
 - Per-Round R7 packet/artifact：`operations/reviews/research-experience-reboot-r7-independent-review.md`
 - Final Integrated packet/artifact：`operations/reviews/2026-08-30-research-experience-reboot-final-integrated-review.md`
 
-State: `owner_accepted_commit_authorized`. Owner first selected the “formal harness restored” path, so Builder invoked `harness_run_independent_review` once for `reviewRole=per_round`, `roundId=R7`. The tool returned:
+State: `accepted_effective_with_formal_review_limitation`. Owner first selected the “formal harness restored” path, so Builder invoked `harness_run_independent_review` once for `reviewRole=per_round`, `roundId=R7`. The tool returned:
 
 ```text
 harness_run_independent_review: not_applicable
 Reason: Harness is in simple/passive mode. Formal Round, handoff, review, and widget capabilities require explicit Owner-approved formal activation.
 ```
 
-No formal child was created and no formal P0/P1/P2 exist. This direct R7 invocation disproved restored formal capability in the current runtime; Builder did not proceed to a redundant Final Integrated helper call in the same capability state. Owner then explicitly selected option 2：modify/waive the R7 formal review gate with this limitation and enter Owner acceptance judgment. Owner subsequently accepted R7 with this visible limitation and authorized an acceptance commit without push.
+No formal child was created and formal P0/P1/P2 were not assessed. This direct R7 invocation disproved restored formal capability in the current runtime; Builder did not proceed to a redundant Final Integrated helper call in the same capability state. Owner then explicitly selected option 2：modify/waive the R7 formal review gate with this limitation and enter Owner acceptance judgment. Owner subsequently accepted R7 with this visible limitation；acceptance commit `730eeee50c9e07997828f2bb7e6017a955092caa` and post-commit verification completed without push.
 
 ## Formal review boundary
 
-R7 originally required two distinct formal obligations：per-Round Independent Review and Final Integrated Independent Review. Development subagent reviewers are supplemental only. Current runtime returned `not_applicable/simple-passive` again when Owner selected the formal-harness-restored path. Owner then explicitly modified/waived the R7 formal review gate with limitation and allowed the candidate to enter Owner acceptance judgment. Owner accepted R7 with this limitation and authorized an acceptance commit without push. No silent waiver or substitution occurred; the limitation remains visible in the R7 and Final Integrated review artifacts.
+R7 originally required two distinct formal obligations：per-Round Independent Review and Final Integrated Independent Review. Development subagent reviewers are supplemental only and do not substitute for either formal obligation. Current runtime returned `not_applicable/simple-passive` again when Owner selected the formal-harness-restored path. Owner then explicitly modified/waived the R7 formal review gate with limitation and accepted R7. Acceptance commit and post-commit verification are complete without push；no silent waiver or substitution occurred，且无 formal child、formal P0/P1/P2 未评估。

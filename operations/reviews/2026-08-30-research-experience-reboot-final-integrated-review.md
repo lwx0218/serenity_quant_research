@@ -22,7 +22,7 @@ Unresolved P2: 0 (not formally assessed; formal child did not run)
 - Required mode：formal `harness_run_independent_review` with `reviewRole = final_integrated` after R7 candidate stabilization.
 - Current decision：`owner_modified_review_gate_with_limitation`；no formal final-integrated child has run and formal P0/P1/P2 are not assessed.
 - Reason：No independent governance-maintenance evidence shows current formal harness runtime capability has recovered from the R6 `not_applicable/simple-passive` blocker. After R7 candidate stabilization, Owner selected the “formal harness restored” path; the per-Round R7 helper invocation again returned `not_applicable/simple-passive`. Builder therefore did not make a redundant Final Integrated helper invocation in the same blocked capability state. Owner then explicitly selected option 2：modify/waive the R7 formal review gate with this limitation and enter Owner acceptance judgment. Development subagent reviews remain supplemental and do not become formal review.
-- Next gate：Owner accepted R7 with this visible limitation and separately authorized an acceptance commit without push.
+- Next gate：R7 acceptance commit `730eeee50c9e07997828f2bb7e6017a955092caa` completed；post-commit verification passed；not pushed；R7 and current Research Experience Reboot boundary are accepted-effective; Active Round none.
 
 ## Integrated Candidate Packet
 
@@ -49,7 +49,7 @@ R7 candidate closes this boundary by proving the end-to-end journey, enforcing h
 - R4：accepted-effective full CPO Explorer with documented R4-only review limitation.
 - R5：accepted-effective Company Pool / Quick Drawer / Full Detail.
 - R6：accepted-effective read-only linked Research Workspace with documented R6-only formal review limitation.
-- R7：candidate implemented and development reviewed; formal per-Round and final-integrated review gates are blocked pending Owner path decision.
+- R7：accepted-effective after Owner-modified formal review limitation, acceptance commit `730eeee50c9e07997828f2bb7e6017a955092caa`, and successful post-commit verification without push.
 
 ### R7 candidate paths
 
@@ -136,4 +136,4 @@ A valid final integrated reviewer must answer with P0/P1/P2 findings and a decis
 
 ## Owner Gate
 
-Owner explicitly modified/waived the R7 formal review gate with limitation after the per-Round helper still returned `not_applicable/simple-passive`. This artifact records that no formal Final Integrated review child ran and formal P0/P1/P2 are not assessed. Owner subsequently accepted R7 with this limitation and authorized an acceptance commit without push. R7 and the full Research Experience Reboot become accepted-effective only after the authorized commit and successful post-commit verification.
+Owner explicitly modified/waived the R7 formal review gate with limitation after the per-Round helper still returned `not_applicable/simple-passive`. This artifact records that no formal Final Integrated review child ran and formal P0/P1/P2 are not assessed. Owner accepted R7 with this limitation；acceptance commit `730eeee50c9e07997828f2bb7e6017a955092caa` and post-commit verification completed without push. R7 and the current Research Experience Reboot boundary are accepted-effective；Active Round none.

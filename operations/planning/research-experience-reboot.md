@@ -328,15 +328,15 @@ Out of scope:
 - Round review: operations/reviews/research-experience-reboot-r7-independent-review.md
 - Final integrated review: operations/reviews/2026-08-30-research-experience-reboot-final-integrated-review.md
 - Acceptance evidence: End-to-end journey evidence; machine-reviewer rejection test; bounded cleanup map; clean full regression and portability record; documented Owner-modified formal review limitation for per-Round and Final Integrated review.
-- Product Owner acceptance gate: Owner accepted R7 with documented formal review limitation on 2026-08-30 and separately authorized an acceptance commit without push.
-- Exact next gate: R7 accepted-effective closeout after authorized acceptance commit and successful post-commit verification; stop. Later Evidence/Conclusion/Report UI requires a new Plan.
+- Product Owner acceptance gate: Owner accepted R7 with documented formal review limitation on 2026-08-30；acceptance commit `730eeee50c9e07997828f2bb7e6017a955092caa` completed and post-commit verification passed without push.
+- Exact next gate: R7 is accepted-effective；Active Round none；stop. Later Evidence/Conclusion/Report UI requires a new Plan.
 - Blockers / assumptions: R1–R6 accepted evidence remains reproducible; endpoint identity can reuse P3 actor-type infrastructure; cleanup is limited to proven-dead frontend
 - Blocked / rebaseline conditions: Evidence semantics would change; schema/migration is required; cleanup would remove admin/backend/history; deferred UI scope is needed; Final Integrated Review cannot be completed or approved fallback is unavailable
 
 ## Commit / Push / Progression Rules
 
 - 不自动 commit，不自动 push。
-- 每个 Round 必须在 Owner acceptance、authorized acceptance commit 与 post-commit verify 后才可称为 accepted-effective。
+- 每个 Round 必须在 Owner acceptance、authorized acceptance commit 与 post-commit verify 后才可称为 accepted-effective；R7 已满足该条件，HEAD 为 `730eeee50c9e07997828f2bb7e6017a955092caa`。
 - 一个 Round 完成后停止；后续 Round 需要 Owner 明确启动。
 - Review/Fix 不创建隐藏 Round；continuation 仍属于同一 Round。
 

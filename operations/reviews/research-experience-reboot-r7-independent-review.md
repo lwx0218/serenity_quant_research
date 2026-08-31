@@ -11,7 +11,7 @@ Unresolved P2: 0 (not formally assessed; formal child did not run)
 
 - Project: serenity_quant_research
 - Document type: other
-- Status: active
+- Status: approved
 - Owner: project owner
 - Last updated: 2026-08-30
 - Source of truth: operations/planning/research-experience-reboot.md
@@ -22,7 +22,7 @@ Unresolved P2: 0 (not formally assessed; formal child did not run)
 - Required mode：formal `harness_run_independent_review` per canonical Plan and Owner R7 start decision.
 - Current decision：`owner_modified_review_gate_with_limitation`；formal review child did not run, formal P0/P1/P2 are not assessed, and development subagent reviews are not being used as substitutes.
 - Reason：R6 twice observed current Pi/harness runtime returning `not_applicable/simple-passive` for formal review helpers. After R7 candidate stabilization, Owner selected the option asserting formal harness was restored; Builder invoked the formal per-Round helper once, but the current runtime again returned `not_applicable/simple-passive`. Owner then explicitly selected option 2：modify/waive the R7 formal review gate with this limitation and enter Owner acceptance judgment. This does not create a formal review pass and does not itself authorize commit/push.
-- Next gate：Owner accepted R7 with this visible limitation and separately authorized an acceptance commit without push.
+- Next gate：R7 acceptance commit `730eeee50c9e07997828f2bb7e6017a955092caa` completed；post-commit verification passed；not pushed；R7 is accepted-effective and Active Round is none.
 
 ## Candidate Reviewed / Review Packet
 
@@ -144,5 +144,5 @@ Decision effect:
 - no formal per-Round child ran;
 - formal P0/P1/P2 are not assessed;
 - development subagent review/re-review remains supplemental, not a formal substitute;
-- R7 may proceed to Owner acceptance judgment with this visible limitation;
-- Owner subsequently accepted R7 with this limitation and authorized an acceptance commit without push; R7 becomes accepted-effective only after that commit and successful post-commit verification.
+- Owner acceptance judgment occurred with this visible limitation;
+- Owner accepted R7 with this limitation；acceptance commit `730eeee50c9e07997828f2bb7e6017a955092caa` and post-commit verification completed without push；R7 is accepted-effective.
