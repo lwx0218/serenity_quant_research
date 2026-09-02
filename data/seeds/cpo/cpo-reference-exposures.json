@@ -1,0 +1,67 @@
+{
+  "$comment": "证据级 reference(行业公开图示)。来源是一张公开的产业链示意图,只能说明“公开资料把这家公司归到这个环节”,不能说明具体产品或供应关系。已核验事实用 reviewed,待核验用 candidate。",
+  "source": {
+    "id": "source.tucaishe.cpo-chain-map",
+    "publisher": "图财社",
+    "title": "CPO 产业链全景图 / CPO 3D 爆炸分解图",
+    "yearRange": "2024–2026",
+    "kind": "industry-infographic",
+    "localCopies": [
+      "docs/references/cpo-industry-chain.jpeg",
+      "docs/references/cpo-3d-components.jpeg"
+    ],
+    "note": "示意性梳理,不构成投资建议"
+  },
+  "evidenceLevel": "reference",
+  "shortNames": {
+    "global.nvidia": "NVIDIA",
+    "global.broadcom": "Broadcom",
+    "global.cisco": "Cisco",
+    "global.intel": "Intel",
+    "global.marvell": "Marvell",
+    "global.coherent": "Coherent",
+    "global.lumentum": "Lumentum",
+    "global.arista": "Arista",
+    "cn.300308": "中际旭创",
+    "cn.300502": "新易盛",
+    "cn.002281": "光迅科技",
+    "cn.300394": "天孚通信",
+    "cn.000988": "华工科技",
+    "cn.603083": "剑桥科技",
+    "cn.688498": "源杰科技",
+    "cn.688048": "长光华芯",
+    "cn.002916": "深南电路",
+    "cn.002463": "沪电股份",
+    "cn.300602": "飞荣达",
+    "cn.688200": "华峰测控"
+  },
+  "companies": [
+    { "id": "global.meta", "name": "Meta Platforms, Inc.", "shortName": "Meta", "ticker": "META", "exchange": "NASDAQ", "countryRegion": "美国", "universeLayer": "reference" },
+    { "id": "global.microsoft", "name": "Microsoft Corporation", "shortName": "Microsoft", "ticker": "MSFT", "exchange": "NASDAQ", "countryRegion": "美国", "universeLayer": "reference" },
+    { "id": "global.juniper", "name": "Juniper Networks (HPE)", "shortName": "Juniper", "ticker": null, "exchange": null, "countryRegion": "美国", "universeLayer": "reference" },
+    { "id": "global.hpe", "name": "Hewlett Packard Enterprise", "shortName": "HPE", "ticker": "HPE", "exchange": "NYSE", "countryRegion": "美国", "universeLayer": "reference" },
+    { "id": "global.viavi", "name": "VIAVI Solutions Inc.", "shortName": "VIAVI", "ticker": "VIAV", "exchange": "NASDAQ", "countryRegion": "美国", "universeLayer": "reference" },
+    { "id": "global.keysight", "name": "Keysight Technologies, Inc.", "shortName": "Keysight", "ticker": "KEYS", "exchange": "NYSE", "countryRegion": "美国", "universeLayer": "reference" },
+    { "id": "global.jabil", "name": "Jabil Inc.", "shortName": "Jabil", "ticker": "JBL", "exchange": "NYSE", "countryRegion": "美国", "universeLayer": "reference" },
+    { "id": "global.us-conec", "name": "US Conec Ltd.", "shortName": "US Conec", "ticker": null, "exchange": null, "countryRegion": "美国", "universeLayer": "reference" },
+    { "id": "global.senko", "name": "Senko Advanced Components", "shortName": "Senko", "ticker": null, "exchange": null, "countryRegion": "日本", "universeLayer": "reference" },
+    { "id": "cn.688313", "name": "河南仕佳光子科技股份有限公司", "shortName": "仕佳光子", "ticker": "688313", "exchange": "SSE", "countryRegion": "中国", "universeLayer": "reference" },
+    { "id": "cn.002384", "name": "苏州东山精密制造股份有限公司", "shortName": "东山精密", "ticker": "002384", "exchange": "SZSE", "countryRegion": "中国", "universeLayer": "reference" },
+    { "id": "cn.300684", "name": "北京中石伟业科技股份有限公司", "shortName": "中石科技", "ticker": "300684", "exchange": "SZSE", "countryRegion": "中国", "universeLayer": "reference" },
+    { "id": "cn.002600", "name": "领益智造股份有限公司", "shortName": "领益智造", "ticker": "002600", "exchange": "SZSE", "countryRegion": "中国", "universeLayer": "reference" },
+    { "id": "cn.300757", "name": "罗博特科智能科技股份有限公司", "shortName": "罗博特科", "ticker": "300757", "exchange": "SZSE", "countryRegion": "中国", "universeLayer": "reference" },
+    { "id": "cn.300570", "name": "深圳市太辰光通信股份有限公司", "shortName": "太辰光", "ticker": "300570", "exchange": "SZSE", "countryRegion": "中国", "universeLayer": "reference" }
+  ],
+  "exposures": [
+    { "chainNodeId": "cpo.chain.demand", "companyIds": ["global.nvidia", "global.arista", "global.cisco", "global.meta", "global.microsoft"] },
+    { "chainNodeId": "cpo.chain.asic", "companyIds": ["global.broadcom", "global.nvidia", "global.marvell"] },
+    { "chainNodeId": "cpo.chain.silicon-photonics", "companyIds": ["global.intel", "global.broadcom", "cn.300308", "cn.688498"] },
+    { "chainNodeId": "cpo.chain.light-source", "companyIds": ["global.coherent", "global.lumentum", "cn.688313", "cn.688048"] },
+    { "chainNodeId": "cpo.chain.optical-engine-package", "companyIds": ["global.broadcom", "global.intel", "global.cisco", "cn.002281", "cn.300502"] },
+    { "chainNodeId": "cpo.chain.substrate-interconnect", "companyIds": ["cn.002916", "cn.002463", "cn.002384"] },
+    { "chainNodeId": "cpo.chain.thermal-structure", "companyIds": ["cn.300602", "cn.300684", "cn.002600"] },
+    { "chainNodeId": "cpo.chain.test-equipment", "companyIds": ["global.viavi", "global.keysight", "global.jabil", "cn.300757"] },
+    { "chainNodeId": "cpo.chain.optical-connection", "companyIds": ["global.us-conec", "global.senko", "cn.300570", "cn.300394"] },
+    { "chainNodeId": "cpo.chain.systems-switches", "companyIds": ["global.nvidia", "global.arista", "global.cisco", "global.juniper", "global.hpe"] }
+  ]
+}

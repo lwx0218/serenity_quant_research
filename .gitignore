@@ -33,3 +33,16 @@ coverage/
 
 # Generated report/output artifacts
 artifacts/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+api/.pytest_cache/
+
+# Runtime database (rebuilt from data/seeds)
+data/*.sqlite
+data/*.sqlite-*
+
+# Web build
+web/dist/

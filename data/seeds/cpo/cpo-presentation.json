@@ -1,0 +1,109 @@
+{
+  "$comment": "Explorer 展示层内容:产品/模块的显示名、一句话功能、分层图视觉类型、信号链路。研究事实仍以 cpo-research-seed.json 与 evidence 为准;这里只是怎么讲。",
+  "product": {
+    "id": "cpo",
+    "name": "CPO 光模块",
+    "nameEn": "Co-Packaged Optics",
+    "eyebrow": "CO-PACKAGED OPTICS · 1.6T / 3.2T",
+    "summary": "九层结构,从散热上盖到高速主板。点击任意一层,看它由什么构成、谁在做。",
+    "themeId": "theme.cpo",
+    "chainId": "chain.cpo",
+    "signalPath": {
+      "summary": "电信号从主板经交换芯片与驱动层进入硅光芯片,转换为光后由光纤阵列送出;返程由探测阵列完成光电转换。",
+      "steps": [
+        { "label": "PCB / 金手指", "kind": "电信号", "moduleId": "cpo.mod.host-board" },
+        { "label": "交换 ASIC", "kind": "电信号", "moduleId": "cpo.mod.host-asic" },
+        { "label": "Driver / TIA", "kind": "电信号", "moduleId": "cpo.mod.eic" },
+        { "label": "SiPh PIC", "kind": "电 → 光", "moduleId": "cpo.mod.pic" },
+        { "label": "FAU / MPO", "kind": "光信号", "moduleId": "cpo.mod.fiber-interface" }
+      ]
+    },
+    "sourceNote": "结构与代表企业整理自公开行业图示(图财社,2024–2026),为示意性梳理,不构成研究结论或投资建议。"
+  },
+  "modules": {
+    "cpo.mod.thermal": {
+      "code": "THERMAL",
+      "name": "散热与上盖",
+      "nameEn": "Heat spreader / lid",
+      "summary": "均热板与冷板把 ASIC 与光引擎的热量导出",
+      "description": "封装最上层。均热盖负责把 ASIC 与光引擎的热量摊开,冷板或散热器再把热量带进系统冷却回路;两者之间靠热界面材料降低接触热阻。",
+      "visual": "lid"
+    },
+    "cpo.mod.host-asic": {
+      "code": "HOST-ASIC",
+      "name": "交换 ASIC",
+      "nameEn": "Switch ASIC",
+      "summary": "1.6T / 3.2T 交换芯片,完成数据交换与调度",
+      "description": "整个模块的电学核心。交换裸片完成高速数据交换与调度,SerDes 与高速 I/O 把它接到近封装的光引擎上。",
+      "visual": "board-die"
+    },
+    "cpo.mod.eic": {
+      "code": "EIC",
+      "name": "电处理层",
+      "nameEn": "Driver / TIA / Retimer",
+      "summary": "224G PAM4 电信号驱动、放大与重定时",
+      "description": "光与电之间的电信号处理层。驱动器把电信号送进光调制器,跨阻放大器把探测电流放大回电压;重定时、时钟恢复与 DSP 是可选的架构选项。",
+      "visual": "board-chips"
+    },
+    "cpo.mod.pic": {
+      "code": "SIPH-PIC",
+      "name": "硅光芯片",
+      "nameEn": "Silicon photonics PIC",
+      "summary": "调制、波分复用与片上波导耦合,光学引擎核心",
+      "description": "把电信号调制到光载波、按波长复用,并通过片上波导把光耦合进出光纤。它是 CPO 的光学核心,对应产业链中的硅光环节。",
+      "visual": "board-die-traces"
+    },
+    "cpo.mod.laser": {
+      "code": "LASER",
+      "name": "激光器阵列",
+      "nameEn": "EML / DFB laser array",
+      "summary": "外置连续波光源,为硅光芯片供光",
+      "description": "为硅光芯片提供连续波光载波。CPO 架构里通常把激光器做成可维护的外置光源,通过耦合接口给光引擎供光。",
+      "visual": "board-row-gold"
+    },
+    "cpo.mod.receiver": {
+      "code": "PD-ARRAY",
+      "name": "光电探测阵列",
+      "nameEn": "Photodetector array",
+      "summary": "接收光信号并转换为电流",
+      "description": "接收方向的第一站。光电探测器阵列把进来的光信号转换成电流,再交给电处理层的跨阻放大器。",
+      "visual": "board-row-dark"
+    },
+    "cpo.mod.fiber-interface": {
+      "code": "FAU",
+      "name": "光纤阵列",
+      "nameEn": "Fiber array unit / MPO",
+      "summary": "多通道光纤对准、耦合与出入光接口",
+      "description": "光进出模块的物理接口。光纤阵列单元把多通道光纤对准到硅光芯片的耦合结构上,高密度光连接器再把它接到板内或前面板。",
+      "visual": "board-connector-fibers"
+    },
+    "cpo.mod.cpa-substrate": {
+      "code": "SUBSTRATE",
+      "name": "共封装基板",
+      "nameEn": "Package substrate / interposer",
+      "summary": "共同承载 ASIC 与光引擎的高密度互连基板",
+      "description": "把交换 ASIC 和光引擎装在同一块高密度封装基板上,是“共封装”三个字的物理落点;中介层、RDL 或桥接提供短距高密度互连。",
+      "visual": "substrate"
+    },
+    "cpo.mod.host-board": {
+      "code": "HOST-PCB",
+      "name": "高速主板",
+      "nameEn": "Host PCB / edge connector",
+      "summary": "系统级供电、控制与高速连接,金手指对接背板",
+      "description": "承载整个共封装组件的系统板。提供多路供电与电源管理、控制信号和高速连接,通过板级连接器或金手指对接交换机系统。",
+      "visual": "pcb-fingers"
+    }
+  },
+  "chainNodes": {
+    "cpo.chain.demand": { "displayName": "需求侧", "keywords": "AI 集群 · 数据中心 · 交换机升级" },
+    "cpo.chain.asic": { "displayName": "交换芯片 / ASIC", "keywords": "Tomahawk · SerDes · 高密度端口" },
+    "cpo.chain.silicon-photonics": { "displayName": "硅光芯片", "keywords": "PIC · 调制器 MZM · WDM" },
+    "cpo.chain.light-source": { "displayName": "光源 / 激光器", "keywords": "CW · EML · 高功率窄线宽" },
+    "cpo.chain.optical-engine-package": { "displayName": "光引擎 / 封装", "keywords": "共封装趋势 · 高密度封装 · 低损耗耦合" },
+    "cpo.chain.substrate-interconnect": { "displayName": "基板与互连", "keywords": "高层数 PCB · FCBGA · 玻璃基板" },
+    "cpo.chain.thermal-structure": { "displayName": "散热与结构件", "keywords": "冷板 · 均热板 · 导热界面" },
+    "cpo.chain.test-equipment": { "displayName": "测试与设备", "keywords": "耦合封装 · 光学对准 · 老化测试" },
+    "cpo.chain.optical-connection": { "displayName": "光器件 / 连接", "keywords": "FAU · MPO · 透镜 · 隔离器" },
+    "cpo.chain.systems-switches": { "displayName": "下游整机与交换机", "keywords": "数据中心交换机 · AI 服务器互联" }
+  }
+}
