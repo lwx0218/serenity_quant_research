@@ -338,22 +338,32 @@ function updateStateLine(target: HTMLElement, model?: ExplorerModel, state: Part
 }
 
 function openDrawer(app: HTMLElement, drawer: HTMLElement, drawerContent: HTMLElement, content: Node) {
+    replaceChildren(drawerContent, content);
+    drawer.dataset.motion = "open";
     drawer.hidden = false;
     drawer.setAttribute("aria-hidden", "false");
-    drawer.classList.add("is-open");
     app.classList.add("is-drawer-open");
-    replaceChildren(drawerContent, content);
+    requestAnimationFrame(() => {
+        if (!drawer.hidden && drawer.getAttribute("aria-hidden") === "false")
+            drawer.classList.add("is-open");
+    });
 }
 
 function closeDrawer(app: HTMLElement, drawer: HTMLElement, drawerContent: HTMLElement) {
+    drawer.dataset.motion = "closing";
     drawer.classList.remove("is-open");
     drawer.setAttribute("aria-hidden", "true");
-    drawer.hidden = true;
     app.classList.remove("is-drawer-open");
-    replaceChildren(drawerContent,
-        el("span", "Research Context", "cpo-kicker"),
-        Object.assign(el("h2", "CPO component"), { id: "cpo-drawer-title", tabIndex: -1 }),
-        el("p", "选择组件后显示真实子部件、权威技术关系与公司映射缺口。"));
+    window.setTimeout(() => {
+        if (drawer.dataset.motion !== "closing" || drawer.classList.contains("is-open"))
+            return;
+        drawer.hidden = true;
+        drawer.dataset.motion = "closed";
+        replaceChildren(drawerContent,
+            el("span", "Research Context", "cpo-kicker"),
+            Object.assign(el("h2", "CPO component"), { id: "cpo-drawer-title", tabIndex: -1 }),
+            el("p", "选择组件后显示真实子部件、权威技术关系与公司映射缺口。"));
+    }, 320);
 }
 
 function renderModuleDrawer(target: HTMLElement, module: ResearchModuleSummary, childResearch: ChildResearch[], selectedChildId: string | undefined,

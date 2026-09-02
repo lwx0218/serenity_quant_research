@@ -121,8 +121,19 @@ const act = async expression => evaluate(`(()=>{${expression};return true})()`);
 const waitReady = () => waitFor(`document.querySelector('#cpo-explorer-app')?.dataset.ready === 'true'`, 'R4 explorer ready');
 const waitDrawer = id => waitFor(`document.querySelector('#cpo-research-drawer.is-open') && document.querySelector('#cpo-explorer-app')?.dataset.selected === '${id}' && document.querySelector('#cpo-drawer-content')?.innerText.includes('stable: ${id}')`, `drawer for ${id}`);
 const setView = async view => act(`document.querySelector('#cpo-view-${view}').click()`);
+async function assertViewButtonHitTest(view) {
+    const state = await evaluate(`(()=>{const button=document.querySelector('#cpo-view-${view}');const rect=button.getBoundingClientRect();const x=rect.left+rect.width/2;const y=rect.top+rect.height/2;const hit=document.elementFromPoint(x,y);const match=hit?.closest('#cpo-view-${view}')===button;return{view:'${view}',button:{left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height},hitText:hit?.textContent?.trim()??'',hitTag:hit?.tagName??'',match};})()`);
+    assert(state.match, `view switch ${view} center is not pointer-clickable: ${JSON.stringify(state)}`);
+}
+async function pointerSetView(view) {
+    await assertViewButtonHitTest(view);
+    const state = await evaluate(`(()=>{const button=document.querySelector('#cpo-view-${view}');const rect=button.getBoundingClientRect();const x=rect.left+rect.width/2;const y=rect.top+rect.height/2;const target=document.elementFromPoint(x,y);target.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true,cancelable:true,clientX:x,clientY:y}));target.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,cancelable:true,clientX:x,clientY:y}));target.dispatchEvent(new MouseEvent('mouseup',{bubbles:true,cancelable:true,clientX:x,clientY:y}));target.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,clientX:x,clientY:y}));return{view:document.querySelector('#cpo-explorer-app').dataset.view,selected:document.querySelector('#cpo-explorer-app').dataset.selected};})()`);
+    assert(state.view === view, `pointer click did not switch to ${view}: ${JSON.stringify(state)}`);
+}
 const hoverComponent = async (scene, id) => act(`document.querySelector('#cpo-scene-${scene} .cpo-component[data-component-id="${id}"]').dispatchEvent(new MouseEvent('mouseenter',{bubbles:false,cancelable:true}))`);
 const hoverCallout = async (scene, id) => act(`document.querySelector('#cpo-scene-${scene} .cpo-callout[data-component-id="${id}"]').dispatchEvent(new MouseEvent('mouseenter',{bubbles:false,cancelable:true}))`);
+const focusCallout = async (scene, id) => act(`document.querySelector('#cpo-scene-${scene} .cpo-callout[data-component-id="${id}"]').focus()`);
+const clearFocus = async () => act(`document.activeElement?.blur?.()`);
 const clearHover = async (scene, selector, id) => act(`document.querySelector('#cpo-scene-${scene} ${selector}[data-component-id="${id}"]').dispatchEvent(new MouseEvent('mouseleave',{bubbles:false,cancelable:true}))`);
 const clickComponent = async (scene, id) => act(`document.querySelector('#cpo-scene-${scene} .cpo-component[data-component-id="${id}"]').dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}))`);
 const clickCallout = async (scene, id) => act(`document.querySelector('#cpo-scene-${scene} .cpo-callout[data-component-id="${id}"]').dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}))`);
@@ -184,6 +195,12 @@ async function assertHoverPair(scene, id) {
     assert(state.dimmed, `${scene}/${id} hover did not de-emphasize unrelated components`);
     assert(state.line.includes('hover preview') && !state.line.includes('selected'), `${scene}/${id} hover announced as selected`);
 }
+async function assertCalloutFocusOnCard(scene, id) {
+    const state = await evaluate(`(()=>{const callout=document.querySelector('#cpo-scene-${scene} .cpo-callout[data-component-id="${id}"]');const card=callout.querySelector('.cpo-callout-card');const groupStyle=getComputedStyle(callout);const cardStyle=getComputedStyle(card);return{focused:document.activeElement===callout,groupOutlineStyle:groupStyle.outlineStyle,groupOutlineWidth:groupStyle.outlineWidth,cardStroke:cardStyle.stroke,cardStrokeWidth:cardStyle.strokeWidth}})()`);
+    assert(state.focused, `${scene}/${id} callout did not receive focus`);
+    assert(state.groupOutlineStyle === 'none' || parseFloat(state.groupOutlineWidth) === 0, `${scene}/${id} still uses group focus outline`);
+    assert(parseFloat(state.cardStrokeWidth) >= 1.5, `${scene}/${id} focus did not land on visible callout card: ${JSON.stringify(state)}`);
+}
 async function assertSelected(scene, id) {
     const state = await evaluate(`(()=>({selected:document.querySelector('#cpo-explorer-app').dataset.selected,view:document.querySelector('#cpo-explorer-app').dataset.view,drawer:document.querySelector('#cpo-research-drawer').classList.contains('is-open'),activeComponent:document.querySelector('#cpo-scene-${scene} .cpo-component[data-component-id="${id}"]')?.classList.contains('is-active'),activeCallout:document.querySelector('#cpo-scene-${scene} .cpo-callout[data-component-id="${id}"]')?.classList.contains('is-active'),childCards:document.querySelectorAll('#cpo-drawer-content .cpo-child-card').length,text:document.querySelector('#cpo-drawer-content')?.innerText??''}))()`);
     assert(state.selected === id && state.view === scene && state.drawer && state.activeComponent && state.activeCallout, `${scene}/${id} selected state did not synchronize`);
@@ -195,23 +212,56 @@ async function assertIdle() {
     const state = await evaluate(`(()=>({selected:document.querySelector('#cpo-explorer-app').dataset.selected, drawer:document.querySelector('#cpo-research-drawer').classList.contains('is-open')}))()`);
     assert(state.selected === '' && !state.drawer, 'Explorer did not reset to overview');
 }
-async function assertVisibleCallout(scene, id) {
-    const state = await evaluate(`(()=>{const callout=document.querySelector('#cpo-scene-${scene} .cpo-callout[data-component-id="${id}"]');const card=callout.querySelector('.cpo-callout-card');const drawer=document.querySelector('#cpo-research-drawer');const rect=card.getBoundingClientRect();const drawerRect=drawer.getBoundingClientRect();const x=rect.left+rect.width/2;const y=rect.top+rect.height/2;const top=document.elementFromPoint(x,y);return{right:rect.right,left:rect.left,top:rect.top,width:rect.width,height:rect.height,drawerLeft:drawerRect.left,hit:!!top?.closest('#cpo-scene-${scene} .cpo-callout[data-component-id="${id}"]')}})()`);
-    assert(state.width > 20 && state.height > 20 && state.left >= 0 && state.top >= 0, `${scene}/${id} callout card is not visible`);
-    assert(state.right <= state.drawerLeft, `${scene}/${id} callout card is covered by drawer: right ${state.right}, drawerLeft ${state.drawerLeft}`);
-    assert(state.hit, `${scene}/${id} callout is not top-most pointer target`);
+async function explorerGeometry() {
+    return await evaluate(`(()=>{const rect=s=>{const b=document.querySelector(s).getBoundingClientRect();return{left:b.left,right:b.right,top:b.top,bottom:b.bottom,width:b.width,height:b.height};};const drawer=document.querySelector('#cpo-research-drawer');const ds=getComputedStyle(drawer);return{viewport:{width:innerWidth,height:innerHeight},heading:rect('.cpo-page-heading'),app:rect('#cpo-explorer-app'),workbench:rect('.cpo-explorer-workbench'),canvas:rect('#cpo-canvas-frame'),stage:rect('.cpo-viewport-stage'),drawer:rect('#cpo-research-drawer'),drawerStyle:{position:ds.position,transitionProperty:ds.transitionProperty,opacity:ds.opacity,transform:ds.transform,hidden:drawer.hidden,aria:drawer.getAttribute('aria-hidden'),open:drawer.classList.contains('is-open'),text:drawer.innerText}}})()`);
+}
+async function assertShellAndTitleAlignment() {
+    const state = await explorerGeometry();
+    const leftDelta = Math.abs(state.heading.left - state.app.left);
+    const gutterDelta = Math.abs(state.app.left - (state.viewport.width - state.app.right));
+    assert(leftDelta <= 24, `CPO title/app left alignment drifted by ${leftDelta}px`);
+    assert(gutterDelta <= 24, `CPO app outer gutters are unbalanced by ${gutterDelta}px`);
+    assert(state.app.width / state.viewport.width >= .89, `CPO app became a content island: ratio ${state.app.width / state.viewport.width}`);
+}
+function assertStableRect(before, after, key) {
+    assert(Math.abs(before[key].left - after[key].left) <= 2, `${key} left moved when drawer opened: before ${before[key].left}, after ${after[key].left}`);
+    assert(Math.abs(before[key].width - after[key].width) <= 2, `${key} width changed when drawer opened: before ${before[key].width}, after ${after[key].width}`);
+}
+function assertDrawerOverlayInvariant(before, after) {
+    for (const key of ['workbench', 'canvas', 'stage'])
+        assertStableRect(before, after, key);
+    assert(after.drawerStyle.position === 'absolute' || after.drawerStyle.position === 'fixed', `drawer is not overlay-positioned: ${after.drawerStyle.position}`);
+    assert(after.drawerStyle.open && parseFloat(after.drawerStyle.opacity) >= .98, `drawer did not settle into visible open state: ${JSON.stringify(after.drawerStyle)}`);
+    assert(/transform|all/.test(after.drawerStyle.transitionProperty) && /opacity|all/.test(after.drawerStyle.transitionProperty), `drawer transition must include transform and opacity: ${after.drawerStyle.transitionProperty}`);
+    assert(Math.abs(after.drawer.top - after.workbench.top) <= 8, `drawer top does not align to workbench: ${after.drawer.top} vs ${after.workbench.top}`);
+    assert(Math.abs(after.drawer.right - after.workbench.right) <= 8, `drawer right does not align to workbench: ${after.drawer.right} vs ${after.workbench.right}`);
+    assert(Math.abs(after.drawer.bottom - after.workbench.bottom) <= 8, `drawer bottom does not align to workbench: ${after.drawer.bottom} vs ${after.workbench.bottom}`);
+}
+async function assertDrawerFirstFrameHasIdentity(id) {
+    const state = await explorerGeometry();
+    assert(!state.drawerStyle.hidden && state.drawerStyle.aria === 'false', `drawer first visible frame is still hidden for ${id}`);
+    assert(/正在读取|stable:|当前选择/.test(state.drawerStyle.text), `drawer first visible frame has no selected/loading identity: ${state.drawerStyle.text}`);
+}
+async function waitDrawerSettled() {
+    await waitFor(`(()=>{const drawer=document.querySelector('#cpo-research-drawer');const style=getComputedStyle(drawer);return drawer.classList.contains('is-open') && parseFloat(style.opacity) >= .98 && (style.transform === 'none' || style.transform.startsWith('matrix(1, 0, 0, 1, 0'));})()`, 'drawer overlay settled');
+}
+async function assertDrawerClosingMotion() {
+    const state = await explorerGeometry();
+    assert(!state.drawerStyle.open && state.drawerStyle.aria === 'true', 'drawer did not enter closing state');
+    assert(/transform|all/.test(state.drawerStyle.transitionProperty) && /opacity|all/.test(state.drawerStyle.transitionProperty), `drawer close transition missing transform/opacity: ${state.drawerStyle.transitionProperty}`);
+    assert(state.drawerStyle.hidden === false, 'drawer was hidden before slide-out transition could run');
 }
 async function exerciseFullCoverage() {
     for (const id of expectedModules) {
         await setView('flat');
         await hoverComponent('flat', id); await assertHoverPair('flat', id); await clearHover('flat', '.cpo-component', id);
         await hoverCallout('flat', id); await assertHoverPair('flat', id); await clearHover('flat', '.cpo-callout', id);
-        await clickComponent('flat', id); await waitDrawer(id); await assertSelected('flat', id); await assertVisibleCallout('flat', id);
+        await clickComponent('flat', id); await waitDrawer(id); await assertSelected('flat', id);
         await clickComponent('flat', id); await assertIdle();
 
         await setView('three');
-        await clickCallout('three', id); await waitDrawer(id); await assertSelected('three', id); await assertVisibleCallout('three', id);
-        await setView('flat'); await assertSelected('flat', id);
+        await clickCallout('three', id); await waitDrawer(id); await assertSelected('three', id);
+        await pointerSetView('flat'); await assertSelected('flat', id);
         await esc(); await assertIdle();
     }
 }
@@ -228,23 +278,28 @@ async function runViewportEvidence(width, height, suffix) {
     await waitReady();
     await assertResearchShell('CPO Explorer');
     await assertCoverage();
+    await assertShellAndTitleAlignment();
 
     await setView('flat'); await assertGeometryOwnership('flat'); await screenshot(`idle-flat-${suffix}.png`);
     await hoverComponent('flat', 'cpo.mod.pic'); await assertHoverPair('flat', 'cpo.mod.pic'); await screenshot(`hover-flat-pic-${suffix}.png`); await clearHover('flat', '.cpo-component', 'cpo.mod.pic');
-    await clickComponent('flat', 'cpo.mod.host-asic'); await waitDrawer('cpo.mod.host-asic'); await assertSelected('flat', 'cpo.mod.host-asic'); await sleep(360); await screenshot(`selected-flat-host-asic-${suffix}.png`);
-    await setView('three'); await assertSelected('three', 'cpo.mod.host-asic'); await sleep(360); await screenshot(`view-switch-host-asic-${suffix}.png`);
-    await esc(); await assertIdle();
+    await focusCallout('flat', 'cpo.mod.pic'); await assertCalloutFocusOnCard('flat', 'cpo.mod.pic'); await screenshot(`focus-callout-flat-pic-${suffix}.png`); await clearFocus();
+    const flatGeometryBeforeDrawer = await explorerGeometry();
+    await clickComponent('flat', 'cpo.mod.host-asic'); await assertDrawerFirstFrameHasIdentity('cpo.mod.host-asic'); await waitDrawer('cpo.mod.host-asic'); await assertSelected('flat', 'cpo.mod.host-asic'); await waitDrawerSettled(); assertDrawerOverlayInvariant(flatGeometryBeforeDrawer, await explorerGeometry()); await screenshot(`selected-flat-host-asic-${suffix}.png`);
+    await pointerSetView('three'); await assertSelected('three', 'cpo.mod.host-asic'); await sleep(360); await assertViewButtonHitTest('flat'); await assertViewButtonHitTest('three'); await screenshot(`view-switch-host-asic-${suffix}.png`);
+    await esc(); await assertIdle(); await sleep(40); await assertDrawerClosingMotion(); await sleep(320);
 
     await setView('three'); await assertGeometryOwnership('three'); await screenshot(`idle-3d-${suffix}.png`);
     await hoverCallout('three', 'cpo.mod.laser'); await assertHoverPair('three', 'cpo.mod.laser'); await screenshot(`hover-3d-laser-${suffix}.png`); await clearHover('three', '.cpo-callout', 'cpo.mod.laser');
-    await clickCallout('three', 'cpo.mod.fiber-interface'); await waitDrawer('cpo.mod.fiber-interface'); await assertSelected('three', 'cpo.mod.fiber-interface'); await sleep(360); await screenshot(`selected-3d-fiber-interface-${suffix}.png`);
-    await clickBlank(); await assertIdle(); await sleep(360); await screenshot(`reset-blank-${suffix}.png`);
+    const threeGeometryBeforeDrawer = await explorerGeometry();
+    await clickCallout('three', 'cpo.mod.fiber-interface'); await assertDrawerFirstFrameHasIdentity('cpo.mod.fiber-interface'); await waitDrawer('cpo.mod.fiber-interface'); await assertSelected('three', 'cpo.mod.fiber-interface'); await waitDrawerSettled(); assertDrawerOverlayInvariant(threeGeometryBeforeDrawer, await explorerGeometry()); await screenshot(`selected-3d-fiber-interface-${suffix}.png`);
+    await clickBlank(); await assertIdle(); await sleep(40); await assertDrawerClosingMotion(); await sleep(320); await screenshot(`reset-blank-${suffix}.png`);
 }
 
 await runViewportEvidence(1440, 980, '1440');
 await exerciseFullCoverage();
 await assertKeyboardAndBlankReset();
 await runViewportEvidence(1920, 1080, '1920');
+await runViewportEvidence(2504, 1178, '2504');
 await assertR2RegressionSurface();
 
 await command('session.end', {});
