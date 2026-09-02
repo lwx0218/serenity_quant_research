@@ -6,7 +6,7 @@
 - Document type: human-manual
 - Status: active
 - Owner: project owner
-- Last updated: 2026-08-30
+- Last updated: 2026-09-02
 - Source of truth: AGENTS.md
 
 这份文件是项目本地的人类操作入口。模型执行合同以 `AGENTS.md` 为准。

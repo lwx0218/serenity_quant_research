@@ -4,7 +4,7 @@
 
 - Project: serenity_quant_research
 - Document type: index
-- Status: approved
+- Status: superseded
 - Owner: project owner
 - Last updated: 2026-08-30
 - Source of truth: AGENTS.md

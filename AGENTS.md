@@ -53,38 +53,35 @@ skills、domain modeling、subagent 和 reviewer 均为按需能力，不是默�
 <!-- HARNESS:MANAGED:END -->
 
 <!-- PROJECT:OWNED:START -->
-## Project Document Governance
+## 项目规则(reboot-v2,2026-09)
 
-Project-local Markdown governance is defined in `docs/manual/document-governance.md`. For new or substantively updated governance/evidence documents, prefer project-local paths under `docs/**`, `operations/**`, and `assets/templates/**`; do not depend on external workspace paths or historical archive conventions as active policy.
+### 是什么
 
-Canonical product delivery authority remains `operations/planning/research-experience-reboot.md`. Document-format cleanup must not change product authority, research facts, evidence/review/audit semantics, accepted Round state, or R6 start requirements.
+以实物部件为入口的产业链投研工作台。Explorer 是同一种视图的递归:容器 → 部件层 → 子部件;当前唯一产品是 CPO 光模块。
+技术栈:`web/`(Vite + React + TS,纯 CSS 变量)与 `api/`(FastAPI + SQLite);数据从 `data/seeds/cpo/*.json` 导入,可随时重建。
 
-## Product Reboot Gate
+### 界面
 
-当前 approved product baseline 是 **Research Experience Reboot**。P0–P3 工程实现、tests、work logs 和 reviews 继续作为有效工程历史；与 `docs/product/` 冲突的 research-facing UI / UX 不再是产品事实源。旧 P4 不得继续；当前交付到 Explorer → Company → read-only Workspace，完整长期闭环仍保留 Workspace → Evidence → Review → Conclusion → Report。
+- 唯一规则文件:`docs/product/design-rules.md`;数值以 `web/src/styles/tokens.css` 为准。改界面前先读它,改完对照「禁区」一节。
+- 页面就是背景:不新增卡片、面板、侧边栏、标签页、筛选器家族。需要新组件先问能否用现有五种原语拼出。
+- 界面文案中文为主;不出现实现术语、轮次号、边界声明。
+- 深浅色都必须成立:只用变量,不写死颜色。
+- `docs/product/` 里其余 spec 与 `docs/archive/` 只是历史,不作为实现依据。
 
-涉及 research-facing UI、UX、navigation、page structure、interaction、frontend shell 或 workflow 的非 trivial 任务，按以下顺序读取：
+### 数据与证据
 
-1. 本文件和适用 scoped `AGENTS.md`
-2. `docs/product/README.md`
-3. `docs/product/experience-map.md`
-4. task-specific page spec
-5. approved/directional prototype
-6. `docs/product/visual-language.md`
-7. `docs/product/acceptance-contract.md`
-8. approved active Plan 与 orchestration
-9. current implementation
-10. legacy product plans/work logs
+- `cpo-research-seed.json` 是研究事实与稳定 ID,不因界面需要改动;展示文案在 `cpo-presentation.json`。
+- 公司 ↔ 环节关系必须带 `evidence_level`(`reference` < `candidate` < `reviewed`),定义见 `docs/research-baseline/evidence-contract.md` §2a。
+- 图示里的份额、BOM%、国产化率等数字不进入产品;没有数据就不放模块,不放 Unknown 徽章。
 
-研究事实、evidence state、review、publication 和 audit 语义仍以 `docs/research-baseline/evidence-contract.md` 与 reviewed repository evidence 为准。Prototype 只定义交互/视觉方向，不得把 mock data 变成 seed、database、research copy、company exposure、conclusion 或 report。
+### 尚未决定、动之前先问 Owner
 
-Serenity 继续承载 host、service/data、permission、audit、migration 和 admin maintenance，但不是 research-facing 产品设计依据。不得因为框架已有能力而静默新增 primary page、top-level navigation、permanent research sidebar、tab/filter/metric/comparison family 或 research-facing admin entry。
+- 可写的研究笔记(Workspace)的作者身份、写入模型与存储。
+- 新增产品容器(机柜、交换机)时的层级与 ID 约定。
+- 任何对外发布、推送或删除历史。
 
-Product-visible review 必须先验证 objective、IA、interaction、visual hierarchy 和 research-data safety，再看 accessibility、tests 与 build。Prototype 的 hit-zone、overlap、keyboard 或 mock-state 局限是 production acceptance defect，不是默认接受项。
+### 验证
 
-Workspace v1 是 `read-only + linked-object-first`，不得新增 ResearchNote、OpenQuestion、Backlink、Graph 或 editor persistence。受信任隔离环境可保留 `OpenAccess:Enabled = true`；任何新 persistent research writing 开始前，必须就 identity、author attribution、audit ownership 和 all-admin Open Access 影响重新取得 Owner 决策。
-
-只主动升级会改变 primary product area、core user path、persistent domain/schema、research evidence/audit semantics，或造成明显不可逆/高成本架构投入的问题。普通 visual、CSS、component、hit-region、test 和 screenshot 细节使用安全默认并在 review 中展示。
-
-Canonical delivery authority：`operations/planning/research-experience-reboot.md`。不得自动连续推进 fixed Rounds。
+- API:`cd api && python -m unittest -q`
+- Web:`cd web && npm run build`(含 `tsc --noEmit`);界面改动附截图(总览、选中、深色各一张)。
 <!-- PROJECT:OWNED:END -->

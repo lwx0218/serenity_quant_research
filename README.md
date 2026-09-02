@@ -1,139 +1,85 @@
 # Serenity Quant Research
 
-## Metadata
-
-- Project: serenity_quant_research
-- Document type: index
-- Status: active
-- Owner: project owner
-- Last updated: 2026-08-30
-- Source of truth: AGENTS.md
-
-Finance-first 产业链投研工作台，基于 `serenity-is/Serenity`。首个主题为光模块 / CPO。
-
-## Current Status — Research Experience Reboot
-
-P0–P3 的 domain、service、data、policy、tests 与 review 历史继续保留；其 framework/admin/grid-first research-facing UI / UX 已被新的 approved product baseline supersede。旧 P4 暂停。
-
-当前交付边界：
+以**实物部件**为入口的产业链投研工作台。第一个主题:光模块 / CPO。
 
 ```text
-CPO Explorer
-→ Component / Material / Technology
-→ Company Pool
-→ Quick Drawer
-→ Full Company Detail
-→ Read-only Research Workspace
+实物产品(CPO 光模块)
+  → 九层结构,点一层
+    → 它由什么构成(子部件)· 属于产业链哪一环 · 谁在做(公司)
+      → 公司页:证据级与来源
 ```
 
-完整长期产品目标仍然是：
+长期目标是从机柜(如 GPU / 交换机整机)一层层拆到光模块、再到部件;
+Explorer 是同一种视图的递归,加新产品是加数据,不是加页面。
+
+## 分支状态
+
+`reboot-v2`(2026-09):从 .NET / Serenity 推倒重来。旧实现与流程记录见 `docs/archive/`,git 历史完整保留。
+
+本轮范围:Shell(含深浅色切换)+ Explorer(总览 / 选中一层 / 下钻到部件)+ 极简公司页。
+研究笔记(Obsidian 式的可写 Workspace)尚未开始,需要先决定作者身份与写入模型。
+
+## 技术栈
+
+| 层 | 选择 | 位置 |
+|---|---|---|
+| 前端 | Vite + React 19 + TypeScript,纯 CSS 变量,无 UI 框架 | `web/` |
+| 后端 | FastAPI + SQLite(标准库 `sqlite3`) | `api/` |
+| 数据 | JSON seed → SQLite,随时可重建 | `data/seeds/cpo/` |
+| 字体 | Geist / Geist Mono 自托管(OFL);中文用系统字体 | `web/public/fonts/` |
+
+## 运行
+
+后端(端口 8000):
+
+```bash
+cd api
+python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
+pip install -e ".[dev]"
+uvicorn app.main:app --reload --port 8000              # 首次启动自动从 seed 建库
+```
+
+前端(端口 5173,`/api` 自动代理到 8000):
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+打开 http://localhost:5173 。
+
+测试与构建:
+
+```bash
+cd api && python -m unittest -q          # 或 pytest
+cd web && npm run build                  # tsc + vite build → web/dist
+```
+
+`web/dist` 存在时,`uvicorn app.main:app` 会直接同时提供前端与 API(单进程部署)。
+重建数据库:`cd api && python -m app.seed --rebuild`。
+
+## 目录
 
 ```text
-Physical Product / Explorer
-→ Component / Material / Technology
-→ Company
-→ Research Workspace
-→ Evidence
-→ Review
-→ Conclusion
-→ Report
+api/      FastAPI 应用:app/{main,db,seed,repo,schemas,routers/}、tests/
+web/      Vite 应用:src/{pages,components,lib,styles}
+data/     seeds/cpo/*.json(研究事实 · 展示文案 · 参考企业)
+docs/
+  product/            design-rules.md(当前有效的设计规则)+ 旧 spec(标注 superseded)
+  research-baseline/  CPO taxonomy、公司候选池、证据合同
+  references/         两张参考图示(图财社)
+  archive/            旧 operations 记录与模板(只读)
 ```
 
-Evidence Timeline/Review、Conclusion publishing 和 Report generation 没有被取消，但不属于当前 Research Experience Reboot 的验收范围。
+## 数据与证据边界
 
-## Canonical Baseline
+- 研究事实、稳定 ID 与分类来自 `cpo-research-seed.json`,不因界面需要而改动。
+- 界面怎么讲(显示名、一句话、分层图视觉类型、信号链路)在 `cpo-presentation.json`。
+- 公司与产业链环节的对应关系带**证据级**:`reference`(行业公开图示)< `candidate`(有来源、待核验)< `reviewed`(已核验)。
+  详见 `docs/research-baseline/evidence-contract.md` 与 `api/README.md`。
+- 图示中的份额、BOM%、国产化率等数字不进入产品。
 
-- 文档索引：`docs/README.md`
-- Product：`docs/product/`
-- Research facts/evidence：`docs/research-baseline/`
-- Plan：`operations/planning/research-experience-reboot.md`
-- Orchestration：`operations/orchestration/research-experience-reboot.md`
-- Legacy plan：`operations/archive/phase-1-mvp-p0-p3.md`
+## 设计
 
-当前 Round 状态以 canonical Plan 为准：R1–R5 已 accepted-effective；Active Round 为 none。下一轮 `R6 — R6-readonly-research-workspace` 仍为 pending，必须等待单独 Owner start decision；不得自动启动 R6。
-
-## Product Areas
-
-1. **CPO Explorer** — Flat / 3D Exploded、shared component state、callout、contextual drawer。
-2. **Company Pool + Company Detail** — Card/List → Quick Drawer → Expand → entity-centric Full Detail。
-3. **Research Workspace v1** — read-only、linked-object-first；无 Graph、New Note 或持久化编辑。
-
-Serenity 继续作为 host、service/data、permission、audit、migration 和 admin maintenance 基础，但不定义 research-facing 产品设计。
-
-## Research-data Boundary
-
-Prototype 和 Gemini design reference 中的 BOM%、国产化率、market share、supplier/customer relationship、company tier、investment thesis、production/sampling status、technology-barrier score 都不是 research fact。没有 evidence contract 支持时使用 `Unknown`、`Not reviewed`、`Candidate`、system-derived status 或省略。
-
-## Toolchain
-
-- .NET SDK `10.0.400`（`global.json`）
-- Node.js `>=24.10.0 <25`
-- npm `>=11.6.2 <12`
-- Firefox（UI browser regression）
-- Serenity / Serene / sergen `10.3.7`
-
-## Restore And Build
-
-```bash
-dotnet restore SerenityQuantResearch.slnx
-
-cd src/SerenityQuantResearch/SerenityQuantResearch.Web
-dotnet tool restore
-npm ci
-npm run build
-cd ../../..
-
-dotnet build SerenityQuantResearch.slnx --no-restore
-dotnet test SerenityQuantResearch.slnx --no-build
-
-cd src/SerenityQuantResearch/SerenityQuantResearch.Web
-npm run test:ui
-```
-
-## Run
-
-```bash
-dotnet run \
-  --project src/SerenityQuantResearch/SerenityQuantResearch.Web/SerenityQuantResearch.Web.csproj
-```
-
-当前本地 runtime 使用 `OpenAccess:Enabled = true`：任何可访问请求都映射为 admin，只适合受信任、隔离环境。任何新增 persistent research writing 前，必须先决定 identity、author attribution 和 audit ownership。
-
-当前主要入口：
-
-- 公司研究池：`http://localhost:5000/Research/Companies`
-- CPO：`http://localhost:5000/Research/Cpo`
-
-这些页面仍可能显示 P2/P3 legacy presentation，直到对应 reboot Round 被接受。
-
-## Existing Engineering Baseline
-
-优先复用：
-
-- 9 个 `PhysicalModule`、21 个递归 `PhysicalPart`、10 个 `IndustryChainNode`
-- 20 家双层公司候选池、stable IDs、company exposure
-- part ↔ technology / chain relationships
-- source/event/evidence、review states、audit/permission policy
-- versioned conclusion/report model、SQLite migrations、seed importer
-- `PartResearchService`、`CompanyUniverseService` 与现有回归测试
-
-Seed 中的 candidate/draft 状态不得因 UI 或 prototype 升级。
-
-<!-- HARNESS:README:MANAGED:START -->
-## Harness / Pi Onboarding
-
-本项目使用 Harness starter 的 PI-first simple 默认路径。
-
-- 模型合同：`AGENTS.md`
-- 人类手册：`Harness_manual.md`
-- Pi capabilities：`.pi/`
-- 项目 evidence：`docs/project-intake/`、`operations/`
-
-第一次进入：
-
-```bash
-pi --name "00-orchestration"
-```
-
-Owner 批准 Plan 前 no-write。已有 approved baseline 后，清楚 bounded task 默认直接执行并验证。fixed Round、Independent Review、handoff 或 formal gate 只有 Owner 明确批准时才启用。
-<!-- HARNESS:README:MANAGED:END -->
+规则只有一页:`docs/product/design-rules.md`。数值以 `web/src/styles/tokens.css` 为准。

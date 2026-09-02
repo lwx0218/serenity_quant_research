@@ -6,7 +6,7 @@
 - Document type: research-baseline
 - Status: active
 - Owner: project owner
-- Last updated: 2026-08-30
+- Last updated: 2026-09-02
 - Source of truth: AGENTS.md
 
 ## 1. 目的和强制边界
@@ -30,6 +30,25 @@
 | `C` | 聚合、转载、搜索摘要、匿名/社交内容 | 聚合新闻、概念股表、论坛、社交媒体、两张 seed JPEG | 关键词、候选公司、待核验问题 | 只能创建 discovery lead；不得单独支持 exposure、conclusion 或 report claim |
 
 若同一内容有更靠近原始发布者的来源，必须引用最接近原始的版本。付费墙、动态页面或视频不降低等级，但必须保存合法可用的定位信息；不得绕过访问控制。
+
+## 2a. 证据级(2026-09 新增,产品层使用)
+
+来源等级(A/B/C)描述**来源本身**;证据级描述**一条公司 ↔ 环节对应关系在产品里可以怎么展示**。两者独立。
+
+| evidence_level | 含义 | 界面文案 | 典型来源 |
+|---|---|---|---|
+| `reference` | 公开行业图示或综述把公司归到某一环节;只说明「公开资料这样归类」,不说明具体产品或供应关系 | 行业图示 | `docs/references/` 两张图示(Level C) |
+| `candidate` | 有可追溯来源(Level A/B)支持的候选关系,尚未经人工审核 | 候选 · 待核验 | 公司官网产品页、新闻稿 |
+| `reviewed` | 经人工审核的 evidence 支持 | 已核验 | reviewed evidence |
+
+规则:
+
+1. `reference` 允许直接展示,但整页只在页脚或公司页出现一次来源说明;不给每条打徽章。
+2. 同一公司在同一环节有多条记录时,界面显示最高一级。
+3. `reference` 不能支持 conclusion 或 report claim;它的作用是让 Explorer 在没有已核验证据时仍然有内容可读,并把「待核验」的工作可见化。
+4. 图示中的数字(份额、BOM%、国产化率)不随 `reference` 进入产品。
+
+实现:`data/seeds/cpo/cpo-reference-exposures.json` → `api/app/seed.py` → `exposures.evidence_level`。
 
 ## 3. Evidence 审核状态
 
