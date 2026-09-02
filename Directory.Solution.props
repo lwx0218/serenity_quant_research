@@ -1,6 +1,0 @@
-<Project>
-  <!-- Some agent hosts export PLATFORM=linux, which is not a solution platform. -->
-  <PropertyGroup Condition="'$(Platform)' == 'linux'">
-    <Platform>Any CPU</Platform>
-  </PropertyGroup>
-</Project>
