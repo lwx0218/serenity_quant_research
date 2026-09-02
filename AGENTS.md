@@ -11,6 +11,10 @@
 - `.pi/` 只是 capability layer，不是 policy authority。
 - extension、skills、prompt templates 默认 passive；不会因为存在而自动启用 formal workflow。
 
+### Owner-Facing Language
+
+面向 Owner 的聊天总结、交付说明、状态报告和控制门提示默认使用中文。治理文档新增或实质更新默认使用中文；文件名、命令、代码标识、协议字段和必要原文引用可保留英文。
+
 ### Default Mode: simple
 
 默认永远是 `simple`：理解请求、必要时少量澄清、执行 bounded change、运行相称验证、用中文总结。复杂、跨文件、跨 session 或已有历史 Plan/evidence 不会自动升级为 fixed Round、handoff、Independent Review 或 formal gate。
@@ -45,9 +49,20 @@ Owner 批准 Plan 前只允许 read/infer/discuss 和 chat Plan Preview；不得
 
 skills、domain modeling、subagent 和 reviewer 均为按需能力，不是默认关卡。
 
-### Evidence And Safety
+### Document And Evidence Governance
 
-项目 evidence 默认保存在项目本地 `docs/project-intake/` 与 `operations/`。只有 Plan、交接、合同/bootstrap/portability 或正式 review 需要时才写 durable evidence。
+新增或实质更新 Markdown 时先判定承载位置：
+
+- `docs/**`：长期说明、manual、reference、project intake 与导航；使用 kebab-case 文件名和最小 Metadata。
+- `operations/**`：事件型 durable evidence；使用 `YYYY-MM-DD-<slug>.md` 日期前缀与任务型 Metadata。
+- reusable 模板放在 `assets/templates/**`；项目本地没有 reusable 模板目录时，不把模板塞进 `operations/**`。
+- `operations/archive/**` 保持历史原貌，不因新格式规则批量重写；默认 active navigation 不读取 archive，也不激活旧 workflow。
+
+项目 evidence 默认保存在项目本地 `docs/project-intake/` 与 `operations/`。只有进入 Plan、跨 session/交接、合同/bootstrap/portability 变更或正式 review trail 时，才默认写 durable evidence。
+
+详细格式见 `docs/manual/document-governance.md`；若该文件不存在，以本 `AGENTS.md` 分区规则为准，并优先创建/补齐该 reference，而不是临时发明新目录规则。
+
+### Evidence And Safety
 
 高风险、破坏性、外部授权、scope/acceptance 改变或验证失败时 fail closed 并询问 Owner。不自动 push。
 <!-- HARNESS:MANAGED:END -->

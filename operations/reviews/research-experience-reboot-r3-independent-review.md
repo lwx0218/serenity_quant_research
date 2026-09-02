@@ -13,7 +13,7 @@ Unresolved P1: 0
 - Final review path：updated `harness_run_independent_review` wrapper。
 - Artifact author：Builder；review child 未写项目文件。
 - Product candidate status：implementation、full automated validation、Independent Review、P2 disposition、Product Owner acceptance、acceptance commit authorization 已完成。
-- R3 accepted-effective closeout will be valid after acceptance commit and post-commit verification complete.
+- R3 accepted-effective closeout is complete: acceptance commit `a24d5ab` and post-commit verification passed.
 
 ## Candidate scope reviewed
 

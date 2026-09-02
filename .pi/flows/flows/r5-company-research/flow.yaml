@@ -1,0 +1,115 @@
+name: r5-company-research
+description: "R5 Company Research Experience bootstrap/execution flow. Dynamic process visualization only; does not replace the canonical Plan, Independent Review, or Owner gates."
+max_concurrent: 1
+task_required: false
+
+steps:
+  - id: scope-context-scout
+    type: agent
+    agent: r5-scope-context-scout
+    task: |
+      Bootstrap/read-only scouting for R5 Company Research Experience. Confirm R5 DoR, candidate/context/environment scope, protected surfaces, and stop conditions. Do not implement product code.
+
+  - id: product-contract-scout
+    type: agent
+    agent: r5-product-contract-scout
+    blockedBy: [scope-context-scout]
+    inputs:
+      scope_context: "${{result.scope-context-scout.summary}}"
+    task: |
+      Read-only product contract scouting for R5. Extract Company Pool / Quick Drawer / Full Detail acceptance and data-safety obligations. Do not implement product code.
+
+  - id: code-scout
+    type: agent
+    agent: r5-code-scout
+    blockedBy: [product-contract-scout]
+    inputs:
+      scope_context: "${{result.scope-context-scout.summary}}"
+      product_contract: "${{result.product-contract-scout.summary}}"
+    task: |
+      Read-only code scouting for R5. Locate Company module, services, tests, and UI validation entry points. Do not implement product code.
+
+  - id: owner-implementation-gate
+    type: fork
+    question: |
+      R5 scouting is complete. Start R5 implementation now?
+
+      Selecting "Start R5 implementation (Owner-approved)" authorizes only R5 candidate surfaces from operations/planning/research-experience-reboot.md. Schema, migrations, seed, evidence/audit semantics, Company Comparison, Workspace, commits, and R6 remain out of scope.
+    options:
+      - "Stop before implementation"
+      - "Start R5 implementation (Owner-approved)"
+    branches:
+      "Stop before implementation": final-summary
+      "Start R5 implementation (Owner-approved)": implementation
+    task: |
+      SAFETY FOR AUTO-ROUTING: This is an Owner gate. If autonomous mode is active and no live Owner selection is supplied, choose branch "Stop before implementation". Only a live explicit Owner selection may start implementation.
+
+  - id: implementation
+    type: agent
+    agent: r5-company-implementer
+    inputs:
+      scope_context: "${{result.scope-context-scout.summary}}"
+      product_contract: "${{result.product-contract-scout.summary}}"
+      code_map: "${{result.code-scout.summary}}"
+    task: |
+      Implement R5 Company Research Experience only after the Owner gate. Keep changes inside R5 candidate surfaces. Stop and report if schema/migration/seed/evidence/audit semantics, Company Comparison, Workspace, or prototype mock facts would be required.
+
+  - id: verification
+    type: agent
+    agent: r5-company-verifier
+    blockedBy: [implementation]
+    inputs:
+      scope_context: "${{result.scope-context-scout.summary}}"
+      product_contract: "${{result.product-contract-scout.summary}}"
+      code_map: "${{result.code-scout.summary}}"
+      implementation: "${{result.implementation.summary}}"
+    task: |
+      Run R5 plan validation: focused company policy/service checks, npm build, dotnet build/test, UI tests, and product-visible evidence checks. Do not commit or expand scope.
+
+  - id: review
+    type: agent
+    agent: r5-company-reviewer
+    blockedBy: [verification]
+    inputs:
+      scope_context: "${{result.scope-context-scout.summary}}"
+      product_contract: "${{result.product-contract-scout.summary}}"
+      code_map: "${{result.code-scout.summary}}"
+      implementation: "${{result.implementation.summary}}"
+      verification: "${{result.verification.summary}}"
+    task: |
+      Perform read-only R5 review. Classify only R5 candidate findings as P0/P1/P2. Treat tooling and unrelated dirty state as context/environment unless they directly block R5 acceptance.
+
+  - id: review-decision
+    type: agent-decision
+    agent: r5-review-router
+    task: |
+      Decide whether R5 needs another bounded fix pass.
+
+      Loop iteration: ${{loop.review-decision.iteration}}/${{loop.review-decision.max}}
+      Review status: ${{result.review.status}}
+      P0 count: ${{result.review.p0_count}}
+      P1 count: ${{result.review.p1_count}}
+      P2 count: ${{result.review.p2_count}}
+      Review summary: ${{result.review.summary}}
+
+      Choose branch "fix" only when P0/P1 findings remain and another R5 fix pass is allowed. Choose "done" when no P0/P1 remain or loop budget is exhausted.
+    branches:
+      fix: implementation
+      done: final-summary
+    max_iterations: 2
+
+  - id: final-summary
+    type: agent
+    agent: r5-final-summary
+    inputs:
+      scope_context: "${{result.scope-context-scout.summary}}"
+      product_contract: "${{result.product-contract-scout.summary}}"
+      code_map: "${{result.code-scout.summary}}"
+      implementation: "${{result.implementation.summary}}"
+      verification: "${{result.verification.summary}}"
+      review: "${{result.review.summary}}"
+      p0_count: "${{result.review.p0_count}}"
+      p1_count: "${{result.review.p1_count}}"
+      p2_count: "${{result.review.p2_count}}"
+    task: |
+      Produce the Owner-facing R5 flow summary. If the Owner gate stopped before implementation, summarize scouting only and state that product implementation has not begun. Do not commit and do not start R6.
