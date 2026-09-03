@@ -70,7 +70,7 @@ class AnalyticsTests(unittest.TestCase):
 
 class NotesTests(unittest.TestCase):
     def test_round_trip_keeps_front_matter_and_questions(self):
-        n = notes.load_note("cpo.mod.pic")
+        n = notes.load_note("cpo.mod.pic", _notes_tmp)
         self.assertEqual(n.direction, "pos")
         self.assertIn("basket:cpo.mod.pic", n.track)
         self.assertEqual(n.questions[0]["status"], "open")
@@ -86,6 +86,8 @@ class NotesTests(unittest.TestCase):
 class ResearchApiTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        # never write into the repo's own notes, whichever test module imported config first
+        config.NOTES_DIR = _notes_tmp
         rebuild(config.DB_PATH, config.SEED_DIR)
         cls.client = TestClient(app)
 

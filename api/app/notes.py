@@ -34,7 +34,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from .config import NOTES_DIR
+from . import config
 
 LIST_KEYS = ("track", "indicators", "invalidation")
 KNOWN_KEYS = ("subject", "kind", "title", "direction", "stance", "updated", "since", "window_until",
@@ -168,12 +168,14 @@ def render_questions(qs: list[dict[str, Any]]) -> str:
 
 
 # --------------------------------------------------------------------- file i/o
-def note_path(subject: str, notes_dir: Path = NOTES_DIR) -> Path:
+def note_path(subject: str, notes_dir: Path | None = None) -> Path:
+    notes_dir = notes_dir or config.NOTES_DIR
     safe = re.sub(r"[^A-Za-z0-9._-]", "_", subject)
     return notes_dir / f"{safe}.md"
 
 
-def load_note(subject: str, notes_dir: Path = NOTES_DIR) -> Note | None:
+def load_note(subject: str, notes_dir: Path | None = None) -> Note | None:
+    notes_dir = notes_dir or config.NOTES_DIR
     p = note_path(subject, notes_dir)
     if not p.exists():
         return None
@@ -208,7 +210,8 @@ def render_note(n: Note) -> str:
     return dump_front_matter(meta) + "\n" + n.body.strip() + "\n" + render_questions(n.questions)
 
 
-def save_note(n: Note, notes_dir: Path = NOTES_DIR) -> Path:
+def save_note(n: Note, notes_dir: Path | None = None) -> Path:
+    notes_dir = notes_dir or config.NOTES_DIR
     notes_dir.mkdir(parents=True, exist_ok=True)
     p = note_path(n.subject, notes_dir)
     n.updated = n.updated or date.today().isoformat()
@@ -216,7 +219,8 @@ def save_note(n: Note, notes_dir: Path = NOTES_DIR) -> Path:
     return p
 
 
-def list_notes(notes_dir: Path = NOTES_DIR) -> list[Note]:
+def list_notes(notes_dir: Path | None = None) -> list[Note]:
+    notes_dir = notes_dir or config.NOTES_DIR
     if not notes_dir.exists():
         return []
     out = []
