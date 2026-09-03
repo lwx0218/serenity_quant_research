@@ -50,6 +50,18 @@
 
 实现:`data/seeds/cpo/cpo-reference-exposures.json` → `api/app/seed.py` → `exposures.evidence_level`。
 
+### 2a.1 证据级怎么升(2026-09-03 新增)
+
+升级只发生在人点了按钮之后,每次都写一行 `verifications`(kind、event_id、exposure_id、时间):
+
+| 动作 | 条件 | 结果 |
+|---|---|---|
+| 升级为候选 | 一条公告 / 官网类卡口事件(扩产、订单、认证、供需、涨价)提到了公司在某环节的产线或产品,而该关系还是 `reference` | `reference → candidate`,事件来源写入 `sources` 并挂到这条关系 |
+| 忽略 | 同上,但人认为不构成来源 | 关系不变;这条事件不再出现在待核验 |
+| 审核 / 驳回 | 关系已是 `candidate` | `candidate → reviewed` / `candidate → reference` |
+
+待核验项在收件箱(`GET /api/research/inbox`)与公司页右栏出现;新闻、互动易不能作为升级来源(只能提示去找公告)。
+
 ## 3. Evidence 审核状态
 
 ### 状态定义

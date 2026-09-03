@@ -2,11 +2,11 @@
 
 ## Metadata
 
-- Project: serenity_quant_research
+- Project: serenity_quant_research(产品名 Teardown)
 - Document type: index
 - Status: active
 - Owner: project owner
-- Last updated: 2026-09-02
+- Last updated: 2026-09-03
 - Source of truth: AGENTS.md
 
 | 路径 | 用途 | 状态 |
@@ -24,6 +24,8 @@
 
 做界面:`README.md`(根)→ `product/design-rules.md` → `web/src/styles/tokens.css` → 对应页面代码。
 做数据 / 研究事实:`research-baseline/evidence-contract.md` → `data/seeds/cpo/*.json` → `api/app/seed.py`。
+做市场层 / 量化:`product/design-rules.md` §5–§7(方向色、结论先行、时间语义)→ `api/app/analytics.py` → `api/app/insights.py`。
+判断笔记:`data/notes/*.md`(front matter 字段见 `api/app/notes.py` 顶部)。
 
 ## 约定
 

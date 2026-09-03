@@ -57,7 +57,8 @@ skills、domain modeling、subagent 和 reviewer 均为按需能力，不是默�
 
 ### 是什么
 
-以实物部件为入口的产业链投研工作台。Explorer 是同一种视图的递归:容器 → 部件层 → 子部件;当前唯一产品是 CPO 光模块。
+Teardown(拆解):以实物部件为入口、落到资金投票的产业链量化投研工作台。Explorer 是同一种视图的递归:容器 → 模块 → 子部件;当前唯一产品是 CPO 光模块。
+三层内容:事件(卡口事件 + T+N 反应 + 时效)、判断(`data/notes/*.md`,可证伪)、量化 v1(环节篮子、事件效力、拥挤度)。
 技术栈:`web/`(Vite + React + TS,纯 CSS 变量)与 `api/`(FastAPI + SQLite);数据从 `data/seeds/cpo/*.json` 导入,可随时重建。
 
 ### 界面
@@ -66,6 +67,8 @@ skills、domain modeling、subagent 和 reviewer 均为按需能力，不是默�
 - 页面就是背景:不新增卡片、面板、侧边栏、标签页、筛选器家族。需要新组件先问能否用现有五种原语拼出。
 - 界面文案中文为主;不出现实现术语、轮次号、边界声明。
 - 深浅色都必须成立:只用变量,不写死颜色。
+- 方向色只有一条轴(`--sig-pos/neg/neu`),只落在方向标记、带号数字、结论行;正文墨色。每个分析段第一行是结论行,方向由阈值决定(`api/app/analytics.py`),措辞在 `api/app/insights.py`。
+- 没有「裸」读数:每段带 `截至 + 窗口`;拥挤度是状态量不是信号;事件时效由事件效力的半衰期校准。
 - `docs/product/` 里其余 spec 与 `docs/archive/` 只是历史,不作为实现依据。
 
 ### 数据与证据
@@ -73,11 +76,14 @@ skills、domain modeling、subagent 和 reviewer 均为按需能力，不是默�
 - `cpo-research-seed.json` 是研究事实与稳定 ID,不因界面需要改动;展示文案在 `cpo-presentation.json`。
 - 公司 ↔ 环节关系必须带 `evidence_level`(`reference` < `candidate` < `reviewed`),定义见 `docs/research-baseline/evidence-contract.md` §2a。
 - 图示里的份额、BOM%、国产化率等数字不进入产品;没有数据就不放模块,不放 Unknown 徽章。
+- 市场层示例数据只在 `cpo-sample-market.json`,写库时 `is_sample=1`;真实适配器写同一组表(events / reactions / series / crowding),不新造并行结构。反应永远从序列算,不手填。
+- 判断笔记的 front matter 字段以 `api/app/notes.py` 为准;新增字段要能被 Obsidian 手改后无损读回。
 
 ### 尚未决定、动之前先问 Owner
 
-- 可写的研究笔记(Workspace)的作者身份、写入模型与存储。
-- 新增产品容器(机柜、交换机)时的层级与 ID 约定。
+- 接哪些真实数据源、抓取频率与存放(公告 / 互动易 / 新闻 / 行情);交易所日历。
+- 篮子权重(默认等权)与跨市场汇率处理。
+- 新增产品容器(机柜、交换机)时的层级与 ID 约定,以及是否换成物理保真的分层图。
 - 任何对外发布、推送或删除历史。
 
 ### 验证
