@@ -1,0 +1,43 @@
+/* Research pages: judgement editor, inbox, basket. Explorer's .hero/.focus are reused. */
+
+:root { --judge-dim: 0.5; }
+:root[data-theme="dark"] { --judge-dim: 0.75; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --judge-dim: 0.75; } }
+.judge { min-height: 1100px; }
+.judge .focus { padding-bottom: 96px; }
+
+/* inbox */
+.inbox { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 96px; padding-top: 56px; align-items: start; }
+.inbox-main { display: flex; flex-direction: column; gap: 52px; }
+.inbox-head { display: flex; flex-direction: column; gap: 14px; }
+.inbox-aside { display: flex; flex-direction: column; gap: 14px; padding-top: 120px; }
+.dec-row { grid-template-columns: 110px 64px minmax(0, 1fr) 150px; padding: 14px 0; }
+.dec-row .row-text { font-size: 14px; color: var(--ink); line-height: 1.5; }
+.rail-head { display: grid; grid-template-columns: 28px minmax(0, 1fr) 24px 56px; gap: 10px; padding: 0 0 4px; }
+.rail-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) 24px 56px; gap: 10px; align-items: baseline; padding: 9px 0; border-top: 1px solid var(--hair); color: inherit; }
+.rail-row:hover .rail-name { color: var(--accent); }
+.rail-name { font-size: 14px; }
+.rail-n { font-family: var(--font-mono); font-size: 12px; text-align: right; }
+.note-row { grid-template-columns: 56px 110px minmax(0, 1fr) 60px; padding: 11px 0; }
+.note-row .row-text { font-size: 14px; }
+.oq-row { grid-template-columns: 28px minmax(0, 1fr) 120px 80px 60px; padding: 12px 0; }
+.oq-row .row-text { font-size: 15px; color: var(--ink); }
+
+/* basket */
+.basket-head { padding-top: 56px; display: flex; flex-direction: column; gap: 18px; max-width: 960px; }
+.two-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 96px; align-items: start; }
+.mem-row { grid-template-columns: 170px 150px 80px 80px 100px 110px minmax(0, 1fr) 100px; padding: 13px 0; }
+.mem-row .row-title { font-size: 17px; }
+.oth-row { grid-template-columns: 40px 220px 70px 80px minmax(0, 1fr); padding: 10px 0; }
+.crowd-lvl { font-family: var(--font-mono); font-size: 12px; }
+.crowd-lvl.is-pos { color: var(--sig-pos); }
+.crowd-lvl.is-neg { color: var(--sig-neg); }
+.crowd-lvl.is-neu { color: var(--sig-neu); }
+
+/* company page (v3) */
+.cpage-main { gap: 44px; }
+.price-meta { display: flex; gap: 28px; font-size: 13px; color: var(--ink-2); margin-top: 6px; align-items: baseline; }
+.price-meta .row-meta { margin-right: 6px; }
+.pos-row { grid-template-columns: 200px 130px minmax(0, 1fr); padding: 12px 0; }
+.verify-item { display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-top: 1px solid var(--hair); }
+.verify-item .actions { font-size: 13px; }

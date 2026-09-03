@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Shell } from "../components/Shell";
+import { Footer, Shell } from "../components/Shell";
 import { api, EVIDENCE_LABEL, market, pad2, type ChainNode, type CompanySummary, type NodeDetail } from "../lib/api";
 import { Link, useRouter } from "../lib/router";
 import "./companies.css";
@@ -40,7 +40,7 @@ export function CompaniesPage() {
   const levels = items ? Array.from(new Set(items.map((c) => c.evidence_level).filter(Boolean))) : [];
 
   return (
-    <Shell crumbs={crumbs}>
+    <Shell crumbs={crumbs} footer={<Footer note="“行业图示”一级来自公开产业链示意图,只说明公开资料把公司归到这一环节,不代表已核验的产品或供应关系。" />}>
       <main className="page">
         <header className="co-head">
           <span className="eyebrow">{current ? `Chain · ${pad2(current.sort)} / ${pad2(chain.length || 10)}` : node ? "Companies" : "Universe"}</span>
@@ -89,11 +89,6 @@ export function CompaniesPage() {
           </section>
         )}
 
-        <footer className="footer">
-          <p style={{ maxWidth: 720 }}>
-            “行业图示”一级来自公开产业链示意图,只说明公开资料把公司归到这一环节,不代表已核验的产品或供应关系。
-          </p>
-        </footer>
       </main>
     </Shell>
   );

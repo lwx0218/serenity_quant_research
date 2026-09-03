@@ -31,6 +31,13 @@
   --accent: #2f5fc9;
   --accent-ink: #ffffff;
   --dim: 0.14;           /* opacity of de-emphasised layers */
+
+  /* ---- direction colours (the only semantic colour axis, see design-rules §5) ---- */
+  --sig-up: #c0392b;     /* A股: red = up */
+  --sig-down: #2e7d5b;   /* A股: green = down */
+  --sig-pos: var(--sig-up);
+  --sig-neg: var(--sig-down);
+  --sig-neu: #8a8e96;
   --shadow: 0 18px 28px -14px rgba(0, 0, 0, 0.28);
 
   /* ---- materials for the exploded stack (top / left / right faces) ---- */
@@ -78,6 +85,9 @@
     --accent-ink: #0f1012;
     --dim: 0.16;
     --shadow: 0 18px 30px -12px rgba(0, 0, 0, 0.7);
+    --sig-up: #f07a6a;
+    --sig-down: #5dc391;
+    --sig-neu: #7e8189;
 
     --m-alu-t: #e3e6ea;  --m-alu-l: #9ea4ab;  --m-alu-r: #bfc4ca;  --m-alu-fin: #b0b6bd;
     --m-pcb-t: #4b6d5b;  --m-pcb-l: #2a3f34;  --m-pcb-r: #3a5546;
@@ -105,6 +115,9 @@
   --accent-ink: #0f1012;
   --dim: 0.16;
   --shadow: 0 18px 30px -12px rgba(0, 0, 0, 0.7);
+  --sig-up: #f07a6a;
+  --sig-down: #5dc391;
+  --sig-neu: #7e8189;
 
   --m-alu-t: #e3e6ea;  --m-alu-l: #9ea4ab;  --m-alu-r: #bfc4ca;  --m-alu-fin: #b0b6bd;
   --m-pcb-t: #4b6d5b;  --m-pcb-l: #2a3f34;  --m-pcb-r: #3a5546;
@@ -116,4 +129,10 @@
   --m-fiber: #7fb2f0;
 
   color-scheme: dark;
+}
+
+/* 绿涨红跌 (international convention): swap which colour means "positive" */
+:root[data-signal="intl"] {
+  --sig-pos: var(--sig-down);
+  --sig-neg: var(--sig-up);
 }

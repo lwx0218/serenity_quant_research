@@ -1,10 +1,10 @@
 /* Explorer: hero (overview / selected), signal path, chain list. */
 
-.hero { position: relative; height: 968px; }
-.hero.is-selected { height: 940px; }
+.hero { position: relative; height: 1150px; }
+.hero.is-selected { height: auto; min-height: 1000px; display: grid; grid-template-columns: 740px 540px; align-items: start; }
 
 .hero-title {
-  position: absolute; left: 0; top: 56px; width: 720px;
+  position: absolute; left: 0; top: 56px; width: 960px;
   display: flex; flex-direction: column; gap: 18px;
   transition: opacity 0.3s ease, transform 0.4s ease;
 }
@@ -33,14 +33,24 @@
 .layer-label-name { font-size: 17px; font-weight: 500; color: var(--ink); letter-spacing: -0.005em; transition: color 0.2s ease; }
 .layer-label-en { font-size: 12px; color: var(--muted); }
 .layer-label-fn { font-size: 13px; color: var(--ink-2); line-height: 1.4; }
+.layer-label-act { font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: 0.04em; margin-left: 4px; white-space: nowrap; }
+.layer-label .row-index.is-pos { color: var(--sig-pos); }
+.layer-label .row-index.is-neg { color: var(--sig-neg); }
+.layer-label .row-index.is-neu { color: var(--sig-neu); }
+.hero.is-selected .live, .hero.is-selected .live-ring { display: none; }
+
+/* what changed (overview) */
+.changed { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; max-width: 960px; }
+.changed-meta { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: baseline; font-size: 14px; color: var(--ink-2); }
+.changed-meta .asof { margin-right: 4px; }
 .layer-label:hover .layer-label-name, .layer-label.is-hot .layer-label-name { color: var(--accent); }
 .layer-label.is-hot .row-index { color: var(--accent); }
 .hero.is-selected .layer-label { opacity: 0; pointer-events: none; }
 
 /* selected-state content column */
 .focus {
-  position: absolute; left: 740px; top: 32px; width: 540px;
-  display: flex; flex-direction: column; gap: 40px;
+  grid-column: 2; position: relative; width: 540px; padding: 32px 0 80px;
+  display: flex; flex-direction: column; gap: 44px;
   animation: focus-in 0.45s cubic-bezier(.2,.7,.2,1) both;
 }
 @keyframes focus-in { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
@@ -51,7 +61,7 @@
 .focus-tags .mono { font-size: 12px; letter-spacing: 0.02em; }
 .focus-note { font-size: 12px; line-height: 1.6; color: var(--muted); }
 
-.hint { position: absolute; left: 0; bottom: 44px; display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--muted); }
+.hint { position: absolute; left: 0; top: 1000px; display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--muted); }
 
 /* signal path */
 .signal { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 56px; align-items: start; }
@@ -70,7 +80,7 @@ a.signal-step:hover .signal-step-label { color: var(--accent); }
 
 /* rows inside the focus column */
 .parts-row { grid-template-columns: 28px 200px minmax(0, 1fr) 16px; padding: 14px 0; }
-.co-row { grid-template-columns: 200px 170px minmax(0, 1fr); padding: 12px 0; }
+.co-row { grid-template-columns: 120px 120px 70px 60px minmax(0, 1fr); padding: 12px 0; }
 .co-row .row-meta { font-size: 12px; }
 .sib-row { grid-template-columns: 28px minmax(0, 1fr) 16px; padding: 12px 0; }
 .is-current-row .row-title { color: var(--muted); font-weight: 400; }

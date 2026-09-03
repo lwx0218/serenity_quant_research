@@ -5,20 +5,40 @@
     "name": "CPO 光模块",
     "nameEn": "Co-Packaged Optics",
     "eyebrow": "CO-PACKAGED OPTICS · 1.6T / 3.2T",
-    "summary": "九层结构,从散热上盖到高速主板。点击任意一层,看它由什么构成、谁在做。",
+    "summary": "九个模块,从散热上盖到高速主板。点击任意一个,看它由什么构成、谁在做、资金最近在给谁投票。",
     "themeId": "theme.cpo",
     "chainId": "chain.cpo",
     "signalPath": {
       "summary": "电信号从主板经交换芯片与驱动层进入硅光芯片,转换为光后由光纤阵列送出;返程由探测阵列完成光电转换。",
       "steps": [
-        { "label": "PCB / 金手指", "kind": "电信号", "moduleId": "cpo.mod.host-board" },
-        { "label": "交换 ASIC", "kind": "电信号", "moduleId": "cpo.mod.host-asic" },
-        { "label": "Driver / TIA", "kind": "电信号", "moduleId": "cpo.mod.eic" },
-        { "label": "SiPh PIC", "kind": "电 → 光", "moduleId": "cpo.mod.pic" },
-        { "label": "FAU / MPO", "kind": "光信号", "moduleId": "cpo.mod.fiber-interface" }
+        {
+          "label": "PCB / 金手指",
+          "kind": "电信号",
+          "moduleId": "cpo.mod.host-board"
+        },
+        {
+          "label": "交换 ASIC",
+          "kind": "电信号",
+          "moduleId": "cpo.mod.host-asic"
+        },
+        {
+          "label": "Driver / TIA",
+          "kind": "电信号",
+          "moduleId": "cpo.mod.eic"
+        },
+        {
+          "label": "SiPh PIC",
+          "kind": "电 → 光",
+          "moduleId": "cpo.mod.pic"
+        },
+        {
+          "label": "FAU / MPO",
+          "kind": "光信号",
+          "moduleId": "cpo.mod.fiber-interface"
+        }
       ]
     },
-    "sourceNote": "结构与代表企业整理自公开行业图示(图财社,2024–2026),为示意性梳理,不构成研究结论或投资建议。"
+    "sourceNote": "分层按研究模块排列(公开行业图示命名,经 OIF 术语核验),不是物理拆解:光接收多集成在 PIC 内,光源可外置,主板属系统边界。结构与代表企业整理自公开行业图示(图财社,2024–2026),不构成投资建议。"
   },
   "modules": {
     "cpo.mod.thermal": {
@@ -95,15 +115,45 @@
     }
   },
   "chainNodes": {
-    "cpo.chain.demand": { "displayName": "需求侧", "keywords": "AI 集群 · 数据中心 · 交换机升级" },
-    "cpo.chain.asic": { "displayName": "交换芯片 / ASIC", "keywords": "Tomahawk · SerDes · 高密度端口" },
-    "cpo.chain.silicon-photonics": { "displayName": "硅光芯片", "keywords": "PIC · 调制器 MZM · WDM" },
-    "cpo.chain.light-source": { "displayName": "光源 / 激光器", "keywords": "CW · EML · 高功率窄线宽" },
-    "cpo.chain.optical-engine-package": { "displayName": "光引擎 / 封装", "keywords": "共封装趋势 · 高密度封装 · 低损耗耦合" },
-    "cpo.chain.substrate-interconnect": { "displayName": "基板与互连", "keywords": "高层数 PCB · FCBGA · 玻璃基板" },
-    "cpo.chain.thermal-structure": { "displayName": "散热与结构件", "keywords": "冷板 · 均热板 · 导热界面" },
-    "cpo.chain.test-equipment": { "displayName": "测试与设备", "keywords": "耦合封装 · 光学对准 · 老化测试" },
-    "cpo.chain.optical-connection": { "displayName": "光器件 / 连接", "keywords": "FAU · MPO · 透镜 · 隔离器" },
-    "cpo.chain.systems-switches": { "displayName": "下游整机与交换机", "keywords": "数据中心交换机 · AI 服务器互联" }
+    "cpo.chain.demand": {
+      "displayName": "需求侧",
+      "keywords": "AI 集群 · 数据中心 · 交换机升级"
+    },
+    "cpo.chain.asic": {
+      "displayName": "交换芯片 / ASIC",
+      "keywords": "Tomahawk · SerDes · 高密度端口"
+    },
+    "cpo.chain.silicon-photonics": {
+      "displayName": "硅光芯片",
+      "keywords": "PIC · 调制器 MZM · WDM"
+    },
+    "cpo.chain.light-source": {
+      "displayName": "光源 / 激光器",
+      "keywords": "CW · EML · 高功率窄线宽"
+    },
+    "cpo.chain.optical-engine-package": {
+      "displayName": "光引擎 / 封装",
+      "keywords": "共封装趋势 · 高密度封装 · 低损耗耦合"
+    },
+    "cpo.chain.substrate-interconnect": {
+      "displayName": "基板与互连",
+      "keywords": "高层数 PCB · FCBGA · 玻璃基板"
+    },
+    "cpo.chain.thermal-structure": {
+      "displayName": "散热与结构件",
+      "keywords": "冷板 · 均热板 · 导热界面"
+    },
+    "cpo.chain.test-equipment": {
+      "displayName": "测试与设备",
+      "keywords": "耦合封装 · 光学对准 · 老化测试"
+    },
+    "cpo.chain.optical-connection": {
+      "displayName": "光器件 / 连接",
+      "keywords": "FAU · MPO · 透镜 · 隔离器"
+    },
+    "cpo.chain.systems-switches": {
+      "displayName": "下游整机与交换机",
+      "keywords": "数据中心交换机 · AI 服务器互联"
+    }
   }
 }

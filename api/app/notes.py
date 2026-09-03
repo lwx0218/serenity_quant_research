@@ -80,7 +80,9 @@ def _unquote(v: str) -> str:
     return v
 
 
-def _quote(v: str) -> str:
+def _quote(v: object) -> str:
+    if isinstance(v, float) and v.is_integer():
+        v = int(v)
     s = str(v)
     if s == "" or s[0] in "[\"'{&*!|>%@`#" or ": " in s or s.endswith(":") or s.strip() != s:
         return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
