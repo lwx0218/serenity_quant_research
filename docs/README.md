@@ -13,7 +13,8 @@
 |---|---|---|
 | `product/design-rules.md` | 研究界面的全部视觉与文案规则(一页) | **当前有效** |
 | `product/*.md`(其余) | .NET 时期的产品规格与体验地图 | superseded,思路可参考,条款不再约束 |
-| `product/prototypes/` | 当时的 HTML 原型 | 历史参考 |
+| `product/prototypes/teardown-v3/` | Teardown 方向稿 v3 的静态导出与生成脚本(六页 × 浅深) | **当前有效**,实现以它为准 |
+| `product/prototypes/*.html`(其余) | .NET 时期的 HTML 原型 | 历史参考 |
 | `research-baseline/` | CPO taxonomy、公司候选池、证据合同 | 当前有效(证据级见 evidence-contract §2a) |
 | `references/` | 两张公开产业链图示(图财社) | 长期参考输入;它们是 `reference` 级证据的来源 |
 | `project-intake/` | 项目入口与边界 | 部分过期,待随 v2 更新 |

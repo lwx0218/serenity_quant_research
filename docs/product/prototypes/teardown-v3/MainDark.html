@@ -1,0 +1,152 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+</head>
+<body>
+
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;family=Noto+Sans+SC:wght@300;400;500;600&amp;display=swap">
+  <style>
+    html, body { margin: 0; background: #0F1012; }
+    body { font-family: "Geist", "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; color: #F1F0EC; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    a { color: #7AA2F5; text-decoration: none; }
+    a:hover { color: #F1F0EC; }
+    * { box-sizing: border-box; }
+
+    @keyframes td-breathe { 0%,100% { opacity: .45; transform: scale(1); } 50% { opacity: 1; transform: scale(1.3); } }
+    .td-live { animation: td-breathe 2.6s ease-in-out infinite; transform-origin: center; }
+    .td-live-ring { position:absolute; width:7px; height:7px; border-radius:50%; animation: td-ring 2.6s ease-out infinite; }
+    @keyframes td-ring { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, #7AA2F5 45%, transparent); } 70% { box-shadow: 0 0 0 9px color-mix(in srgb, #7AA2F5 0%, transparent); } 100% { box-shadow: 0 0 0 9px transparent; } }
+    @media (prefers-reduced-motion: reduce) { .td-live, .td-live-ring { animation: none; } }
+  </style>
+
+<div style="width:1440px;min-height:1340px;background:#0F1012;position:relative;overflow:hidden">
+<header style="height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 80px">
+  <div style="display:flex;align-items:center;gap:28px">
+    <span style="font-weight:600;font-size:15px;letter-spacing:-0.01em;color:#F1F0EC">Teardown</span>
+    
+  </div>
+  <nav style="display:flex;align-items:center;gap:32px;font-size:14px">
+    <span style="color:#F1F0EC;font-weight:500">光模块</span><span style="color:#7E8189;font-weight:400">公司</span><span style="color:#7E8189;font-weight:400">研究<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#7AA2F5;margin-left:6px;vertical-align:2px"></span></span>
+    <span style="display:inline-flex;width:32px;height:32px;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#7E8189" stroke-width="1.3" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.8M8 12.7v1.8M1.5 8h1.8M12.7 8h1.8M3.4 3.4l1.3 1.3M11.3 11.3l1.3 1.3M3.4 12.6l1.3-1.3M11.3 4.7l1.3-1.3"/></svg></span>
+  </nav>
+</header>
+<section style="position:relative;height:1100px">
+  <div style="position:absolute;left:80px;top:56px;display:flex;flex-direction:column;gap:18px;width:960px">
+    <span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#7E8189">CO-PACKAGED OPTICS · 1.6T / 3.2T</span>
+    <h1 style="margin:0;font-size:68px;line-height:1.02;font-weight:600;letter-spacing:-0.025em;color:#F1F0EC">CPO 光模块</h1>
+    <p style="margin:6px 0 0;font-size:19px;line-height:1.55;color:#C3C4C8;font-weight:300;max-width:600px;text-wrap:pretty">九个模块,从散热上盖到高速主板。点击任意一个,看它由什么构成、谁在做、资金最近在给谁投票。</p>
+    
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+      <div style="display:flex;gap:14px;align-items:baseline;padding:2px 0 4px"><span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;letter-spacing:0.08em;color:#F07A6A;flex:none;min-width:52px">▲ 偏多</span><span style="font-size:16px;line-height:1.55;color:#F1F0EC">资金本周在给 <span style='font-weight:500'>硅光芯片</span> 投票:08-29 扩产后环节内 3/4 同向,篮子 T+1 超额 <span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:15px;font-weight:500;color:#F07A6A;font-variant-numeric:tabular-nums">+1.9%</span>,上游光纤阵列跟随 <span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:15px;font-weight:500;color:#F07A6A;font-variant-numeric:tabular-nums">+1.2%</span>;高速主板的涨价传闻未被买入 <span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:15px;font-weight:500;color:#5DC391;font-variant-numeric:tabular-nums">−0.6%</span>。</span></div>
+      <div style="display:flex;gap:22px;align-items:baseline;font-size:14px;color:#C3C4C8">
+        <span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:11px;letter-spacing:0.04em;color:#7E8189">截至 08-30 收盘 · 窗口 过去 7 天 · 反应 = T+1 相对篮子</span>
+        <span style="font-size:14px;color:#7AA2F5">6 条卡口事件</span><span style="color:#4E5158">·</span><span>已反应 <span style="color:#F1F0EC">4</span> · 未反应 <span style="color:#F1F0EC">2</span></span>
+        <span style="color:#4E5158">·</span><span style="font-size:14px;color:#7AA2F5">2 条待核验</span><span style="color:#4E5158">·</span><span style="font-size:14px;color:#7AA2F5">1 个判断到期</span>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute;left:300px;top:400px"><svg viewBox="0 0 462 704" width="462" height="704" style="display:block;overflow:visible" role="img" aria-label="CPO 光模块九层分解"><defs><filter id="lift" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="18" stdDeviation="14" flood-color="#000" flood-opacity="0.22"/></filter></defs><g><g data-layer="board"><polygon points="6.0,594.8 283.0,682.3 283.0,692.3 6.0,604.8" fill="#25382F"/><polygon points="451.0,629.2 283.0,682.3 283.0,692.3 451.0,639.2" fill="#31473C"/><polygon points="174.0,541.7 451.0,629.2 283.0,682.3 6.0,594.8" fill="#3E5A4C"/><line x1="30.7" y1="600.2" x2="49.7" y2="594.2" stroke="#D4B369" stroke-width="5"/><line x1="48.8" y1="605.9" x2="67.8" y2="599.9" stroke="#D4B369" stroke-width="5"/><line x1="66.9" y1="611.6" x2="85.9" y2="605.6" stroke="#D4B369" stroke-width="5"/><line x1="85.0" y1="617.3" x2="104.0" y2="611.3" stroke="#D4B369" stroke-width="5"/><line x1="103.1" y1="623.0" x2="122.1" y2="617.0" stroke="#D4B369" stroke-width="5"/><line x1="121.2" y1="628.7" x2="140.2" y2="622.7" stroke="#D4B369" stroke-width="5"/><line x1="139.3" y1="634.5" x2="158.3" y2="628.5" stroke="#D4B369" stroke-width="5"/><line x1="157.4" y1="640.2" x2="176.4" y2="634.2" stroke="#D4B369" stroke-width="5"/><line x1="175.5" y1="645.9" x2="194.5" y2="639.9" stroke="#D4B369" stroke-width="5"/><line x1="193.5" y1="651.6" x2="212.5" y2="645.6" stroke="#D4B369" stroke-width="5"/><line x1="211.6" y1="657.3" x2="230.6" y2="651.3" stroke="#D4B369" stroke-width="5"/><line x1="229.7" y1="663.0" x2="248.7" y2="657.0" stroke="#D4B369" stroke-width="5"/><line x1="247.8" y1="668.7" x2="266.8" y2="662.7" stroke="#D4B369" stroke-width="5"/><line x1="265.9" y1="674.5" x2="284.9" y2="668.5" stroke="#D4B369" stroke-width="5"/></g><g data-layer="substrate"><polygon points="19.5,529.0 276.0,610.0 276.0,622.0 19.5,541.0" fill="#A5945F"/><polygon points="437.5,559.0 276.0,610.0 276.0,622.0 437.5,571.0" fill="#C0AE7B"/><polygon points="181.0,478.0 437.5,559.0 276.0,610.0 19.5,529.0" fill="#D9C89C"/><line x1="177.2" y1="490.0" x2="399.5" y2="560.2" stroke="#C9B77F" stroke-width="1"/><line x1="153.2" y1="497.6" x2="375.6" y2="567.8" stroke="#C9B77F" stroke-width="1"/><line x1="129.3" y1="505.1" x2="351.6" y2="575.3" stroke="#C9B77F" stroke-width="1"/><line x1="105.4" y1="512.7" x2="327.7" y2="582.9" stroke="#C9B77F" stroke-width="1"/><line x1="81.4" y1="520.2" x2="303.7" y2="590.4" stroke="#C9B77F" stroke-width="1"/><line x1="57.5" y1="527.8" x2="279.8" y2="598.0" stroke="#C9B77F" stroke-width="1"/></g><g data-layer="fiber"><polygon points="32.0,468.9 273.1,545.0 273.1,552.0 32.0,475.9" fill="#25382F"/><polygon points="424.9,497.1 273.1,545.0 273.1,552.0 424.9,504.1" fill="#31473C"/><polygon points="183.8,421.0 424.9,497.1 273.1,545.0 32.0,468.9" fill="#3E5A4C"/><polygon points="67.8,453.0 272.9,517.8 272.9,533.8 67.8,469.0" fill="#1D1E21"/><polygon points="305.2,507.6 272.9,517.8 272.9,533.8 305.2,523.6" fill="#2B2D31"/><polygon points="100.1,442.8 305.2,507.6 272.9,517.8 67.8,453.0" fill="#3A3C40"/><path d="M78.0,464.2 C80.0,488.2 62.0,496.2 52.0,522.2" fill="none" stroke="#7FB2F0" stroke-width="2.4" stroke-linecap="round" opacity="0.9"/><path d="M104.4,472.5 C106.4,496.5 88.4,504.5 78.4,530.5" fill="none" stroke="#7FB2F0" stroke-width="2.4" stroke-linecap="round" opacity="0.9"/><path d="M130.8,480.9 C132.8,504.9 114.8,512.9 104.8,538.9" fill="none" stroke="#7FB2F0" stroke-width="2.4" stroke-linecap="round" opacity="0.9"/><path d="M157.2,489.2 C159.2,513.2 141.2,521.2 131.2,547.2" fill="none" stroke="#7FB2F0" stroke-width="2.4" stroke-linecap="round" opacity="0.9"/><path d="M183.5,497.5 C185.5,521.5 167.5,529.5 157.5,555.5" fill="none" stroke="#7FB2F0" stroke-width="2.4" stroke-linecap="round" opacity="0.9"/><path d="M209.9,505.9 C211.9,529.9 193.9,537.9 183.9,563.9" fill="none" stroke="#7FB2F0" stroke-width="2.4" stroke-linecap="round" opacity="0.9"/><path d="M236.3,514.2 C238.3,538.2 220.3,546.2 210.3,572.2" fill="none" stroke="#7FB2F0" stroke-width="2.4" stroke-linecap="round" opacity="0.9"/><path d="M262.7,522.5 C264.7,546.5 246.7,554.5 236.7,580.5" fill="none" stroke="#7FB2F0" stroke-width="2.4" stroke-linecap="round" opacity="0.9"/></g><g data-layer="receiver"><polygon points="32.0,402.9 273.1,479.0 273.1,486.0 32.0,409.9" fill="#25382F"/><polygon points="424.9,431.1 273.1,479.0 273.1,486.0 424.9,438.1" fill="#31473C"/><polygon points="183.8,355.0 424.9,431.1 273.1,479.0 32.0,402.9" fill="#3E5A4C"/><polygon points="95.5,392.6 114.5,398.6 114.5,406.6 95.5,400.6" fill="#1D1E21"/><polygon points="137.3,391.4 114.5,398.6 114.5,406.6 137.3,399.4" fill="#2B2D31"/><polygon points="118.3,385.4 137.3,391.4 114.5,398.6 95.5,392.6" fill="#3A3C40"/><polygon points="119.2,400.0 138.2,406.0 138.2,414.0 119.2,408.0" fill="#1D1E21"/><polygon points="161.0,398.8 138.2,406.0 138.2,414.0 161.0,406.8" fill="#2B2D31"/><polygon points="142.0,392.8 161.0,398.8 138.2,406.0 119.2,400.0" fill="#3A3C40"/><polygon points="142.9,407.5 161.9,413.5 161.9,421.5 142.9,415.5" fill="#1D1E21"/><polygon points="184.7,406.3 161.9,413.5 161.9,421.5 184.7,414.3" fill="#2B2D31"/><polygon points="165.7,400.3 184.7,406.3 161.9,413.5 142.9,407.5" fill="#3A3C40"/><polygon points="166.7,415.0 185.7,421.0 185.7,429.0 166.7,423.0" fill="#1D1E21"/><polygon points="208.5,413.8 185.7,421.0 185.7,429.0 208.5,421.8" fill="#2B2D31"/><polygon points="189.5,407.8 208.5,413.8 185.7,421.0 166.7,415.0" fill="#3A3C40"/><polygon points="190.4,422.5 209.4,428.5 209.4,436.5 190.4,430.5" fill="#1D1E21"/><polygon points="232.2,421.3 209.4,428.5 209.4,436.5 232.2,429.3" fill="#2B2D31"/><polygon points="213.2,415.3 232.2,421.3 209.4,428.5 190.4,422.5" fill="#3A3C40"/><polygon points="214.1,430.0 233.1,436.0 233.1,444.0 214.1,438.0" fill="#1D1E21"/><polygon points="255.9,428.8 233.1,436.0 233.1,444.0 255.9,436.8" fill="#2B2D31"/><polygon points="236.9,422.8 255.9,428.8 233.1,436.0 214.1,430.0" fill="#3A3C40"/><polygon points="237.8,437.5 256.8,443.5 256.8,451.5 237.8,445.5" fill="#1D1E21"/><polygon points="279.6,436.3 256.8,443.5 256.8,451.5 279.6,444.3" fill="#2B2D31"/><polygon points="260.6,430.3 279.6,436.3 256.8,443.5 237.8,437.5" fill="#3A3C40"/><polygon points="261.6,445.0 280.6,451.0 280.6,459.0 261.6,453.0" fill="#1D1E21"/><polygon points="303.4,443.8 280.6,451.0 280.6,459.0 303.4,451.8" fill="#2B2D31"/><polygon points="284.4,437.8 303.4,443.8 280.6,451.0 261.6,445.0" fill="#3A3C40"/></g><g data-layer="laser"><polygon points="32.0,336.9 273.1,413.0 273.1,420.0 32.0,343.9" fill="#25382F"/><polygon points="424.9,365.1 273.1,413.0 273.1,420.0 424.9,372.1" fill="#31473C"/><polygon points="183.8,289.0 424.9,365.1 273.1,413.0 32.0,336.9" fill="#3E5A4C"/><polygon points="94.5,322.9 113.5,328.9 113.5,340.9 94.5,334.9" fill="#A3843F"/><polygon points="138.2,321.1 113.5,328.9 113.5,340.9 138.2,333.1" fill="#BC9C55"/><polygon points="119.2,315.1 138.2,321.1 113.5,328.9 94.5,322.9" fill="#D4B369"/><polygon points="118.3,330.3 137.3,336.3 137.3,348.3 118.3,342.3" fill="#A3843F"/><polygon points="162.0,328.5 137.3,336.3 137.3,348.3 162.0,340.5" fill="#BC9C55"/><polygon points="143.0,322.5 162.0,328.5 137.3,336.3 118.3,330.3" fill="#D4B369"/><polygon points="142.0,337.8 161.0,343.8 161.0,355.8 142.0,349.8" fill="#A3843F"/><polygon points="185.7,336.0 161.0,343.8 161.0,355.8 185.7,348.0" fill="#BC9C55"/><polygon points="166.7,330.0 185.7,336.0 161.0,343.8 142.0,337.8" fill="#D4B369"/><polygon points="165.7,345.3 184.7,351.3 184.7,363.3 165.7,357.3" fill="#A3843F"/><polygon points="209.4,343.5 184.7,351.3 184.7,363.3 209.4,355.5" fill="#BC9C55"/><polygon points="190.4,337.5 209.4,343.5 184.7,351.3 165.7,345.3" fill="#D4B369"/><polygon points="189.4,352.8 208.4,358.8 208.4,370.8 189.4,364.8" fill="#A3843F"/><polygon points="233.1,351.0 208.4,358.8 208.4,370.8 233.1,363.0" fill="#BC9C55"/><polygon points="214.1,345.0 233.1,351.0 208.4,358.8 189.4,352.8" fill="#D4B369"/><polygon points="213.2,360.3 232.2,366.3 232.2,378.3 213.2,372.3" fill="#A3843F"/><polygon points="256.9,358.5 232.2,366.3 232.2,378.3 256.9,370.5" fill="#BC9C55"/><polygon points="237.9,352.5 256.9,358.5 232.2,366.3 213.2,360.3" fill="#D4B369"/><polygon points="236.9,367.8 255.9,373.8 255.9,385.8 236.9,379.8" fill="#A3843F"/><polygon points="280.6,366.0 255.9,373.8 255.9,385.8 280.6,378.0" fill="#BC9C55"/><polygon points="261.6,360.0 280.6,366.0 255.9,373.8 236.9,367.8" fill="#D4B369"/><polygon points="260.6,375.3 279.6,381.3 279.6,393.3 260.6,387.3" fill="#A3843F"/><polygon points="304.3,373.5 279.6,381.3 279.6,393.3 304.3,385.5" fill="#BC9C55"/><polygon points="285.3,367.5 304.3,373.5 279.6,381.3 260.6,375.3" fill="#D4B369"/></g><g data-layer="pic"><polygon points="32.0,270.9 273.1,347.0 273.1,354.0 32.0,277.9" fill="#25382F"/><polygon points="424.9,299.1 273.1,347.0 273.1,354.0 424.9,306.1" fill="#31473C"/><polygon points="183.8,223.0 424.9,299.1 273.1,347.0 32.0,270.9" fill="#3E5A4C"/><polygon points="136.4,281.5 254.4,318.8 254.4,323.8 136.4,286.5" fill="#6D8299"/><polygon points="319.0,298.4 254.4,318.8 254.4,323.8 319.0,303.4" fill="#84999F"/><polygon points="201.0,261.1 319.0,298.4 254.4,318.8 136.4,281.5" fill="#9DB2C8"/><line x1="194.1" y1="264.9" x2="307.0" y2="300.6" stroke="#DCE7F2" stroke-width="1" opacity="0.8"/><line x1="182.7" y1="268.5" x2="295.6" y2="304.2" stroke="#DCE7F2" stroke-width="1" opacity="0.8"/><line x1="171.3" y1="272.1" x2="284.2" y2="307.8" stroke="#DCE7F2" stroke-width="1" opacity="0.8"/><line x1="159.9" y1="275.7" x2="272.8" y2="311.4" stroke="#DCE7F2" stroke-width="1" opacity="0.8"/><line x1="148.5" y1="279.3" x2="261.4" y2="315.0" stroke="#DCE7F2" stroke-width="1" opacity="0.8"/></g><g data-layer="eic"><polygon points="32.0,204.9 273.1,281.0 273.1,288.0 32.0,211.9" fill="#25382F"/><polygon points="424.9,233.1 273.1,281.0 273.1,288.0 424.9,240.1" fill="#31473C"/><polygon points="183.8,157.0 424.9,233.1 273.1,281.0 32.0,204.9" fill="#3E5A4C"/><polygon points="148.1,190.5 180.4,200.7 180.4,206.7 148.1,196.5" fill="#1D1E21"/><polygon points="208.9,191.7 180.4,200.7 180.4,206.7 208.9,197.7" fill="#2B2D31"/><polygon points="176.6,181.5 208.9,191.7 180.4,200.7 148.1,190.5" fill="#3A3C40"/><polygon points="187.9,203.1 220.2,213.3 220.2,219.3 187.9,209.1" fill="#1D1E21"/><polygon points="248.7,204.3 220.2,213.3 220.2,219.3 248.7,210.3" fill="#2B2D31"/><polygon points="216.4,194.1 248.7,204.3 220.2,213.3 187.9,203.1" fill="#3A3C40"/><polygon points="227.7,215.6 260.0,225.8 260.0,231.8 227.7,221.6" fill="#1D1E21"/><polygon points="288.5,216.8 260.0,225.8 260.0,231.8 288.5,222.8" fill="#2B2D31"/><polygon points="256.2,206.6 288.5,216.8 260.0,225.8 227.7,215.6" fill="#3A3C40"/><polygon points="267.4,228.2 299.7,238.4 299.7,244.4 267.4,234.2" fill="#1D1E21"/><polygon points="328.2,229.4 299.7,238.4 299.7,244.4 328.2,235.4" fill="#2B2D31"/><polygon points="295.9,219.2 328.2,229.4 299.7,238.4 267.4,228.2" fill="#3A3C40"/><polygon points="99.7,205.8 132.0,216.0 132.0,222.0 99.7,211.8" fill="#1D1E21"/><polygon points="160.5,207.0 132.0,216.0 132.0,222.0 160.5,213.0" fill="#2B2D31"/><polygon points="128.2,196.8 160.5,207.0 132.0,216.0 99.7,205.8" fill="#3A3C40"/><polygon points="139.5,218.4 171.8,228.6 171.8,234.6 139.5,224.4" fill="#1D1E21"/><polygon points="200.3,219.6 171.8,228.6 171.8,234.6 200.3,225.6" fill="#2B2D31"/><polygon points="168.0,209.4 200.3,219.6 171.8,228.6 139.5,218.4" fill="#3A3C40"/><polygon points="179.2,230.9 211.5,241.1 211.5,247.1 179.2,236.9" fill="#1D1E21"/><polygon points="240.0,232.1 211.5,241.1 211.5,247.1 240.0,238.1" fill="#2B2D31"/><polygon points="207.7,221.9 240.0,232.1 211.5,241.1 179.2,230.9" fill="#3A3C40"/><polygon points="219.0,243.5 251.3,253.7 251.3,259.7 219.0,249.5" fill="#1D1E21"/><polygon points="279.8,244.7 251.3,253.7 251.3,259.7 279.8,250.7" fill="#2B2D31"/><polygon points="247.5,234.5 279.8,244.7 251.3,253.7 219.0,243.5" fill="#3A3C40"/></g><g data-layer="host-asic"><polygon points="32.0,138.9 273.1,215.0 273.1,222.0 32.0,145.9" fill="#25382F"/><polygon points="424.9,167.1 273.1,215.0 273.1,222.0 424.9,174.1" fill="#31473C"/><polygon points="183.8,91.0 424.9,167.1 273.1,215.0 32.0,138.9" fill="#3E5A4C"/><polygon points="150.2,150.9 237.4,178.4 237.4,187.4 150.2,159.9" fill="#151719"/><polygon points="305.2,157.0 237.4,178.4 237.4,187.4 305.2,166.0" fill="#1F2226"/><polygon points="218.0,129.5 305.2,157.0 237.4,178.4 150.2,150.9" fill="#2A2D33"/><text x="227.7" y="158.0" text-anchor="middle" font-family="'Geist Mono', ui-monospace, monospace" font-size="11" letter-spacing="0.12em" fill="#8E949C">ASIC</text></g><g data-layer="thermal"><polygon points="19.5,59.0 276.0,140.0 276.0,160.0 19.5,79.0" fill="#AEB3BA"/><polygon points="437.5,89.0 276.0,140.0 276.0,160.0 437.5,109.0" fill="#C4C8CE"/><polygon points="181.0,8.0 437.5,89.0 276.0,140.0 19.5,59.0" fill="#DCDFE3"/><line x1="177.2" y1="17.6" x2="407.1" y2="90.2" stroke="#B9BEC5" stroke-width="3" stroke-linecap="round"/><line x1="161.3" y1="22.6" x2="391.2" y2="95.2" stroke="#B9BEC5" stroke-width="3" stroke-linecap="round"/><line x1="145.4" y1="27.6" x2="375.3" y2="100.2" stroke="#B9BEC5" stroke-width="3" stroke-linecap="round"/><line x1="129.5" y1="32.7" x2="359.4" y2="105.3" stroke="#B9BEC5" stroke-width="3" stroke-linecap="round"/><line x1="113.5" y1="37.7" x2="343.4" y2="110.3" stroke="#B9BEC5" stroke-width="3" stroke-linecap="round"/><line x1="97.6" y1="42.7" x2="327.5" y2="115.3" stroke="#B9BEC5" stroke-width="3" stroke-linecap="round"/><line x1="81.7" y1="47.8" x2="311.6" y2="120.4" stroke="#B9BEC5" stroke-width="3" stroke-linecap="round"/><line x1="65.8" y1="52.8" x2="295.7" y2="125.4" stroke="#B9BEC5" stroke-width="3" stroke-linecap="round"/><line x1="49.9" y1="57.8" x2="279.8" y2="130.4" stroke="#B9BEC5" stroke-width="3" stroke-linecap="round"/></g></g></svg></div>
+  <div style="position:absolute;left:697px;top:512px;width:155px;height:1px;background:#33363B"></div><div style="position:absolute;left:694px;top:509px;width:7px;height:7px;border-radius:50%;background:#0F1012;border:1.5px solid #C3C4C8"></div><div style="position:absolute;left:687px;top:583px;width:165px;height:1px;background:#33363B"></div><div style="position:absolute;left:684px;top:580px;width:7px;height:7px;border-radius:50%;background:#0F1012;border:1.5px solid #C3C4C8"></div><div style="position:absolute;left:687px;top:649px;width:165px;height:1px;background:#33363B"></div><div style="position:absolute;left:684px;top:646px;width:7px;height:7px;border-radius:50%;background:#0F1012;border:1.5px solid #C3C4C8"></div><div style="position:absolute;left:687px;top:715px;width:165px;height:1px;background:#33363B"></div><div class="td-live-ring" style="left:684px;top:712px;background:#F07A6A"></div><div class="td-live" style="position:absolute;left:684px;top:712px;width:7px;height:7px;border-radius:50%;background:#F07A6A"></div><div style="position:absolute;left:687px;top:781px;width:165px;height:1px;background:#33363B"></div><div class="td-live-ring" style="left:684px;top:778px;background:#F07A6A"></div><div class="td-live" style="position:absolute;left:684px;top:778px;width:7px;height:7px;border-radius:50%;background:#F07A6A"></div><div style="position:absolute;left:687px;top:847px;width:165px;height:1px;background:#33363B"></div><div style="position:absolute;left:684px;top:844px;width:7px;height:7px;border-radius:50%;background:#0F1012;border:1.5px solid #C3C4C8"></div><div style="position:absolute;left:687px;top:913px;width:165px;height:1px;background:#33363B"></div><div style="position:absolute;left:684px;top:910px;width:7px;height:7px;border-radius:50%;background:#0F1012;border:1.5px solid #C3C4C8"></div><div style="position:absolute;left:697px;top:978px;width:155px;height:1px;background:#33363B"></div><div style="position:absolute;left:694px;top:975px;width:7px;height:7px;border-radius:50%;background:#0F1012;border:1.5px solid #C3C4C8"></div><div style="position:absolute;left:709px;top:1047px;width:143px;height:1px;background:#33363B"></div><div class="td-live-ring" style="left:706px;top:1044px;background:#5DC391"></div><div class="td-live" style="position:absolute;left:706px;top:1044px;width:7px;height:7px;border-radius:50%;background:#5DC391"></div>
+  
+    <div style="position:absolute;left:872px;top:500px;width:480px;display:flex;gap:18px;align-items:baseline">
+      <span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;color:#7E8189;letter-spacing:0.06em;width:22px;flex:none">01</span>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;gap:10px;align-items:baseline">
+          <span style="font-size:17px;font-weight:500;color:#F1F0EC;letter-spacing:-0.005em">散热与上盖</span>
+          <span style="font-size:12px;color:#7E8189">Heat spreader / lid</span>
+        </div>
+        <span style="font-size:13px;color:#C3C4C8;line-height:1.4">均热板与冷板把 ASIC 与光引擎的热量导出</span>
+      </div>
+    </div>
+    <div style="position:absolute;left:872px;top:571px;width:480px;display:flex;gap:18px;align-items:baseline">
+      <span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;color:#7E8189;letter-spacing:0.06em;width:22px;flex:none">02</span>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;gap:10px;align-items:baseline">
+          <span style="font-size:17px;font-weight:500;color:#F1F0EC;letter-spacing:-0.005em">交换 ASIC</span>
+          <span style="font-size:12px;color:#7E8189">Switch ASIC</span>
+        </div>
+        <span style="font-size:13px;color:#C3C4C8;line-height:1.4">1.6T / 3.2T 交换芯片,完成数据交换与调度</span>
+      </div>
+    </div>
+    <div style="position:absolute;left:872px;top:637px;width:480px;display:flex;gap:18px;align-items:baseline">
+      <span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;color:#7E8189;letter-spacing:0.06em;width:22px;flex:none">03</span>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;gap:10px;align-items:baseline">
+          <span style="font-size:17px;font-weight:500;color:#F1F0EC;letter-spacing:-0.005em">电处理层</span>
+          <span style="font-size:12px;color:#7E8189">Driver / TIA / Retimer</span>
+        </div>
+        <span style="font-size:13px;color:#C3C4C8;line-height:1.4">224G PAM4 电信号驱动、放大与重定时</span>
+      </div>
+    </div>
+    <div style="position:absolute;left:872px;top:703px;width:480px;display:flex;gap:18px;align-items:baseline">
+      <span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;color:#F07A6A;letter-spacing:0.06em;width:22px;flex:none">04</span>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;gap:10px;align-items:baseline">
+          <span style="font-size:17px;font-weight:500;color:#F1F0EC;letter-spacing:-0.005em">硅光芯片</span>
+          <span style="font-size:12px;color:#7E8189">Silicon photonics PIC</span><span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:11px;color:#7E8189;letter-spacing:0.04em;margin-left:6px">· 4 条事件 · 篮子 7 天</span> <span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;font-weight:500;color:#F07A6A;font-variant-numeric:tabular-nums">+2.4%</span>
+        </div>
+        <span style="font-size:13px;color:#C3C4C8;line-height:1.4">调制、波分复用与片上波导耦合,光学引擎核心</span>
+      </div>
+    </div>
+    <div style="position:absolute;left:872px;top:769px;width:480px;display:flex;gap:18px;align-items:baseline">
+      <span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;color:#F07A6A;letter-spacing:0.06em;width:22px;flex:none">05</span>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;gap:10px;align-items:baseline">
+          <span style="font-size:17px;font-weight:500;color:#F1F0EC;letter-spacing:-0.005em">激光器阵列</span>
+          <span style="font-size:12px;color:#7E8189">EML / DFB laser array</span><span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:11px;color:#7E8189;letter-spacing:0.04em;margin-left:6px">· 2 条事件 · 篮子 7 天</span> <span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;font-weight:500;color:#F07A6A;font-variant-numeric:tabular-nums">+1.1%</span>
+        </div>
+        <span style="font-size:13px;color:#C3C4C8;line-height:1.4">外置连续波光源,为硅光芯片供光</span>
+      </div>
+    </div>
+    <div style="position:absolute;left:872px;top:835px;width:480px;display:flex;gap:18px;align-items:baseline">
+      <span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;color:#7E8189;letter-spacing:0.06em;width:22px;flex:none">06</span>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;gap:10px;align-items:baseline">
+          <span style="font-size:17px;font-weight:500;color:#F1F0EC;letter-spacing:-0.005em">光电探测阵列</span>
+          <span style="font-size:12px;color:#7E8189">Photodetector array</span>
+        </div>
+        <span style="font-size:13px;color:#C3C4C8;line-height:1.4">接收光信号并转换为电流</span>
+      </div>
+    </div>
+    <div style="position:absolute;left:872px;top:901px;width:480px;display:flex;gap:18px;align-items:baseline">
+      <span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;color:#7E8189;letter-spacing:0.06em;width:22px;flex:none">07</span>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;gap:10px;align-items:baseline">
+          <span style="font-size:17px;font-weight:500;color:#F1F0EC;letter-spacing:-0.005em">光纤阵列</span>
+          <span style="font-size:12px;color:#7E8189">Fiber array unit / MPO</span>
+        </div>
+        <span style="font-size:13px;color:#C3C4C8;line-height:1.4">多通道光纤对准、耦合与出入光接口</span>
+      </div>
+    </div>
+    <div style="position:absolute;left:872px;top:966px;width:480px;display:flex;gap:18px;align-items:baseline">
+      <span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;color:#7E8189;letter-spacing:0.06em;width:22px;flex:none">08</span>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;gap:10px;align-items:baseline">
+          <span style="font-size:17px;font-weight:500;color:#F1F0EC;letter-spacing:-0.005em">共封装基板</span>
+          <span style="font-size:12px;color:#7E8189">Package substrate / interposer</span>
+        </div>
+        <span style="font-size:13px;color:#C3C4C8;line-height:1.4">共同承载 ASIC 与光引擎的高密度互连基板</span>
+      </div>
+    </div>
+    <div style="position:absolute;left:872px;top:1035px;width:480px;display:flex;gap:18px;align-items:baseline">
+      <span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;color:#5DC391;letter-spacing:0.06em;width:22px;flex:none">09</span>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;gap:10px;align-items:baseline">
+          <span style="font-size:17px;font-weight:500;color:#F1F0EC;letter-spacing:-0.005em">高速主板</span>
+          <span style="font-size:12px;color:#7E8189">Host PCB / edge connector</span><span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:11px;color:#7E8189;letter-spacing:0.04em;margin-left:6px">· 1 条事件 · 篮子 7 天</span> <span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;font-weight:500;color:#5DC391;font-variant-numeric:tabular-nums">−0.6%</span>
+        </div>
+        <span style="font-size:13px;color:#C3C4C8;line-height:1.4">系统级供电、控制与高速连接,金手指对接背板</span>
+      </div>
+    </div>
+</section><footer style="padding:72px 80px 56px;display:flex;justify-content:space-between;align-items:flex-end;gap:40px">
+  <p style="margin:0;font-size:12px;line-height:1.6;color:#7E8189;max-width:720px">分层按研究模块排列(公开图示命名,经 OIF 术语核验),不是物理拆解:光接收多集成在 PIC 内,光源可外置,主板属系统边界。事件、反应与读数为样式示例。</p>
+  <span style="font-family:'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:11px;letter-spacing:0.1em;color:#4E5158">TEARDOWN · FROM PART TO POSITION</span>
+</footer>
+</div>
+
+
+</body>
+</html>
