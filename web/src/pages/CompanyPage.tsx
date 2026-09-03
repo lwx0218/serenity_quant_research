@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { LineChart } from "../components/LineChart";
-import { CROWD_RULE, CrowdingReadings, DirLegend, EventsWide, ResonanceBlock, ThesisBlock } from "../components/Research";
+import { Backlinks, CROWD_RULE, CrowdingReadings, DirLegend, EventsWide, ResonanceBlock, ThesisBlock } from "../components/Research";
 import { Footer, Shell, invalidatePending } from "../components/Shell";
 import { AsOf, Conclusion, Head, Sig } from "../components/Signal";
 import { api, EVIDENCE_LABEL, market, md, mkt, pct, roleLabel, type CompanyDetail, type CompanyMarket, type Resonance, type Thesis } from "../lib/api";
@@ -25,12 +25,18 @@ export function CompanyPage({ id }: { id: string }) {
   const [resId, setResId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(() => {
-    api.company(id).then(setC).catch((e) => setError(String(e)));
-    mkt.companyMarket(id).then(setM).catch(() => setM(null));
+  const load = useCallback((live: { on: boolean } = { on: true }) => {
+    setError(null);
+    api.company(id).then((x) => { if (live.on) setC(x); }).catch((e) => { if (live.on) setError(String(e)); });
+    mkt.companyMarket(id).then((x) => { if (live.on) setM(x); }).catch(() => { if (live.on) setM(null); });
   }, [id]);
 
-  useEffect(() => { setC(null); setM(null); setRes(null); setResId(null); load(); }, [load]);
+  useEffect(() => {
+    const live = { on: true };
+    setC(null); setM(null); setRes(null); setResId(null);
+    load(live);
+    return () => { live.on = false; };
+  }, [load]);
 
   // resonance defaults to the most recent event that reacted
   useEffect(() => {
@@ -59,7 +65,7 @@ export function CompanyPage({ id }: { id: string }) {
   const layer = m?.primary_layer ?? null;
 
   return (
-    <Shell crumbs={crumbs} footer={<Footer note={m?.sample ? "价格、估值、反应与拥挤读数为样式示例;接入公告、新闻、行情与资金面数据后替换,每条事件保留原文链接。" : "每条事件保留原文链接;反应按 T+N 收盘计算。"} />}>
+    <Shell crumbs={crumbs} footer={<Footer note={m?.sample ? "价格、估值、反应与拥挤读数为样式示例;每条事件保留原文链接。" : "每条事件保留原文链接;反应按 T+N 收盘计算。"} />}>
       <main className="page">
         {error && <p className="quiet" style={{ paddingTop: 40 }}>加载失败:{error}</p>}
         {!c && !error && <p className="quiet" style={{ paddingTop: 40 }}>加载中…</p>}
@@ -152,10 +158,10 @@ export function CompanyPage({ id }: { id: string }) {
                     <dd>{m.layers.map((l, i) => <span key={l.id}>{i > 0 && " · "}<Link to={`/explore/${l.id}`}>{String(l.sort).padStart(2, "0")} {l.name}</Link></span>)}</dd>
                   </>
                 )}
-                {m?.thesis && m.thesis.subject !== id && (
+                {m && (
                   <>
                     <dt>被引用</dt>
-                    <dd><Link to={`/explore/${m.thesis.subject}`}>{m.thesis.title} · 判断</Link></dd>
+                    <dd><Backlinks items={m.backlinks} /></dd>
                   </>
                 )}
                 {c.official_url && (

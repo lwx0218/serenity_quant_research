@@ -7,7 +7,18 @@ from datetime import date, timedelta
 from typing import Any
 
 from . import insights, market, notes as N
+from . import analytics as A
 from .analytics import CROWD_SIGMA
+
+
+def _pdate(s: str | None) -> date | None:
+    """ISO date or None — a hand-edited note must never take a page down."""
+    if not s:
+        return None
+    try:
+        return date.fromisoformat(str(s)[:10])
+    except ValueError:
+        return None
 
 
 def _label_for(conn: sqlite3.Connection, instrument: str) -> str:
@@ -27,7 +38,7 @@ def thesis_view(conn: sqlite3.Connection, subject: str, when: date | None = None
         return None
     d = n.to_dict()
     pid = market.product_id(conn)
-    since = date.fromisoformat(n.since) if n.since else None
+    since = _pdate(n.since)
     readings = []
     for inst in n.track:
         kind, _, ident = inst.partition(":")
@@ -38,13 +49,13 @@ def thesis_view(conn: sqlite3.Connection, subject: str, when: date | None = None
             exc = market.excess_since(conn, inst, f"basket:{pid}", since, when)
         else:
             layers = market.company_layers(conn, ident)
-            ref = f"basket:{layers[0]}" if layers else f"basket:{pid}"
-            exc = market.excess_since(conn, inst, ref, since, when)
+            ref = market.peer_basket(conn, layers[0], ident, since - timedelta(days=7)) if layers else market.load_series(conn, f"basket:{pid}", since - timedelta(days=7))
+            exc = A.excess_return(market.load_series(conn, inst, since - timedelta(days=7)), ref, since, when) if ref else None
         readings.append({"instrument": inst, "label": _label_for(conn, inst), "excess": exc})
     d["readings"] = readings
     d["conclusion"] = insights.thesis_tracking(d, readings)
     d["as_of"] = when.isoformat()
-    until = date.fromisoformat(n.window_until) if n.window_until else None
+    until = _pdate(n.window_until)
     d["days_left"] = (until - when).days if until else None
     d["expired"] = bool(until and until <= when)
     d["expiring"] = bool(until and 0 <= (until - when).days <= 7)
@@ -106,14 +117,19 @@ def decisions(conn: sqlite3.Connection, when: date | None = None) -> list[dict]:
             })
     # 2. theses expiring / expired
     for n in N.list_notes():
-        v = thesis_view(conn, n.subject, when)
+        try:
+            v = thesis_view(conn, n.subject, when)
+        except Exception:  # one broken note must not hide the rest of the inbox
+            continue
         if not v or v["days_left"] is None or v["days_left"] > 7:
             continue
         lead = next((r for r in v["readings"] if r["excess"] is not None), None)
         reading = f"自判断起{lead['label']} {insights.pct(lead['excess'])}" if lead else "没有跟踪读数"
         thr = v.get("threshold_pct") or 3
-        hit = lead and abs(lead["excess"]) * 100 >= thr
-        score = "观察项,不记分" if v["direction"] == "neu" else ("已达" if hit else "未达") + f" ±{thr:g}% 阈值"
+        sign = 1 if v["direction"] == "pos" else -1 if v["direction"] == "neg" else 0
+        signed = (lead["excess"] * 100 * sign) if lead else 0
+        score = ("观察项,不记分" if sign == 0 or not lead else
+                 f"已达 ±{thr:g}% 阈值" if signed >= thr else f"反向触及 ±{thr:g}% 阈值" if signed <= -thr else f"未达 ±{thr:g}% 阈值")
         items.append({
             "kind": "thesis", "urgency": 1, "label": "判断到期", "direction": "neu",
             "headline": f"{v['title']}的判断到期回顾",
@@ -149,11 +165,24 @@ def inbox(conn: sqlite3.Connection, days: int = 7, when: date | None = None) -> 
     }
 
 
+def backlinks(conn: sqlite3.Connection, names: set[str], instruments: set[str], exclude: str | None = None) -> list[dict]:
+    """Notes that mention any of `names` with [[…]] or track any of `instruments`."""
+    out = []
+    for n in N.list_notes():
+        if n.subject == exclude:
+            continue
+        links = set(n.to_dict()["links"])
+        if links & names or set(n.track) & instruments:
+            out.append({"subject": n.subject, "title": n.title or n.subject, "kind": n.kind, "direction": n.direction})
+    return out
+
+
 def extend_thesis(subject: str, months: int = 3) -> dict | None:
     n = N.load_note(subject)
     if not n:
         return None
-    base = date.fromisoformat(n.window_until) if n.window_until else date.today()
+    months = max(1, min(24, int(months)))
+    base = _pdate(n.window_until) or date.today()
     y, m = base.year, base.month + months
     while m > 12:
         y, m = y + 1, m - 12

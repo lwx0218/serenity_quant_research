@@ -161,10 +161,13 @@ def freshness(event_date: date, as_of: date, validity_days: int, t1_excess: floa
     unreacted 未反应          no T+1 reaction (yet)
     expired   过期 · 未反应   no reaction and the window is over
     pending   T+0             the T+1 close is not in yet
+    nodata    无行情          T+1 has passed but there is no price series to read
     """
     d = trading_days_between(event_date, as_of)
-    if d < 1 or t1_excess is None:
+    if d < 1:
         return {"state": "pending", "days": d, "validity": validity_days, "label": f"T+{d}"}
+    if t1_excess is None:
+        return {"state": "nodata", "days": d, "validity": validity_days, "label": "无行情"}
     reacted = abs(t1_excess) >= threshold
     if reacted and d <= validity_days:
         return {"state": "window", "days": d, "validity": validity_days, "label": f"窗口内 T+{d}/{validity_days}"}
@@ -276,16 +279,18 @@ def efficacy(paths: Iterable[dict]) -> dict | None:
         t1 = p["path"][0]
         if t1 is None or t1 * sign <= 0:
             continue
-        hl = depth
+        hl = None
         for h in range(1, depth):
             v = p["path"][h]
             if v is None:
-                hl = h
-                break
+                break             # not yet observable: this event says nothing about fading (yet)
             if v * sign < 0.5 * t1 * sign:
                 hl = h            # T+(h+1) is the first day below half → holds through T+h
                 break
-        per_event.append(hl)
+        else:
+            hl = depth            # observed all the way and never faded
+        if hl is not None:
+            per_event.append(hl)
     half_life = int(median(per_event)) if per_event else None
     give_back = None
     if avg[5] and avg[20] is not None and avg[5] != 0:

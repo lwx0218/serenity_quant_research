@@ -9,7 +9,7 @@ from datetime import date, timedelta
 from typing import Any
 
 from . import analytics as A
-from .market_seed import basket_members, company_layers, product_members
+from .market_seed import basket_members, company_layers, primary_layer, product_members
 
 CATEGORY_LABEL = {
     "capex": "扩产", "order": "订单合同", "qualification": "认证导入", "supply": "供需", "price": "涨价",
@@ -79,11 +79,17 @@ def company_brief(conn: sqlite3.Connection, company_id: str) -> dict | None:
 
 
 def primary_layer_id(conn: sqlite3.Connection, ev: dict) -> str | None:
+    """The one layer an event is read against — same rule as the reaction computation."""
     if ev.get("node_id"):
         m = module_of(conn, ev["node_id"])
         return m["id"] if m else None
-    layers = company_layers(conn, ev["company_id"]) if ev.get("company_id") else []
-    return layers[0] if layers else None
+    return primary_layer(conn, ev)
+
+
+def peer_basket(conn: sqlite3.Connection, layer: str, company_id: str, start: date | None = None) -> A.Series:
+    """Equal-weight basket of the layer's other members (the reference for a company's reaction)."""
+    peers = [c for c in basket_members(conn, layer) if c != company_id]
+    return A.basket_series([load_series(conn, f"company:{c}", start) for c in peers]) if peers else {}
 
 
 # -------------------------------------------------------------------- efficacy
@@ -138,7 +144,7 @@ def event_public(conn: sqlite3.Connection, ev: dict, when: date, vcache: dict | 
     layer = primary_layer_id(conn, ev)
     # a company's reaction is read against its layer basket; a layer's against the whole device
     key = "excess_basket" if ev.get("company_id") else "excess_product"
-    t = {f"t{h}": (rx[h][key] if h in rx else None) for h in A.HORIZONS}
+    t = {f"t{h}": (rx[h][key] if h in rx and rx[h][key] is not None else rx[h]["excess_product"] if h in rx else None) for h in A.HORIZONS}
     fr = A.freshness(_d(ev["date"]), when, validity_days(conn, layer, vcache), t["t1"])
     layers = [r["node_id"] for r in conn.execute("SELECT node_id FROM event_layers WHERE event_id=?", (ev["id"],))]
     subject_node = module_of(conn, ev["node_id"]) if ev.get("node_id") else None
@@ -163,8 +169,9 @@ def list_events(conn: sqlite3.Connection, node: str | None = None, company: str 
     where = ["e.status != 'ignored'", "e.date <= ?"]
     args.append(when.isoformat())
     if node:
+        m = module_of(conn, node)
         sql += " JOIN event_layers l ON l.event_id = e.id"
-        where.append("l.node_id = ?"); args.append(node)
+        where.append("l.node_id = ?"); args.append(m["id"] if m else node)
     if company:
         where.append("e.company_id = ?"); args.append(company)
     if days:
@@ -229,7 +236,7 @@ def basket_summary(conn: sqlite3.Connection, m: dict, when: date) -> dict:
         "members": len(members), "ret_3m": A.period_return(b, start3, when) if b else None,
         "excess_3m": A.excess_return(b, p, start3, when) if b else None,
         "crowd_pct": cr["metrics"].get("ret20_pct_rank") if cr else None, "crowd_level": cr["level"] if cr else None,
-        "crowd_direction": cr["direction"] if cr else None,
+        "crowd_direction": cr["directions"]["ret20_pct_rank"] if cr else None,
         "last_event": ({"date": last[0]["date"], "category_label": last[0]["category_label"], "t1": last[0]["reaction"]["t1"],
                         "freshness": last[0]["freshness"]} if last else None),
     }
@@ -319,6 +326,7 @@ def resonance(conn: sqlite3.Connection, event_id: str, when: date | None = None)
             r = A.reaction(s, None, ev_date, 1, when)
             peers.append({"company": company_brief(conn, cid), "t1": r["abs_return"] if r else None})
     self_t1 = ev["reaction"]["abs_t1"]
+    self_excess = ev["reaction"]["t1"]
     rx3 = conn.execute("SELECT abs_return FROM reactions WHERE event_id=? AND horizon=3", (event_id,)).fetchone()
     same = [p for p in peers if p["t1"] is not None and self_t1 is not None and (p["t1"] >= 0) == (self_t1 >= 0)]
     n_peers = sum(1 for p in peers if p["t1"] is not None)
@@ -350,7 +358,7 @@ def resonance(conn: sqlite3.Connection, event_id: str, when: date | None = None)
             vals = [e["reaction"]["t1"] for e in hist]
             avg = sum(vals) / len(vals)
             baseline = {"n": len(hist), "avg_t1": avg, "hits": sum(1 for v in vals if v > 0),
-                        "above": self_t1 is not None and self_t1 > avg}
+                        "above": self_excess is not None and self_excess > avg}
 
     return {
         "as_of": when.isoformat(), "event": ev,
@@ -388,7 +396,7 @@ def pending_verifications(conn: sqlite3.Connection, company: str | None = None, 
                         "text": f"{e['company']['short_name']} → {exp['chain_name']} · {e['date'][5:]} {e['source_label']}可作为来源,行业图示 → 候选",
                         "detail": f"{e['date'][5:]} {e['source_label']}提到{exp['chain_name']}相关产线或产品,可作为来源升级这条关系。",
                         "direction": "pos" if (e["reaction"]["t1"] or 0) > 0 else "neu"})
-    handled_exp = {r["exposure_id"] for r in conn.execute("SELECT exposure_id FROM verifications WHERE exposure_id IS NOT NULL")}
+    handled_exp = {r["exposure_id"] for r in conn.execute("SELECT exposure_id FROM verifications WHERE exposure_id IS NOT NULL AND kind IN ('accept','reject')")}
     q = "SELECT e.id, e.company_id, e.evidence_level, e.note, cn.display_name AS chain_name, s.title AS source_title, s.url AS source_url FROM exposures e JOIN chain_nodes cn ON cn.id=e.chain_node_id LEFT JOIN sources s ON s.id=e.source_id WHERE e.evidence_level='candidate'"
     args: list = []
     if company:
@@ -407,6 +415,15 @@ def pending_verifications(conn: sqlite3.Connection, company: str | None = None, 
 def apply_verification(conn: sqlite3.Connection, action: str, event_id: str | None, exposure_id: int | None, note: str | None = None) -> dict:
     from datetime import datetime
     now = datetime.now().isoformat(timespec="seconds")
+    if exposure_id is not None:
+        row = conn.execute("SELECT evidence_level FROM exposures WHERE id=?", (exposure_id,)).fetchone()
+        if not row:
+            raise LookupError(f"exposure {exposure_id} not found")
+        expected = {"upgrade": "reference", "ignore": "reference", "accept": "candidate", "reject": "candidate"}.get(action)
+        if expected and row["evidence_level"] != expected:
+            raise ValueError(f"exposure {exposure_id} is {row['evidence_level']}, expected {expected} for {action}")
+    if event_id is not None and not conn.execute("SELECT 1 FROM events WHERE id=?", (event_id,)).fetchone():
+        raise LookupError(f"event {event_id!r} not found")
     if action == "upgrade" and exposure_id:
         ev = conn.execute("SELECT * FROM events WHERE id=?", (event_id,)).fetchone() if event_id else None
         src_id = None
@@ -441,7 +458,7 @@ def company_market(conn: sqlite3.Connection, company_id: str, months: int = 6, w
     s = load_series(conn, f"company:{company_id}", start - timedelta(days=10))
     layers = company_layers(conn, company_id)
     layer = layers[0] if layers else None
-    b = load_series(conn, f"basket:{layer}", start - timedelta(days=10)) if layer else {}
+    b = peer_basket(conn, layer, company_id, start - timedelta(days=10)) if layer else {}
     p = load_series(conn, f"basket:{pid}", start - timedelta(days=10))
     start3 = when - timedelta(days=91)
     val = conn.execute("SELECT pe_ttm, pe_pct_rank_5y FROM valuation WHERE company_id=?", (company_id,)).fetchone()
@@ -491,7 +508,7 @@ def node_market(conn: sqlite3.Connection, node_id: str, days: int = 7, when: dat
     if not m:
         return None
     act = next((a for a in layer_activity(conn, days, when) if a["id"] == m["id"]), None)
-    events = list_events(conn, node=node_id, days=days, limit=20, when=when)
+    events = list_events(conn, node=m["id"], days=days, limit=20, when=when)
     members = basket_members(conn, m["id"])
     return {
         "as_of": when.isoformat(), "window_days": days, "module": m, "sample": is_sample(conn),
@@ -500,4 +517,5 @@ def node_market(conn: sqlite3.Connection, node_id: str, days: int = 7, when: dat
         "validity_days": validity_days(conn, m["id"]),
         "thesis": research.thesis_for_node(conn, node_id, when),
         "company_events": companies_with_last_event(conn, members, when),
+        "backlinks": research.backlinks(conn, {m["name"]}, {f"basket:{m['id']}"}, exclude=m["id"]),
     }

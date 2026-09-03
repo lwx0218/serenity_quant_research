@@ -36,11 +36,19 @@ export function LineChart({ series, events = [], height = 300, width = 800, yTic
   const dates = useMemo(() => Array.from(new Set(series.flatMap((s) => s.points.map((p) => p[0])))).sort(), [series]);
   const idx = useMemo(() => new Map(dates.map((d, i) => [d, i])), [dates]);
   const values = series.flatMap((s) => s.points.map((p) => p[1]));
+  if (values.length === 0) return <p className="quiet" style={{ padding: "24px 0", borderTop: "1px solid var(--hair)" }}>还没有行情序列。</p>;
   const lo = Math.min(...values), hi = Math.max(...values);
   const pad = (hi - lo) * 0.08 || 1;
   const y0 = lo - pad, y1 = hi + pad;
   const W = width - M.l - M.r, H = height - M.t - M.b;
-  const X = (d: string) => M.l + ((idx.get(d) ?? 0) / Math.max(1, dates.length - 1)) * W;
+  const snap = (d: string): number => {
+    const i = idx.get(d);
+    if (i !== undefined) return i;
+    let lo = 0;                                     // last series date ≤ d (weekend-dated filings)
+    for (let k = 0; k < dates.length; k++) { if (dates[k] <= d) lo = k; else break; }
+    return lo;
+  };
+  const X = (d: string) => M.l + (snap(d) / Math.max(1, dates.length - 1)) * W;
   const Y = (v: number) => M.t + (1 - (v - y0) / (y1 - y0)) * H;
   const ticks = niceTicks(y0, y1, yTicks);
   // labels: stagger when events sit close together, hide past the third level

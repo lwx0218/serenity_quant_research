@@ -36,4 +36,6 @@ def company_market(company_id: str, conn: Conn, months: int = Query(6, ge=1, le=
     d["events_conclusion"] = insights.company_events(d["events_30d"])
     d["headline"] = insights.company_headline(d["events_30d"], d["crowding"])
     d["thesis"] = research.thesis_view(conn, company_id) or (research.thesis_for_node(conn, d["primary_layer"]["id"]) if d["primary_layer"] else None)
+    names = {d["company"]["short_name"], d["company"]["name"]} - {None}
+    d["backlinks"] = research.backlinks(conn, names, {f"company:{company_id}"}, exclude=company_id)
     return d

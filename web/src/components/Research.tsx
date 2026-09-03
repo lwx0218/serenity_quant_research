@@ -229,13 +229,25 @@ export function CrowdingReadings({ metrics, directions, kind }: { metrics: Recor
   );
 }
 
-export const CROWD_RULE = "读数着色规则:高于 80 分位或 +1.5σ 视为脆弱(偏空),低于 20 分位视为出清(偏多),其余中性。阈值可调。";
+export const CROWD_RULE = "读数着色规则:分位高于 80 或偏离 ≥ +1.5σ 视为脆弱(偏空),分位低于 20 视为出清(偏多);融资占流通 ≥ 4%、成交占比 ≥ 1.5 倍均值也计偏空;其余中性。阈值可调。";
 
 export function DirLegend() {
   return (
     <p className="rule-note">
       <Dir d="pos" /> 对资金方向是正向 · <Dir d="neg" /> 负向 · <Dir d="neu" /> 中性或状态量。A 股习惯:红涨绿跌;顶栏 ▲▼ 可切换为绿涨红跌。颜色只用在数字、方向标记和结论行,正文保持墨色。
     </p>
+  );
+}
+
+/** Notes elsewhere that [[link]] or track this subject. */
+export function Backlinks({ items }: { items: { subject: string; title: string; kind: string; direction: any }[] }) {
+  if (!items.length) return <span className="ink">—</span>;
+  return (
+    <>
+      {items.map((b, i) => (
+        <span key={b.subject}>{i > 0 && " · "}<Link to={b.kind === "company" ? `/companies/${b.subject}` : `/explore/${b.subject}`}>{b.title} · 判断</Link></span>
+      ))}
+    </>
   );
 }
 

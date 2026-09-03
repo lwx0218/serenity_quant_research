@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { EventsWide } from "../components/Research";
 import { Footer, Shell, invalidatePending } from "../components/Shell";
 import { AsOf, Conclusion, Dir, Head, Sig } from "../components/Signal";
-import { md, mkt, type Decision, type Inbox } from "../lib/api";
+import { md, mkt, type Decision, type EventsResponse, type Inbox } from "../lib/api";
 import { Link, useRouter } from "../lib/router";
 import "./research.css";
 
@@ -13,7 +13,46 @@ const WINDOW_DAYS = 7;
  * questions and recent notes; the device rail on the right for orientation.
  */
 export function ResearchPage() {
-  const { navigate } = useRouter();
+  const { navigate, route } = useRouter();
+  const company = route.params.get("company");
+  if (company) return <CompanyEvents company={company} />;
+  return <InboxPage navigate={navigate} />;
+}
+
+/** /research?company=… — every event we hold for one company, all sources, one year. */
+function CompanyEvents({ company }: { company: string }) {
+  const [r, setR] = useState<EventsResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    setR(null);
+    mkt.events({ company, days: 365, limit: 200 }).then((x) => { if (live) setR(x); }).catch((e) => { if (live) setError(String(e)); });
+    return () => { live = false; };
+  }, [company]);
+  const who = r?.items[0]?.company;
+  const name = who?.short_name ?? who?.name ?? company;
+  return (
+    <Shell crumbs={[{ label: "研究", to: "/research" }, { label: `${name} · 全部事件` }]} footer={<Footer note={r?.sample ? "事件与反应读数为样式示例。" : undefined} />}>
+      <main className="page">
+        {error && <p className="quiet" style={{ paddingTop: 40 }}>加载失败:{error}</p>}
+        {r && (
+          <div className="inbox-main" style={{ paddingTop: 56 }}>
+            <header className="inbox-head">
+              <span className="eyebrow">Events · 12 个月</span>
+              <h1 className="h1">{name} · 公告与新闻</h1>
+              <Conclusion c={r.conclusion} lead />
+              <AsOf date={r.as_of} horizon="12 个月" extra="T+1 相对同环节其他公司" />
+            </header>
+            <EventsWide items={r.items} who="source" />
+            <Link to={`/companies/${company}`} className="btn">← 回到 {name}</Link>
+          </div>
+        )}
+      </main>
+    </Shell>
+  );
+}
+
+function InboxPage({ navigate }: { navigate: (to: string) => void }) {
   const [ib, setIb] = useState<Inbox | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
@@ -21,7 +60,7 @@ export function ResearchPage() {
   const load = useCallback(() => {
     mkt.inbox(WINDOW_DAYS).then(setIb).catch((e) => setError(String(e)));
   }, []);
-  useEffect(load, [load]);
+  useEffect(() => { load(); }, [load]);
 
   const act = async (d: Decision, a: Decision["actions"][number]) => {
     if (a.to) { navigate(a.to); return; }

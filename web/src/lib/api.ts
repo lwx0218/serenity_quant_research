@@ -189,7 +189,7 @@ export function roleLabel(r: string): string {
    ====================================================================== */
 export type Direction = "pos" | "neg" | "neu";
 export interface Conclusion { direction: Direction; text: string; verdict?: string | null }
-export interface Freshness { state: "window" | "priced" | "unreacted" | "expired" | "pending"; days: number; validity: number; label: string }
+export interface Freshness { state: "window" | "priced" | "unreacted" | "expired" | "pending" | "nodata"; days: number; validity: number; label: string }
 
 export interface CompanyBrief { id: string; name: string; short_name: string | null; ticker: string | null; exchange: string | null; country_region: string | null }
 export interface ModuleBrief { id: string; sort: number; code: string | null; name: string; name_en: string | null }
@@ -232,7 +232,9 @@ export interface NodeMarket {
   basket: { excess: number | null; direction: Direction | null; members: number };
   events: MarketEvent[]; events_conclusion: Conclusion; validity_days: number;
   thesis: Thesis | null; company_events: Record<string, LastEvent | null>;
+  backlinks: Backlink[];
 }
+export interface Backlink { subject: string; title: string; kind: string; direction: Direction }
 
 export interface Resonance {
   as_of: string; event: MarketEvent; conclusion: Conclusion;
@@ -248,7 +250,7 @@ export interface CompanyMarket {
   series: [string, number][]; chart_events: { id: string; date: string; category_label: string; value: number }[]; window_months: number;
   metrics: { pe_ttm: number | null; pe_pct_rank_5y: number | null; ret_3m: number | null; excess_basket_3m: number | null; excess_product_3m: number | null; last: number | null };
   crowding: Crowding | null; events_30d: MarketEvent[]; pending_verifications: Verification[]; sample: boolean;
-  crowding_conclusion: Conclusion; events_conclusion: Conclusion; headline: Conclusion; thesis: Thesis | null;
+  crowding_conclusion: Conclusion; events_conclusion: Conclusion; headline: Conclusion; thesis: Thesis | null; backlinks: Backlink[];
 }
 
 export interface Verification {

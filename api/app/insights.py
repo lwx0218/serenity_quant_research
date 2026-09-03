@@ -154,6 +154,11 @@ def resonance(res: dict) -> dict:
     if t1 is None:
         return {"direction": "neu", "text": "T+1 还没有收盘,共振要等一天。"}
     d = "pos" if t1 >= A.REACTION_THRESHOLD else "neg" if t1 <= -A.REACTION_THRESHOLD else "neu"
+    if not ev.get("company"):
+        adj = [a for a in res["adjacent"] if a["t1"] is not None and a["t1"] * t1 > 0 and abs(a["t1"]) >= A.REACTION_THRESHOLD]
+        layer = (res.get("layer") or {}).get("name", "这一层")
+        follow = f"相邻的{'、'.join(a['node']['name'] for a in adj)}同向" if adj else "相邻层没有跟随"
+        return {"direction": d, "text": f"层级事件:{layer}篮子 T+1 相对整机 {pct(t1)},{follow}。没有个股维度,共振只看层与层。"}
     broad = sd["n"] >= 2 and sd["k"] / sd["n"] >= 0.6
     adj = [a for a in res["adjacent"] if a["t1"] is not None and a["t1"] * t1 > 0 and abs(a["t1"]) >= A.REACTION_THRESHOLD]
     scale = "环节级事件而非个股事件" if broad else "个股事件而非环节级事件"

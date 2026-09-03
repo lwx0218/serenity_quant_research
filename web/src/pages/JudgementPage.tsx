@@ -78,8 +78,13 @@ export function JudgementPage({ subject }: { subject: string }) {
   const mi = modules.findIndex((m) => m.id === moduleId);
   const back = isCompany ? `/companies/${subject}` : `/explore/${subject}`;
 
+  const dirty = draft !== null && JSON.stringify(draft) !== JSON.stringify(toDraft(existing, { kind: draft.kind, title: draft.title, track: draft.track }));
+  const leave = () => {
+    if (dirty && !window.confirm("放弃未保存的修改?")) return;
+    navigate(back);
+  };
   const save = async () => {
-    if (!draft) return;
+    if (!draft || saving) return;
     setSaving(true); setError(null);
     try {
       await mkt.saveNote(subject, {
@@ -97,7 +102,7 @@ export function JudgementPage({ subject }: { subject: string }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") { e.preventDefault(); save(); }
-      if (e.key === "Escape") navigate(back);
+      if (e.key === "Escape") leave();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -183,7 +188,7 @@ export function JudgementPage({ subject }: { subject: string }) {
                 {error && <p className="quiet">保存失败:{error}</p>}
                 <div style={{ display: "flex", gap: 22, alignItems: "center" }}>
                   <button type="button" className="btn-primary" onClick={save} disabled={saving}>{saving ? "保存中…" : "保存"}</button>
-                  <button type="button" className="btn-quiet" onClick={() => navigate(back)}>取消</button>
+                  <button type="button" className="btn-quiet" onClick={leave}>取消</button>
                   <span className="row-meta" style={{ marginLeft: "auto" }}>⌘S 保存 · Esc 取消</span>
                 </div>
               </>
@@ -237,11 +242,11 @@ function LinkedEditor({ value, onChange }: { value: string; onChange: (v: string
         placeholder="为什么这么看?瓶颈在哪、谁受益、什么时候能验证。用 [[ 链接公司或环节。"
         onChange={(e) => { onChange(e.target.value); detect(e.target.value, e.target.selectionStart); }}
         onKeyDown={(e) => {
+          if (query !== null && e.key === "Escape") { e.stopPropagation(); setQuery(null); return; }   // close the list, never leave the page
           if (query === null || items.length === 0) return;
           if (e.key === "ArrowDown") { e.preventDefault(); setHot((h) => (h + 1) % items.length); }
           else if (e.key === "ArrowUp") { e.preventDefault(); setHot((h) => (h - 1 + items.length) % items.length); }
           else if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); pick(items[hot]); }
-          else if (e.key === "Escape") { e.stopPropagation(); setQuery(null); }
         }}
         onClick={(e) => detect(value, (e.target as HTMLTextAreaElement).selectionStart)}
       />

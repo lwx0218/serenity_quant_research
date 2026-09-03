@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ExplodedStack, stackAnchors, type StackLayer } from "../components/ExplodedStack";
-import { EventsNarrow, ThesisBlock } from "../components/Research";
+import { Backlinks, EventsNarrow, ThesisBlock } from "../components/Research";
 import { Footer, Shell, type Crumb } from "../components/Shell";
 import { AsOf, Conclusion, Fresh, Head, Sig } from "../components/Signal";
 import { api, EVIDENCE_LABEL, market, md, mkt, pad2, pct, statusLabel, type ModuleWithParts, type NodeDetail, type NodeMarket, type Overview, type Product, type Thesis } from "../lib/api";
@@ -223,7 +223,7 @@ function WhatChanged({ o }: { o: Overview }) {
     <div className="changed">
       <Conclusion c={o.conclusion} lead />
       <div className="changed-meta">
-        <AsOf date={o.as_of} horizon={`过去 ${o.window_days} 天`} extra="反应 = T+1 相对篮子" />
+        <AsOf date={o.as_of} horizon={`过去 ${o.window_days} 天`} extra="反应 = T+1 相对同环节其他公司" />
         <Link to="/research">{c.events} 条卡口事件</Link>
         <span className="faint">·</span>
         <span>已反应 <span className="ink">{c.reacted}</span> · 未反应 <span className="ink">{c.unreacted}</span>{c.pending > 0 && <> · 待收盘 <span className="ink">{c.pending}</span></>}</span>
@@ -278,6 +278,9 @@ function Focus({ nodeId, detail, nm, modules, onThesis }: { nodeId: string; deta
 
       {/* judgement */}
       <ThesisBlock t={nm?.thesis ?? null} subject={node.id} onChange={onThesis} />
+      {nm && nm.backlinks.length > 0 && (
+        <p className="rule-note" style={{ marginTop: -28 }}>被引用:<Backlinks items={nm.backlinks} /></p>
+      )}
 
       {/* events */}
       {nm && (

@@ -64,6 +64,8 @@ class Note:
     body: str = ""
     questions: list[dict[str, Any]] = field(default_factory=list)
     path: str = ""
+    extra: dict[str, Any] = field(default_factory=dict)   # front-matter keys we do not interpret
+    tail: str = ""                                         # anything after the 问题 list (kept verbatim)
 
     def to_dict(self) -> dict[str, Any]:
         d = {k: getattr(self, k) for k in KNOWN_KEYS}
@@ -75,7 +77,9 @@ class Note:
 # ------------------------------------------------------------------ front matter
 def _unquote(v: str) -> str:
     v = v.strip()
-    if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
+    if len(v) >= 2 and v[0] == v[-1] and v[0] == '"':
+        return v[1:-1].replace('\\"', '"').replace("\\\\", "\\")
+    if len(v) >= 2 and v[0] == v[-1] and v[0] == "'":
         return v[1:-1]
     return v
 
@@ -106,16 +110,16 @@ def parse_front_matter(text: str) -> tuple[dict[str, Any], str]:
         if not line.strip() or line.lstrip().startswith("#"):
             continue
         if line.startswith((" ", "\t")) and line.strip().startswith("- ") and key:
-            meta.setdefault(key, [])
-            if isinstance(meta[key], list):
-                meta[key].append(_unquote(line.strip()[2:]))
+            if not isinstance(meta.get(key), list):
+                meta[key] = []
+            meta[key].append(_unquote(line.strip()[2:]))
             continue
         if ":" in line:
             k, v = line.split(":", 1)
             key = k.strip()
             v = v.strip()
             if v == "":
-                meta[key] = []
+                meta[key] = None          # becomes a list if indented "- " items follow
             elif v.startswith("[") and v.endswith("]"):
                 meta[key] = [_unquote(x) for x in v[1:-1].split(",") if x.strip()]
             else:
@@ -125,7 +129,8 @@ def parse_front_matter(text: str) -> tuple[dict[str, Any], str]:
 
 def dump_front_matter(meta: dict[str, Any]) -> str:
     lines = ["---"]
-    for k in KNOWN_KEYS:
+    order = list(KNOWN_KEYS) + [k for k in meta if k not in KNOWN_KEYS]   # Obsidian tags/aliases etc. survive a save
+    for k in order:
         if k not in meta or meta[k] in (None, "", []):
             continue
         v = meta[k]
@@ -141,19 +146,26 @@ def dump_front_matter(meta: dict[str, Any]) -> str:
 
 
 # -------------------------------------------------------------------- questions
-def split_questions(body: str) -> tuple[str, list[dict[str, Any]]]:
-    """Return (thesis body without the 问题 section, parsed questions)."""
+def split_questions(body: str) -> tuple[str, list[dict[str, Any]], str]:
+    """Return (thesis body without the 问题 section, parsed questions, anything after them)."""
     m = re.search(r"^##\s*问题\s*$", body, flags=re.M)
     if not m:
-        return body.strip(), []
+        return body.strip(), [], ""
     thesis, qsec = body[: m.start()].strip(), body[m.end():]
     qs = []
-    for i, line in enumerate(qsec.splitlines()):
+    tail_lines: list[str] = []
+    seen_item = False
+    for line in qsec.splitlines():
         mm = _Q_RE.match(line.strip())
-        if mm:
+        if mm and not tail_lines:
+            seen_item = True
             qs.append({"index": len(qs) + 1, "text": mm.group(2).strip(), "status": "verified" if mm.group(1).lower() == "x" else "open",
                        "date": mm.group(3)})
-    return thesis, qs
+        elif line.strip() == "" and not tail_lines:
+            continue
+        elif seen_item or tail_lines or line.strip():
+            tail_lines.append(line)
+    return thesis, qs, "\n".join(tail_lines).strip()
 
 
 def render_questions(qs: list[dict[str, Any]]) -> str:
@@ -174,25 +186,32 @@ def note_path(subject: str, notes_dir: Path | None = None) -> Path:
     return notes_dir / f"{safe}.md"
 
 
+def _display_path(p: Path, notes_dir: Path) -> str:
+    """data/notes/x.md when the notes dir sits inside the repo, else the full path."""
+    root = notes_dir.parent.parent
+    return str(p.relative_to(root)) if root in p.parents else str(p)
+
+
 def load_note(subject: str, notes_dir: Path | None = None) -> Note | None:
     notes_dir = notes_dir or config.NOTES_DIR
     p = note_path(subject, notes_dir)
     if not p.exists():
         return None
-    return parse_note(p.read_text(encoding="utf-8"), path=str(p.relative_to(notes_dir.parent.parent)) if notes_dir.parent.parent in p.parents else str(p))
+    return parse_note(p.read_text(encoding="utf-8"), path=_display_path(p, notes_dir))
 
 
 def parse_note(text: str, path: str = "") -> Note:
     meta, body = parse_front_matter(text)
-    thesis, qs = split_questions(body)
-    n = Note(subject=str(meta.get("subject", "")), body=thesis, questions=qs, path=path)
+    thesis, qs, tail = split_questions(body)
+    n = Note(subject=str(meta.get("subject", "")), body=thesis, questions=qs, path=path, tail=tail,
+             extra={k: v for k, v in meta.items() if k not in KNOWN_KEYS})
     for k in ("kind", "title", "direction", "stance", "updated", "since", "window_until", "window_label", "position"):
         if meta.get(k) not in (None, ""):
             setattr(n, k, str(meta[k]))
     if meta.get("threshold_pct") not in (None, ""):
         try:
             n.threshold_pct = float(meta["threshold_pct"])
-        except ValueError:
+        except (TypeError, ValueError):
             pass
     n.sample = str(meta.get("sample", "")).lower() in ("true", "1", "yes")
     for k in LIST_KEYS:
@@ -207,7 +226,11 @@ def parse_note(text: str, path: str = "") -> Note:
 def render_note(n: Note) -> str:
     meta = {k: getattr(n, k) for k in KNOWN_KEYS}
     meta["sample"] = n.sample or None
-    return dump_front_matter(meta) + "\n" + n.body.strip() + "\n" + render_questions(n.questions)
+    meta.update({k: v for k, v in n.extra.items() if k not in meta})
+    out = dump_front_matter(meta) + "\n" + n.body.strip() + "\n" + render_questions(n.questions)
+    if n.tail:
+        out += "\n" + n.tail.strip() + "\n"
+    return out
 
 
 def save_note(n: Note, notes_dir: Path | None = None) -> Path:
@@ -226,7 +249,7 @@ def list_notes(notes_dir: Path | None = None) -> list[Note]:
     out = []
     for p in sorted(notes_dir.glob("*.md")):
         try:
-            n = parse_note(p.read_text(encoding="utf-8"), path=str(p))
+            n = parse_note(p.read_text(encoding="utf-8"), path=_display_path(p, notes_dir))
         except Exception:  # a hand-edited file should never take the API down
             continue
         if n.subject:

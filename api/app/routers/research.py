@@ -25,5 +25,7 @@ def inbox(conn: Conn, days: int = Query(7, ge=1, le=60)):
 def verify(v: VerificationIn, conn: Conn):
     try:
         return market.apply_verification(conn, v.action, v.event_id, v.exposure_id, v.note)
+    except LookupError as e:
+        raise HTTPException(404, str(e))
     except ValueError as e:
-        raise HTTPException(400, str(e))
+        raise HTTPException(409, str(e))

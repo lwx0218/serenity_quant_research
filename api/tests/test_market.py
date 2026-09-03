@@ -56,6 +56,19 @@ class AnalyticsTests(unittest.TestCase):
         self.assertEqual(eff["hit_rate"], 1.0)
         self.assertEqual(eff["by_category"]["capex"]["n"], 2)
 
+    def test_half_life_ignores_events_not_yet_observed_through_their_fade(self):
+        fade = [1.0, 0.9, 0.8, 0.6, 0.45, 0.4] + [0.4] * 14
+        fresh = [1.0, 0.95] + [None] * 18                                # two days old: says nothing about fading
+        eff = A.efficacy([{"category": "capex", "path": fade}, {"category": "capex", "path": fresh}])
+        self.assertEqual(eff["half_life_days"], 4)
+        only_fresh = A.efficacy([{"category": "capex", "path": fresh}])
+        self.assertIsNone(only_fresh["half_life_days"])
+        self.assertEqual(only_fresh["validity_days"], A.DEFAULT_VALIDITY_DAYS)
+
+    def test_freshness_without_price_data_is_not_pending(self):
+        f = A.freshness(date(2026, 8, 20), date(2026, 8, 28), 5, None)
+        self.assertEqual((f["state"], f["label"]), ("nodata", "无行情"))
+
     def test_reaction_and_basket(self):
         d0, d1, d2 = date(2026, 8, 26), date(2026, 8, 27), date(2026, 8, 28)
         s = {d0: 100.0, d1: 103.0, d2: 104.0}
@@ -81,6 +94,23 @@ class NotesTests(unittest.TestCase):
         self.assertEqual(again.body, n.body)
         self.assertIn("[[中际旭创]]", again.to_dict()["body"])
         self.assertIn("中际旭创", again.to_dict()["links"])
+
+
+class NotesEdgeCaseTests(unittest.TestCase):
+    def test_empty_scalars_unknown_keys_and_tail_survive(self):
+        text = ("---\nsubject: x\ntitle: \"say \\\"hi\\\": now\"\ndirection: pos\nposition:\nthreshold_pct:\ntags:\n  - cpo\n  - watch\n---\n"
+                "论点。\n\n## 问题\n\n- [ ] q1 (2026-08-01)\n\n## 复盘\n\n还没写。\n")
+        n = notes.parse_note(text)
+        self.assertEqual(n.title, 'say "hi": now')
+        self.assertIsNone(n.position)
+        self.assertEqual(n.threshold_pct, 3.0)
+        self.assertEqual(n.extra["tags"], ["cpo", "watch"])
+        self.assertEqual(n.tail, "## 复盘\n\n还没写。")
+        again = notes.parse_note(notes.render_note(n))
+        self.assertEqual(again.title, n.title)
+        self.assertEqual(again.extra["tags"], ["cpo", "watch"])
+        self.assertEqual(again.tail, n.tail)
+        self.assertEqual(again.questions, n.questions)
 
 
 class ResearchApiTests(unittest.TestCase):
@@ -154,6 +184,25 @@ class ResearchApiTests(unittest.TestCase):
         self.assertIn("- [x] 耦合良率多少?", text)
         self.assertIn("direction: neg", text)
 
+    def test_bad_dates_are_rejected_not_persisted(self):
+        r = self.client.put("/api/notes/cpo.mod.eic", json={"direction": "pos", "since": "2026/07/01"})
+        self.assertEqual(r.status_code, 422)
+        self.assertFalse((_notes_tmp / "cpo.mod.eic.md").exists())
+        # a hand-edited note with a broken date still renders, and the inbox still answers
+        (_notes_tmp / "cpo.mod.eic.md").write_text("---\nsubject: cpo.mod.eic\ndirection: pos\nsince: 2026/07/01\nwindow_until: 2027-Q1\n---\nx\n", encoding="utf-8")
+        try:
+            self.assertEqual(self.client.get("/api/notes/cpo.mod.eic").status_code, 200)
+            self.assertEqual(self.client.get("/api/research/inbox").status_code, 200)
+            self.assertEqual(self.client.get("/api/overview/cpo").status_code, 200)
+        finally:
+            (_notes_tmp / "cpo.mod.eic.md").unlink()
+
+    def test_part_page_sees_its_module_events(self):
+        part = self.client.get("/api/nodes/cpo.part.pic.modulator/market").json()
+        mod = self.client.get("/api/nodes/cpo.mod.pic/market").json()
+        self.assertEqual(len(part["events"]), len(mod["events"]))
+        self.assertGreater(len(part["events"]), 0)
+
     def test_verification_upgrades_exposure(self):
         inbox = self.client.get("/api/research/inbox").json()
         up = next(d for d in inbox["decisions"] if d["kind"] == "verify" and "升级为候选" in [a["label"] for a in d["actions"]])
@@ -163,6 +212,11 @@ class ResearchApiTests(unittest.TestCase):
         self.assertIn("candidate", [e["evidence_level"] for e in c["exposures"]])
         again = self.client.get("/api/research/inbox").json()
         self.assertNotIn(up["event_id"], [d.get("event_id") for d in again["decisions"]])
+        # the freshly upgraded exposure now waits for review
+        self.assertIn(up["exposure_id"], [d.get("exposure_id") for d in again["decisions"] if d["kind"] == "verify"])
+        # doing it again is a conflict, not a 500; unknown ids are 404
+        self.assertEqual(self.client.post("/api/verifications", json={"action": "upgrade", "event_id": up["event_id"], "exposure_id": up["exposure_id"]}).status_code, 409)
+        self.assertEqual(self.client.post("/api/verifications", json={"action": "accept", "exposure_id": 99999}).status_code, 404)
 
     def test_links_suggest(self):
         r = self.client.get("/api/links/suggest?q=源").json()

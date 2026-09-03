@@ -19,14 +19,16 @@ export function BasketPage({ nodeId }: { nodeId: string }) {
   const [hot, setHot] = useState<string | null>(null);
 
   useEffect(() => {
-    setB(null);
-    mkt.basket(nodeId).then(setB).catch((e) => setError(String(e)));
+    let live = true;
+    setB(null); setError(null); setHot(null);
+    mkt.basket(nodeId).then((x) => { if (live) setB(x); }).catch((e) => { if (live) setError(String(e)); });
+    return () => { live = false; };
   }, [nodeId]);
 
   const crumbs = [{ label: "公司", to: "/companies" }, { label: b?.node.name ?? "…", to: `/explore/${nodeId}` }, { label: "篮子" }];
 
   return (
-    <Shell crumbs={crumbs} footer={<Footer note={b?.sample ? "行情、反应与拥挤读数为样式示例;接入免费行情源(A 股:腾讯/新浪/东财;美股:Yahoo)后替换。" : "篮子为等权、每日再平衡;跨市场成分按各自本币指数化。"} />}>
+    <Shell crumbs={crumbs} footer={<Footer note={b?.sample ? "行情、反应与拥挤读数为样式示例。篮子为等权、每日再平衡;跨市场成分按各自本币指数化。" : "篮子为等权、每日再平衡;跨市场成分按各自本币指数化。"} />}>
       <main className="page">
         {error && <p className="quiet" style={{ paddingTop: 40 }}>加载失败:{error}</p>}
         {!b && !error && <p className="quiet" style={{ paddingTop: 40 }}>加载中…</p>}
@@ -95,7 +97,7 @@ export function BasketPage({ nodeId }: { nodeId: string }) {
             <section className="rows">
               <div className="rows-head">
                 <span className="eyebrow">成分 · {b.members.length} 家</span>
-                <span className="small muted">等权 · 每日再平衡</span>
+                <AsOf date={b.as_of} horizon="3M / 6M · 拥挤 20 日" extra="等权 · 每日再平衡" />
               </div>
               <div className="row mem-row" style={{ padding: "8px 0" }}>
                 <span className="row-meta">公司</span><span className="row-meta">市场</span><span className="row-meta">3M</span><span className="row-meta">6M</span>
@@ -119,7 +121,7 @@ export function BasketPage({ nodeId }: { nodeId: string }) {
               <section className="rows">
                 <div className="rows-head">
                   <span className="eyebrow">其他环节 · 3M · 拥挤</span>
-                  <Link to="/" className="small">回到整机 →</Link>
+                  <span className="head-right"><AsOf date={b.as_of} horizon="3M · 拥挤 20 日" /><Link to="/" className="small">回到整机 →</Link></span>
                 </div>
                 {b.others.map((o) => (
                   <button key={o.node_id} type="button" className="row oth-row" onClick={() => navigate(`/baskets/${o.node_id}`)} style={{ textAlign: "left" }}>

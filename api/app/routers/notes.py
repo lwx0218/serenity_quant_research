@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from .. import market, notes as N, research
@@ -17,8 +17,8 @@ class NoteIn(BaseModel):
     direction: str = Field("neu", pattern="^(pos|neg|neu)$")
     stance: str = ""
     body: str = ""
-    since: str | None = None
-    window_until: str | None = None
+    since: date | None = None
+    window_until: date | None = None
     window_label: str | None = None
     threshold_pct: float = 3.0
     position: str | None = None
@@ -53,9 +53,11 @@ def get_note(subject: str, conn: Conn):
 def put_note(subject: str, body: NoteIn, conn: Conn):
     existing = N.load_note(subject)
     n = existing or N.Note(subject=subject)
-    for k in ("kind", "title", "direction", "stance", "body", "since", "window_until", "window_label",
+    for k in ("kind", "title", "direction", "stance", "body", "window_label",
               "threshold_pct", "position", "track", "indicators", "invalidation"):
         setattr(n, k, getattr(body, k))
+    n.since = body.since.isoformat() if body.since else n.since
+    n.window_until = body.window_until.isoformat() if body.window_until else None
     if not n.title:
         m = market.module_of(conn, subject)
         c = market.company_brief(conn, subject)
@@ -90,7 +92,7 @@ def patch_question(subject: str, index: int, p: QuestionPatch, conn: Conn):
 
 
 @router.post("/notes/{subject}/extend")
-def extend(subject: str, conn: Conn, months: int = 3):
+def extend(subject: str, conn: Conn, months: int = Query(3, ge=1, le=24)):
     r = research.extend_thesis(subject, months)
     if not r:
         raise HTTPException(404, f"no note for {subject!r}")

@@ -73,7 +73,7 @@ def primary_layer(conn: sqlite3.Connection, ev: dict) -> str | None:
 def synth_company_series(rng: random.Random, days: list[date], drift: float, vol: float,
                          impulses: list[tuple[date, float]]) -> A.Series:
     """Random walk plus event impulses: the full impulse lands on T+1 and 75% of it
-    is given back over T+3..T+7 (so efficacy stats come out event-like)."""
+    is given back over T+3..T+7, so efficacy stats come out event-like (half-life ≈ 4–6 days)."""
     shocks: dict[date, float] = {}
     quiet: set[date] = set()        # noise is damped around events so the sample reads as intended
     for ev_date, imp in impulses:
@@ -179,7 +179,11 @@ def import_market(conn: sqlite3.Connection, seed_dir: Path, include_sample: bool
     for ev in events:
         subj_key = f"company:{ev['company_id']}" if ev.get("company_id") else f"basket:{ev['node_id']}"
         layer = primary_layer(conn, ev)
-        basket = series.get(f"basket:{layer}") if layer and ev.get("company_id") else None
+        # a company's reference is the *other* members of its layer, so it is not measured against itself
+        basket = None
+        if layer and ev.get("company_id"):
+            peers = [c for c in basket_members(conn, layer) if c != ev["company_id"]]
+            basket = A.basket_series([series[f"company:{c}"] for c in peers]) if peers else None
         product = series[f"basket:{product_id}"]
         subj = series.get(subj_key)
         if not subj:
