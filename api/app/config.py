@@ -9,6 +9,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SEED_DIR = Path(os.environ.get("SQR_SEED_DIR", REPO_ROOT / "data" / "seeds" / "cpo"))
 DB_PATH = Path(os.environ.get("SQR_DB_PATH", REPO_ROOT / "data" / "sqr.sqlite"))
 WEB_DIST = Path(os.environ.get("SQR_WEB_DIST", REPO_ROOT / "web" / "dist"))
+NOTES_DIR = Path(os.environ.get("SQR_NOTES_DIR", REPO_ROOT / "data" / "notes"))
 
 # Ordered from weakest to strongest. The UI shows the strongest level a
 # company has for a given chain node.

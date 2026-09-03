@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
 
-from .. import repo
+from .. import insights, market, repo, research
 from ..deps import Conn
 from ..schemas import CompanyDetail, CompanySummary
 
@@ -25,3 +25,15 @@ def get_company(company_id: str, conn: Conn):
     if not c:
         raise HTTPException(404, f"company {company_id!r} not found")
     return c
+
+
+@router.get("/companies/{company_id}/market")
+def company_market(company_id: str, conn: Conn, months: int = Query(6, ge=1, le=24)):
+    d = market.company_market(conn, company_id, months=months)
+    if not d:
+        raise HTTPException(404, f"company {company_id!r} not found")
+    d["crowding_conclusion"] = insights.crowding(d["crowding"], kind="company")
+    d["events_conclusion"] = insights.company_events(d["events_30d"])
+    d["headline"] = insights.company_headline(d["events_30d"], d["crowding"])
+    d["thesis"] = research.thesis_view(conn, company_id) or (research.thesis_for_node(conn, d["primary_layer"]["id"]) if d["primary_layer"] else None)
+    return d

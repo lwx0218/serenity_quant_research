@@ -1,4 +1,4 @@
-"""Serenity Quant Research API.
+"""Teardown API (from part to position).
 
     uvicorn app.main:app --reload --port 8000
 
@@ -15,7 +15,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import config
-from .routers import chain, companies, nodes
+from .routers import baskets, chain, companies, events, nodes, notes, overview, research
 from .seed import ensure_database
 
 
@@ -25,18 +25,23 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Serenity Quant Research", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="Teardown — from part to position", version="0.2.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-    allow_methods=["GET"],
+    allow_methods=["GET", "PUT", "POST", "PATCH"],
     allow_headers=["*"],
 )
 
 app.include_router(nodes.router)
 app.include_router(chain.router)
 app.include_router(companies.router)
+app.include_router(overview.router)
+app.include_router(events.router)
+app.include_router(baskets.router)
+app.include_router(notes.router)
+app.include_router(research.router)
 
 
 @app.get("/api/health", tags=["meta"])

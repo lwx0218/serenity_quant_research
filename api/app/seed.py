@@ -7,6 +7,8 @@ Three inputs, three kinds of knowledge:
 - cpo-presentation.json         how the Explorer talks about them (names, copy, visuals)
 - cpo-reference-exposures.json  company ↔ chain-node placements from a public infographic
                                 (evidence level `reference`)
+- cpo-sample-market.json        style-sample market layer (events, series, crowding);
+                                skipped with --no-sample. See market_seed.py.
 """
 from __future__ import annotations
 
@@ -17,6 +19,7 @@ from pathlib import Path
 
 from .config import DB_PATH, SEED_DIR
 from .db import connect, init_schema
+from .market_seed import import_market
 
 
 def _load(seed_dir: Path, name: str) -> dict:
@@ -31,7 +34,7 @@ def _split_bilingual(name: str) -> tuple[str, str | None]:
     return name.strip(), None
 
 
-def import_seed(conn: sqlite3.Connection, seed_dir: Path = SEED_DIR) -> dict[str, int]:
+def import_seed(conn: sqlite3.Connection, seed_dir: Path = SEED_DIR, include_sample: bool = True) -> dict[str, int]:
     research = _load(seed_dir, "cpo-research-seed.json")
     pres = _load(seed_dir, "cpo-presentation.json")
     ref = _load(seed_dir, "cpo-reference-exposures.json")
@@ -163,12 +166,13 @@ def import_seed(conn: sqlite3.Connection, seed_dir: Path = SEED_DIR) -> dict[str
         )
         n += 1
     counts["exposures"] = n
-
     conn.commit()
+
+    counts.update(import_market(conn, seed_dir, include_sample=include_sample))
     return counts
 
 
-def rebuild(db_path: Path = DB_PATH, seed_dir: Path = SEED_DIR) -> dict[str, int]:
+def rebuild(db_path: Path = DB_PATH, seed_dir: Path = SEED_DIR, include_sample: bool = True) -> dict[str, int]:
     db_path = Path(db_path)
     if db_path.exists():
         db_path.unlink()
@@ -176,7 +180,7 @@ def rebuild(db_path: Path = DB_PATH, seed_dir: Path = SEED_DIR) -> dict[str, int
     conn = connect(db_path)
     try:
         init_schema(conn)
-        return import_seed(conn, seed_dir)
+        return import_seed(conn, seed_dir, include_sample=include_sample)
     finally:
         conn.close()
 
@@ -192,9 +196,10 @@ if __name__ == "__main__":
     ap.add_argument("--rebuild", action="store_true", help="delete and recreate the database")
     ap.add_argument("--db", default=str(DB_PATH))
     ap.add_argument("--seed-dir", default=str(SEED_DIR))
+    ap.add_argument("--no-sample", action="store_true", help="skip the style-sample market layer")
     args = ap.parse_args()
     if args.rebuild:
-        print(rebuild(Path(args.db), Path(args.seed_dir)))
+        print(rebuild(Path(args.db), Path(args.seed_dir), include_sample=not args.no_sample))
     else:
         ensure_database(Path(args.db), Path(args.seed_dir))
         print("ok", args.db)

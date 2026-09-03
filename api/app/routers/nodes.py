@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
-from .. import repo
+from .. import market, repo
 from ..deps import Conn
 from ..schemas import NodeDetail, Product
 
@@ -40,3 +40,11 @@ def get_node(node_id: str, conn: Conn):
         "technologies": repo.technologies_for(conn, node_id),
         "companies": repo.companies_for_node(conn, node_id),
     }
+
+
+@router.get("/nodes/{node_id}/market")
+def get_node_market(node_id: str, conn: Conn, days: int = Query(7, ge=1, le=60)):
+    d = market.node_market(conn, node_id, days=days)
+    if not d:
+        raise HTTPException(404, f"node {node_id!r} not found")
+    return d

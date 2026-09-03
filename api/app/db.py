@@ -90,6 +90,90 @@ CREATE TABLE IF NOT EXISTS exposures (
 );
 CREATE INDEX IF NOT EXISTS ix_exposures_chain ON exposures(chain_node_id);
 CREATE INDEX IF NOT EXISTS ix_exposures_company ON exposures(company_id);
+
+-- ---------------------------------------------------------------- market layer
+-- Everything below is dated. `as_of` in settings is the last close the data
+-- knows about; every reading the API returns carries it.
+CREATE TABLE IF NOT EXISTS settings (
+  key   TEXT PRIMARY KEY,
+  value TEXT
+);
+
+-- 卡口事件: something public that could move capital toward a part of the chain.
+CREATE TABLE IF NOT EXISTS events (
+  id             TEXT PRIMARY KEY,
+  date           TEXT NOT NULL,          -- knowable date (YYYY-MM-DD, trading day)
+  company_id     TEXT REFERENCES companies(id),
+  node_id        TEXT REFERENCES nodes(id),        -- when the subject is a layer, not a company
+  chain_node_id  TEXT REFERENCES chain_nodes(id),
+  source_kind    TEXT NOT NULL,          -- announcement | irm | news | official | filing
+  source_title   TEXT,
+  source_url     TEXT,
+  category       TEXT NOT NULL,          -- capex | order | qualification | supply | price | buyback | roadmap | other
+  title          TEXT NOT NULL,
+  summary        TEXT,
+  volume_ratio   REAL,                   -- T+1 volume / 20d average
+  turnover_pct_rank REAL,                -- T+1 turnover percentile (60d)
+  status         TEXT NOT NULL DEFAULT 'candidate',   -- candidate | reviewed | ignored
+  is_sample      INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS ix_events_date ON events(date);
+CREATE INDEX IF NOT EXISTS ix_events_company ON events(company_id, date);
+
+-- an event touches every layer its subject is exposed to
+CREATE TABLE IF NOT EXISTS event_layers (
+  event_id TEXT NOT NULL REFERENCES events(id),
+  node_id  TEXT NOT NULL REFERENCES nodes(id),
+  PRIMARY KEY (event_id, node_id)
+);
+
+-- price reaction per horizon, relative to the reference basket
+CREATE TABLE IF NOT EXISTS reactions (
+  event_id      TEXT NOT NULL REFERENCES events(id),
+  horizon       INTEGER NOT NULL,        -- 1, 3, 5, 20 trading days
+  abs_return    REAL,
+  excess_basket REAL,                    -- vs the subject's layer basket
+  excess_product REAL,                   -- vs the whole-device basket
+  computed_at   TEXT,
+  PRIMARY KEY (event_id, horizon)
+);
+
+-- daily index series (close, base 100 at series start) for companies and baskets
+CREATE TABLE IF NOT EXISTS series (
+  instrument TEXT NOT NULL,              -- company:<id> | basket:<node_id> | basket:<product_id>
+  date       TEXT NOT NULL,
+  value      REAL NOT NULL,
+  is_sample  INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (instrument, date)
+);
+
+-- crowding / fragility readings: state quantities, recomputed daily
+CREATE TABLE IF NOT EXISTS crowding (
+  instrument TEXT NOT NULL,
+  as_of      TEXT NOT NULL,
+  window_days INTEGER NOT NULL DEFAULT 20,
+  metrics    TEXT NOT NULL,              -- JSON
+  is_sample  INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (instrument, as_of)
+);
+
+CREATE TABLE IF NOT EXISTS valuation (
+  company_id TEXT PRIMARY KEY REFERENCES companies(id),
+  as_of      TEXT NOT NULL,
+  pe_ttm     REAL,
+  pe_pct_rank_5y REAL,
+  is_sample  INTEGER NOT NULL DEFAULT 0
+);
+
+-- verification actions taken from the inbox (audit trail)
+CREATE TABLE IF NOT EXISTS verifications (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  kind       TEXT NOT NULL,              -- upgrade | ignore | accept | reject
+  event_id   TEXT REFERENCES events(id),
+  exposure_id INTEGER REFERENCES exposures(id),
+  note       TEXT,
+  created_at TEXT NOT NULL
+);
 """
 
 
