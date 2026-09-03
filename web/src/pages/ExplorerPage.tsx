@@ -66,7 +66,18 @@ export function ExplorerPage({ nodeId }: { nodeId?: string }) {
 
   return (
     <Shell crumbs={crumbs}>
-      <main className="page">
+      <main
+        className="page"
+        style={focused ? { minHeight: "calc(100vh - 64px)" } : undefined}
+        onClick={(e) => {
+          // In the selected state any click on the page background (not a layer, link,
+          // button or the content column) returns to the whole device.
+          if (!focused) return;
+          const t = e.target as HTMLElement;
+          if (t.closest("a, button, [data-layer], .focus, .hint")) return;
+          navigate("/");
+        }}
+      >
         {error && <p className="quiet" style={{ paddingTop: 40 }}>加载失败:{error}</p>}
         <section className={`hero${focused ? " is-selected" : ""}`}>
           {/* title (overview only) */}
@@ -85,7 +96,6 @@ export function ExplorerPage({ nodeId }: { nodeId?: string }) {
                 hoverId={hoverId}
                 onSelect={(id) => navigate(`/explore/${id}`)}
                 onHover={setHoverId}
-                onBackgroundClick={() => focused && navigate("/")}
                 transform={focused ? `scale(${FOCUSED.scale})` : undefined}
               />
             )}
