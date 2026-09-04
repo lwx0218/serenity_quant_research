@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teardown · 1.6T 光模块横截面</title>
+<style>
+  :root {
+    --bg: #0a0a0a; --panel: #121212; --panel-2: #181818; --line: #262626; --line-2: #333;
+    --fg: #f2f2f2; --fg-2: #a3a3a3; --fg-3: #6b6b6b;
+    --elec: #f59e0b; --opt: #22d3ee; --accent: #ffffff;
+    --a: #ef4444; --us: #60a5fa; --other: #a78bfa; --priv: #737373;
+    --ok: #34d399; --mid: #fbbf24; --low: #737373;
+    --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: "Geist", -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 14px; line-height: 1.5; }
+  a { color: inherit; }
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 28px 32px 80px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .18em; color: var(--fg-3); text-transform: uppercase; }
+  h1 { font-size: 30px; margin: 4px 0 6px; letter-spacing: -.01em; white-space: nowrap; }
+  h2 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--fg-2); max-width: 760px; }
+  header { display: grid; grid-template-columns: minmax(380px, 1fr) auto; gap: 24px; align-items: end; border-bottom: 1px solid var(--line); padding-bottom: 20px; margin-bottom: 20px; }
+  .specs { display: grid; grid-template-columns: repeat(3, auto); gap: 6px 22px; font-size: 12px; }
+  .specs dt { color: var(--fg-3); font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; }
+  .specs dd { margin: 0; color: var(--fg); }
+
+  .section { margin-top: 30px; display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 28px; }
+  .section > aside .sub { font-size: 13px; }
+  .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+  .btn { background: transparent; color: var(--fg-2); border: 1px solid var(--line-2); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 12px; cursor: pointer; }
+  .btn.on { color: var(--fg); border-color: var(--fg); }
+  .btn.elec.on { color: var(--elec); border-color: var(--elec); }
+  .btn.opt.on { color: var(--opt); border-color: var(--opt); }
+  .legend { margin-left: auto; display: flex; gap: 14px; font-size: 11.5px; color: var(--fg-2); font-family: var(--mono); }
+  .legend i { display: inline-block; width: 18px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 6px; }
+  .legend .e i { border-color: var(--elec); } .legend .o i { border-color: var(--opt); }
+  .legend .r i { border-top-style: dashed; border-color: var(--fg-2); }
+
+  .cross { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px; overflow-x: auto; }
+  svg { width: 100%; max-width: 100%; height: auto; display: block; min-width: 900px; }
+  .part-shape { cursor: pointer; transition: opacity .15s; }
+  .part-shape rect, .part-shape path, .part-shape polygon { stroke: var(--line-2); stroke-width: 1; }
+  .part-shape:hover rect, .part-shape:hover path, .part-shape:hover polygon { stroke: var(--fg-2); }
+  .part-shape.sel rect, .part-shape.sel path, .part-shape.sel polygon { stroke: var(--accent); stroke-width: 1.6; }
+  .dim .part-shape:not(.sel) { opacity: .5; }
+  .lbl { font-family: var(--mono); font-size: 12px; fill: var(--fg-2); pointer-events: none; }
+  .lbl.big { font-size: 14px; fill: var(--fg); }
+  .lbl.tiny { font-size: 10.5px; fill: var(--fg-3); }
+  #paths { pointer-events: none; }
+  .path-e { fill: none; stroke: var(--elec); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+  .path-o { fill: none; stroke: var(--opt); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+  .path-rx { stroke-dasharray: 5 4; opacity: .9; }
+  .station circle { fill: var(--bg); stroke-width: 1.6; }
+  .station text { font-family: var(--mono); font-size: 9.5px; font-weight: 600; text-anchor: middle; dominant-baseline: central; }
+  .station.e circle { stroke: var(--elec); } .station.e text { fill: var(--elec); }
+  .station.o circle { stroke: var(--opt); } .station.o text { fill: var(--opt); }
+
+  .strip { display: flex; align-items: flex-start; gap: 0; margin-top: 18px; overflow-x: auto; padding-bottom: 6px; }
+  .st { min-width: 128px; flex: 1; cursor: pointer; padding: 8px 10px; border-radius: 8px; border: 1px solid transparent; }
+  .st:hover { background: var(--panel); }
+  .st.sel { border-color: var(--fg-3); background: var(--panel); }
+  .st .n { font-size: 13.5px; font-weight: 600; line-height: 1.25; }
+  .st .k { font-family: var(--mono); font-size: 10.5px; color: var(--fg-3); margin-top: 2px; }
+  .st .k.e { color: var(--elec); } .st .k.o { color: var(--opt); }
+  .st .t { font-size: 11.5px; color: var(--fg-2); margin-top: 6px; line-height: 1.4; }
+  .arrow { align-self: center; color: var(--fg-3); padding: 0 4px; font-family: var(--mono); }
+
+  .detail { margin-top: 24px; display: grid; grid-template-columns: 300px 1fr; gap: 24px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px 22px; min-height: 160px; }
+  .detail .kv { font-size: 12.5px; color: var(--fg-2); }
+  .detail .kv b { color: var(--fg); font-weight: 500; }
+  .detail .kv p { margin: 6px 0; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .tag { font-family: var(--mono); font-size: 10.5px; color: var(--fg-2); border: 1px solid var(--line-2); border-radius: 4px; padding: 1px 6px; }
+  .stages { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px 18px; }
+  .stage h4 { margin: 0 0 6px; font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; color: var(--fg-3); text-transform: uppercase; }
+  .co { display: grid; grid-template-columns: 8px 1fr; gap: 8px; align-items: start; padding: 5px 0; border-top: 1px solid var(--line); font-size: 12.5px; }
+  .co:first-of-type { border-top: 0; }
+  .co .dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 6px; }
+  .co .nm { font-weight: 500; }
+  .co .tk { font-family: var(--mono); font-size: 10.5px; color: var(--fg-3); margin-left: 6px; }
+  .co .rl { color: var(--fg-2); font-size: 11.5px; }
+  .mk { display: inline-block; font-family: var(--mono); font-size: 9.5px; padding: 0 5px; border-radius: 3px; margin-left: 6px; vertical-align: 1px; border: 1px solid; }
+  .mk.A { color: var(--a); border-color: var(--a); } .mk.US { color: var(--us); border-color: var(--us); }
+  .mk.O { color: var(--other); border-color: var(--other); } .mk.P { color: var(--priv); border-color: var(--priv); }
+  .ev-verified { background: var(--ok); } .ev-consensus { background: var(--mid); } .ev-candidate { background: var(--low); }
+  .empty { color: var(--fg-3); font-size: 13px; }
+
+  .matrix { margin-top: 10px; overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; min-width: 1100px; font-size: 12px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); }
+  th { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; color: var(--fg-3); text-transform: uppercase; background: var(--panel); position: sticky; top: 0; }
+  td:first-child { width: 170px; min-width: 170px; font-weight: 500; background: var(--panel); position: sticky; left: 0; }
+  td:first-child small { display: block; color: var(--fg-3); font-family: var(--mono); font-size: 10px; font-weight: 400; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; margin: 2px 4px 2px 0; padding: 1px 7px 1px 5px; border: 1px solid var(--line-2); border-radius: 999px; font-size: 11.5px; white-space: nowrap; cursor: pointer; }
+  .chip:hover { border-color: var(--fg-2); }
+  .chip .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .chip.hide { display: none; }
+  .chip.hl { border-color: var(--fg); background: var(--panel-2); }
+  .cross-count { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px 20px; margin-top: 10px; font-size: 12.5px; }
+  .cross-count div { display: flex; justify-content: space-between; border-bottom: 1px solid var(--line); padding: 5px 0; }
+  .cross-count span:last-child { font-family: var(--mono); color: var(--fg-2); }
+  footer { margin-top: 40px; color: var(--fg-3); font-size: 11.5px; font-family: var(--mono); border-top: 1px solid var(--line); padding-top: 14px; }
+  @media (max-width: 900px) { .section, .detail, header { grid-template-columns: 1fr; } .specs { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Teardown · physical first</div>
+      <h1 id="title">—</h1>
+      <div class="sub" id="host">—</div>
+    </div>
+    <dl class="specs" id="specs"></dl>
+  </header>
+
+  <div class="section">
+    <aside>
+      <div class="eyebrow">Cross section</div>
+      <h2>横截面 · 信号怎么走</h2>
+      <p class="sub">侧视图，左边插在交换机 / 网卡的笼子里，右边是 MPO 光口。点任何一个部件，下面列出这个部件背后的公司；发 / 收切换信号路径。</p>
+      <p class="sub" id="layers"></p>
+    </aside>
+    <div>
+      <div class="bar">
+        <button class="btn on" data-dir="tx">发送 TX</button>
+        <button class="btn" data-dir="rx">接收 RX</button>
+        <button class="btn" data-dir="both">同时</button>
+        <div class="legend"><span class="e"><i></i>电信号</span><span class="o"><i></i>光信号</span><span class="r"><i></i>RX 虚线</span></div>
+      </div>
+      <div class="cross" id="cross"></div>
+      <div class="strip" id="strip"></div>
+    </div>
+  </div>
+
+  <div class="detail" id="detail"><div class="empty">点一个部件，或者点上面的信号站点。</div></div>
+
+  <div class="section">
+    <aside>
+      <div class="eyebrow">Part × stage</div>
+      <h2>全景表 · 谁在哪一层</h2>
+      <p class="sub">行是部件（按发送信号顺序），列是产业阶段。同一家公司在多行出现，说明它在这只模块里吃到多个环节。</p>
+      <div class="bar" id="mfilter">
+        <button class="btn on" data-m="all">全部</button>
+        <button class="btn" data-m="A">A 股</button>
+        <button class="btn" data-m="US">美股</button>
+        <button class="btn" data-m="other">其他市场</button>
+        <button class="btn" data-m="P">非上市</button>
+      </div>
+      <div class="bar" id="efilter">
+        <button class="btn on" data-e="all">全部证据级</button>
+        <button class="btn" data-e="verified">仅已核验</button>
+        <button class="btn" data-e="nocand">去掉候选</button>
+      </div>
+    </aside>
+    <div>
+      <div class="matrix" id="matrix"></div>
+      <div class="eyebrow" style="margin-top:22px">Multi-part exposure</div>
+      <div class="cross-count" id="cross-count"></div>
+    </div>
+  </div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>window.__TEARDOWN_DATA__ = null;/*__INLINE_DATA__*/</script>
+<script>
+(async function () {
+  let data = window.__TEARDOWN_DATA__;
+  if (!data) {
+    try { data = await (await fetch('./data/module-1.6t-dr8-siph.json')).json(); }
+    catch (e) { document.getElementById('detail').innerHTML = '<div class="empty">读不到 data/module-1.6t-dr8-siph.json：请用 <code>python -m http.server</code> 在 physical/ 目录起个服务，或打开 dist/ 里内联好数据的单文件。</div>'; return; }
+  }
+  const M = data.module;
+  const parts = Object.fromEntries(M.parts.map(p => [p.id, p]));
+  const stages = M.stages.slice().sort((a, b) => a.order - b.order);
+  const stageName = Object.fromEntries(stages.map(s => [s.id, s.name]));
+
+  // ---------- header ----------
+  document.getElementById('title').textContent = M.name;
+  document.getElementById('host').textContent = M.hostContext.summary;
+  document.getElementById('specs').innerHTML = Object.entries({
+    '形态': M.formFactor, '通道': M.spec.lanes, '波长/距离': M.spec.wavelength + ' · ' + M.spec.reach,
+    '光口': M.spec.connector, '功耗': M.spec.power, '架构': M.spec.architecture
+  }).map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+  document.getElementById('layers').innerHTML = M.layers.slice().sort((a, b) => a.order - b.order)
+    .map(l => `<b style="color:var(--fg)">${l.name}</b> — ${l.note}`).join('<br>');
+  document.getElementById('foot').textContent = `schema ${data.schemaVersion} · as of ${data.asOf} · ${M.parts.length} 个部件 · ${M.parts.reduce((n, p) => n + p.companies.length, 0)} 条公司映射 · 证据级：● 已核验  ● 行业共识  ● 候选 · 不含任何行情数据`;
+
+  // ---------- cross-section geometry (side view, 1200 × 330) ----------
+  // Each shape: id → svg fragment. Anchor points (ax, ay) are where the signal path visits.
+  const G = {
+    'part.host-cage':     { rect: [10, 140, 110, 160], fill: '#1f1f1f', label: '主机 OSFP 笼子', big: true, ax: 60, ay: 250 },
+    'part.lid-thermal':   { custom: lidShape, ax: 620, ay: 171 },
+    'part.shell':         { custom: shellShape, ax: 400, ay: 292 },
+    'part.edge-fingers':  { rect: [122, 236, 34, 22], fill: '#b8860b', label: '金手指', ax: 140, ay: 247 },
+    'part.pcb':           { rect: [130, 258, 850, 16], fill: '#1b3a2a', label: '主 PCB · 高速多层板', ax: 240, ay: 266 },
+    'part.power-mgmt':    { rect: [175, 232, 70, 26], fill: '#2a2a2a', label: '电源/MCU', ax: 210, ay: 245 },
+    'part.dsp':           { rect: [300, 196, 150, 62], fill: '#3b2a5c', label: 'DSP 3nm', big: true, ax: 375, ay: 227 },
+    'part.cw-laser':      { rect: [500, 224, 66, 34], fill: '#4a1f1f', label: 'CW ×2', ax: 533, ay: 241 },
+    'part.laser-coupling':{ rect: [568, 228, 24, 26], fill: '#333', label: '', ax: 580, ay: 241 },
+    'part.pic':           { rect: [594, 232, 300, 26], fill: '#123a4a', label: '硅光 PIC · MZM · 波导 · 分束', ax: 700, ay: 245 },
+    'part.driver':        { rect: [612, 202, 74, 30], fill: '#3a2f14', label: 'Driver', ax: 649, ay: 217 },
+    'part.tia':           { rect: [726, 202, 74, 30], fill: '#3a2f14', label: 'TIA', ax: 763, ay: 217 },
+    'part.pd':            { rect: [830, 236, 50, 18], fill: '#1e5e6a', label: 'Ge PD', ax: 855, ay: 245 },
+    'part.engine-assembly': { custom: engineOutline, ax: 745, ay: 194 },
+    'part.fau':           { rect: [898, 226, 54, 34], fill: '#2b2b2b', label: 'FAU', ax: 925, ay: 243 },
+    'part.mpo':           { rect: [986, 205, 130, 82], fill: '#1c1c1c', label: 'MPO 插座', big: true, ax: 1051, ay: 246 },
+    'part.module-maker':  { custom: moduleOutline, ax: 1150, ay: 150 },
+  };
+  const SY = 1.75, Y0 = 44; const Y = y => Math.round((y - Y0) * SY + Y0); const H = h => Math.round(h * SY);
+  function lidShape() {
+    let fins = '';
+    for (let x = 140; x < 960; x += 20) fins += `<rect x="${x}" y="${Y(140)}" width="10" height="${H(22)}" fill="#2a2a2a"/>`;
+    return fins + `<rect x="130" y="${Y(162)}" width="850" height="${H(18)}" fill="#303030"/><rect x="130" y="${Y(180)}" width="850" height="${H(6)}" fill="#4b4b3a"/>` +
+      `<text class="lbl big" x="560" y="${Y(171)}" text-anchor="middle">顶盖 · Finned Top · TIM</text>`;
+  }
+  function shellShape() {
+    return `<rect x="122" y="${Y(274)}" width="864" height="${H(26)}" fill="#222"/><rect x="122" y="${Y(162)}" width="8" height="${H(138)}" fill="#222"/>` +
+      `<text class="lbl" x="560" y="${Y(291)}" text-anchor="middle">OSFP 壳体 · 拉环 · EMI</text>`;
+  }
+  function engineOutline() {
+    return `<rect x="494" y="${Y(190)}" width="466" height="${H(72)}" fill="none" stroke-dasharray="4 3"/><text class="lbl tiny" x="500" y="${Y(199)}">光引擎（COB / 倒装 / 耦合）</text>`;
+  }
+  function moduleOutline() {
+    return `<rect x="1128" y="${Y(128)}" width="62" height="${H(46)}" rx="6" fill="#151515"/><text class="lbl tiny" x="1159" y="${Y(142)}" text-anchor="middle">整模块</text><text class="lbl tiny" x="1159" y="${Y(154)}" text-anchor="middle">组装·测试</text><text class="lbl tiny" x="1159" y="${Y(166)}" text-anchor="middle">客户</text>`;
+  }
+  function shape(id, g) {
+    if (g.custom) return `<g class="part-shape" data-part="${id}">${g.custom()}</g>`;
+    const [x, y, w, h] = g.rect;
+    const lbl = g.label ? `<text class="lbl${g.big ? ' big' : ''}" x="${x + w / 2}" y="${Y(y + h / 2) + 4}" text-anchor="middle">${g.label}</text>` : '';
+    return `<g class="part-shape" data-part="${id}"><rect x="${x}" y="${Y(y)}" width="${w}" height="${H(h)}" rx="2" fill="${g.fill}"/>${lbl}</g>`;
+  }
+
+  // Signal paths: sequence of [x, y, kind] points; kind switches color from that point on.
+  const TX_PTS = [[30, 250, 'e'], [122, 250, 'e'], [140, 247, 'e'], [240, 266, 'e'], [300, 227, 'e'], [450, 227, 'e'], [612, 217, 'e'], [686, 217, 'e'], [700, 245, 'o'], [830, 245, 'o'], [898, 243, 'o'], [986, 246, 'o'], [1116, 246, 'o'], [1190, 246, 'o']];
+  const CW_PTS = [[533, 241, 'o'], [568, 241, 'o'], [594, 245, 'o'], [640, 245, 'o']];
+  const RX_PTS = [[1190, 254, 'o'], [1116, 254, 'o'], [952, 251, 'o'], [880, 251, 'o'], [855, 249, 'o'], [800, 224, 'e'], [763, 210, 'e'], [726, 210, 'e'], [450, 233, 'e'], [300, 233, 'e'], [250, 270, 'e'], [140, 253, 'e'], [122, 256, 'e'], [30, 256, 'e']];
+  function polyline(pts, rx) {
+    let out = '', cur = null, seg = [];
+    const flush = () => { if (seg.length > 1) out += `<polyline class="path-${cur}${rx ? ' path-rx' : ''}" points="${seg.map(p => p[0] + ',' + Y(p[1])).join(' ')}"/>`; };
+    pts.forEach(p => { if (cur !== p[2]) { if (cur) { seg.push(p); flush(); } cur = p[2]; seg = [p]; } else seg.push(p); });
+    flush(); return out;
+  }
+  function stations(list, dir) {
+    return list.map(s => {
+      const g = G[s.partId]; const k = s.signal.includes('光') && !s.signal.includes('→') ? 'o' : (s.signal === '电' ? 'e' : 'o');
+      const dy = dir === 'rx' ? 20 : -20;
+      return `<g class="station ${k}" data-part="${s.partId}" style="cursor:pointer"><circle cx="${g.ax}" cy="${Y(g.ay) + dy}" r="8"/><text x="${g.ax}" y="${Y(g.ay) + dy}">${dir === 'rx' ? 'R' : ''}${s.step}</text></g>`;
+    }).join('');
+  }
+  let dir = 'tx', selected = null;
+  function render() {
+    const svg = `<svg viewBox="0 ${Y(120)} 1200 ${Y(306) - Y(120)}" xmlns="http://www.w3.org/2000/svg">
+      <text class="lbl tiny" x="12" y="${Y(132)}">主机侧 · 交换机 / 网卡</text>
+      <text class="lbl tiny" x="1150" y="${Y(236)}">光纤 →</text>
+      ${Object.entries(G).map(([id, g]) => shape(id, g)).join('')}
+      <g id="paths">
+        ${dir !== 'rx' ? polyline(TX_PTS) + polyline(CW_PTS) : ''}
+        ${dir !== 'tx' ? polyline(RX_PTS, true) : ''}
+      </g>
+      ${dir !== 'rx' ? stations(M.signalPath.tx, 'tx') : ''}
+      ${dir !== 'tx' ? stations(M.signalPath.rx, 'rx') : ''}
+    </svg>`;
+    const el = document.getElementById('cross'); el.innerHTML = svg;
+    el.querySelectorAll('[data-part]').forEach(n => n.addEventListener('click', () => select(n.dataset.part)));
+    renderStrip(); applySel();
+  }
+  function renderStrip() {
+    const list = dir === 'rx' ? M.signalPath.rx : M.signalPath.tx;
+    document.getElementById('strip').innerHTML = list.map((s, i) => {
+      const k = s.signal === '电' ? 'e' : (s.signal === '光' ? 'o' : '');
+      return `${i ? '<div class="arrow">→</div>' : ''}<div class="st" data-part="${s.partId}"><div class="n">${parts[s.partId].name}</div><div class="k ${k}">${s.signal}</div><div class="t">${s.text}</div></div>`;
+    }).join('');
+    document.querySelectorAll('.st').forEach(n => n.addEventListener('click', () => select(n.dataset.part)));
+  }
+  function applySel() {
+    const onPath = new Set([...(dir !== 'rx' ? M.signalPath.tx : []), ...(dir !== 'tx' ? M.signalPath.rx : [])].map(s => s.partId));
+    const cross = document.getElementById('cross');
+    cross.classList.toggle('dim', !!selected);
+    cross.querySelectorAll('.part-shape').forEach(n => {
+      n.classList.toggle('sel', n.dataset.part === selected);
+      n.classList.toggle('onpath', false);
+    });
+    document.querySelectorAll('.st').forEach(n => n.classList.toggle('sel', n.dataset.part === selected));
+    document.querySelectorAll('.matrix tr[data-part]').forEach(n => n.style.background = n.dataset.part === selected ? 'var(--panel-2)' : '');
+  }
+  function select(id) { selected = selected === id ? null : id; applySel(); renderDetail(); }
+
+  // ---------- detail ----------
+  const mkClass = m => m === 'A' || m === 'A/HK' ? 'A' : (m === 'US' || m === 'US/IL' ? 'US' : (m === '私有' ? 'P' : 'O'));
+  const coHtml = c => `<div class="co"><div class="dot ev-${c.evidence}"></div><div><span class="nm">${c.name}</span>${c.ticker ? `<span class="tk">${c.ticker}</span>` : ''}<span class="mk ${mkClass(c.market)}">${c.market}</span><div class="rl">${c.role}</div></div></div>`;
+  function renderDetail() {
+    const el = document.getElementById('detail');
+    if (!selected) { el.innerHTML = '<div class="empty">点一个部件，或者点上面的信号站点。</div>'; return; }
+    const p = parts[selected];
+    const byStage = {}; p.companies.forEach(c => (byStage[c.stage] ||= []).push(c));
+    el.innerHTML = `<div class="kv">
+        <div class="eyebrow">${p.nameEn}</div><h2>${p.name}</h2>
+        <p>${p.function}</p>
+        <p><b>关键参数</b></p><div class="tags">${p.keySpecs.map(s => `<span class="tag">${s}</span>`).join('')}</div>
+        ${p.materials.length ? `<p><b>上游材料</b></p><div class="tags">${p.materials.map(s => `<span class="tag">${s}</span>`).join('')}</div>` : ''}
+        <p style="margin-top:12px;color:var(--fg-3);font-family:var(--mono);font-size:11px">${p.companies.length} 家 · ${p.companies.filter(c => mkClass(c.market) === 'A').length} 家 A 股</p>
+      </div>
+      <div class="stages">${stages.filter(s => byStage[s.id]).map(s => `<div class="stage"><h4>${s.name}</h4>${byStage[s.id].map(coHtml).join('')}</div>`).join('')}</div>`;
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // ---------- matrix ----------
+  let mf = 'all', ef = 'all', hlName = null;
+  const order = [...M.signalPath.tx.map(s => s.partId), ...M.signalPath.rx.map(s => s.partId), ...M.parts.map(p => p.id)].filter((v, i, a) => a.indexOf(v) === i);
+  function passes(c) {
+    const m = mkClass(c.market);
+    if (mf === 'A' && m !== 'A') return false; if (mf === 'US' && m !== 'US') return false;
+    if (mf === 'other' && m !== 'O') return false; if (mf === 'P' && m !== 'P') return false;
+    if (ef === 'verified' && c.evidence !== 'verified') return false;
+    if (ef === 'nocand' && c.evidence === 'candidate') return false;
+    return true;
+  }
+  function renderMatrix() {
+    const rows = order.map(id => {
+      const p = parts[id];
+      const cells = stages.map(s => `<td>${p.companies.filter(c => c.stage === s.id).map(c => `<span class="chip${passes(c) ? '' : ' hide'}${hlName === c.name ? ' hl' : ''}" data-name="${c.name}" title="${c.role}"><span class="dot ev-${c.evidence}"></span>${c.name}<span class="mk ${mkClass(c.market)}">${c.market}</span></span>`).join('')}</td>`).join('');
+      return `<tr data-part="${id}"><td><span style="cursor:pointer" data-part="${id}">${p.name}</span><small>${p.nameEn}</small></td>${cells}</tr>`;
+    }).join('');
+    document.getElementById('matrix').innerHTML = `<table><thead><tr><th>部件</th>${stages.map(s => `<th>${s.name}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>`;
+    document.querySelectorAll('.matrix [data-part]').forEach(n => n.addEventListener('click', () => select(n.dataset.part)));
+    document.querySelectorAll('.chip').forEach(n => n.addEventListener('click', () => { hlName = hlName === n.dataset.name ? null : n.dataset.name; renderMatrix(); }));
+    // cross-part exposure
+    const count = {};
+    M.parts.forEach(p => p.companies.filter(passes).forEach(c => { const k = c.name.replace(/（.*?）/, '').split('（')[0]; (count[k] ||= { n: 0, parts: new Set(), m: c.market }).parts.add(p.id); }));
+    const list = Object.entries(count).map(([k, v]) => [k, v.parts.size, v.m]).filter(x => x[1] > 1).sort((a, b) => b[1] - a[1]).slice(0, 18);
+    document.getElementById('cross-count').innerHTML = list.map(([k, n, m]) => `<div><span>${k}<span class="mk ${mkClass(m)}">${m}</span></span><span>${n} 个部件</span></div>`).join('') || '<div class="empty">当前筛选下没有跨部件的公司。</div>';
+    applySel();
+  }
+
+  // ---------- controls ----------
+  document.querySelectorAll('[data-dir]').forEach(b => b.addEventListener('click', () => { dir = b.dataset.dir; document.querySelectorAll('[data-dir]').forEach(x => x.classList.toggle('on', x === b)); render(); }));
+  document.querySelectorAll('#mfilter [data-m]').forEach(b => b.addEventListener('click', () => { mf = b.dataset.m; document.querySelectorAll('#mfilter .btn').forEach(x => x.classList.toggle('on', x === b)); renderMatrix(); }));
+  document.querySelectorAll('#efilter [data-e]').forEach(b => b.addEventListener('click', () => { ef = b.dataset.e; document.querySelectorAll('#efilter .btn').forEach(x => x.classList.toggle('on', x === b)); renderMatrix(); }));
+
+  render(); renderMatrix();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teardown · 1.6T 光模块横截面</title>
+<style>
+  :root {
+    --bg: #0a0a0a; --panel: #121212; --panel-2: #181818; --line: #262626; --line-2: #333;
+    --fg: #f2f2f2; --fg-2: #a3a3a3; --fg-3: #6b6b6b;
+    --elec: #f59e0b; --opt: #22d3ee; --accent: #ffffff;
+    --a: #ef4444; --us: #60a5fa; --other: #a78bfa; --priv: #737373;
+    --ok: #34d399; --mid: #fbbf24; --low: #737373;
+    --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: "Geist", -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 14px; line-height: 1.5; }
+  a { color: inherit; }
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 28px 32px 80px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .18em; color: var(--fg-3); text-transform: uppercase; }
+  h1 { font-size: 30px; margin: 4px 0 6px; letter-spacing: -.01em; white-space: nowrap; }
+  h2 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--fg-2); max-width: 760px; }
+  header { display: grid; grid-template-columns: minmax(380px, 1fr) auto; gap: 24px; align-items: end; border-bottom: 1px solid var(--line); padding-bottom: 20px; margin-bottom: 20px; }
+  .specs { display: grid; grid-template-columns: repeat(3, auto); gap: 6px 22px; font-size: 12px; }
+  .specs dt { color: var(--fg-3); font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; }
+  .specs dd { margin: 0; color: var(--fg); }
+
+  .section { margin-top: 30px; display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 28px; }
+  .section > aside .sub { font-size: 13px; }
+  .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+  .btn { background: transparent; color: var(--fg-2); border: 1px solid var(--line-2); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 12px; cursor: pointer; }
+  .btn.on { color: var(--fg); border-color: var(--fg); }
+  .btn.elec.on { color: var(--elec); border-color: var(--elec); }
+  .btn.opt.on { color: var(--opt); border-color: var(--opt); }
+  .legend { margin-left: auto; display: flex; gap: 14px; font-size: 11.5px; color: var(--fg-2); font-family: var(--mono); }
+  .legend i { display: inline-block; width: 18px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 6px; }
+  .legend .e i { border-color: var(--elec); } .legend .o i { border-color: var(--opt); }
+  .legend .r i { border-top-style: dashed; border-color: var(--fg-2); }
+
+  .cross { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px; overflow-x: auto; }
+  svg { width: 100%; max-width: 100%; height: auto; display: block; min-width: 900px; }
+  .part-shape { cursor: pointer; transition: opacity .15s; }
+  .part-shape rect, .part-shape path, .part-shape polygon { stroke: var(--line-2); stroke-width: 1; }
+  .part-shape:hover rect, .part-shape:hover path, .part-shape:hover polygon { stroke: var(--fg-2); }
+  .part-shape.sel rect, .part-shape.sel path, .part-shape.sel polygon { stroke: var(--accent); stroke-width: 1.6; }
+  .dim .part-shape:not(.sel) { opacity: .5; }
+  .lbl { font-family: var(--mono); font-size: 12px; fill: var(--fg-2); pointer-events: none; }
+  .lbl.big { font-size: 14px; fill: var(--fg); }
+  .lbl.tiny { font-size: 10.5px; fill: var(--fg-3); }
+  #paths { pointer-events: none; }
+  .path-e { fill: none; stroke: var(--elec); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+  .path-o { fill: none; stroke: var(--opt); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+  .path-rx { stroke-dasharray: 5 4; opacity: .9; }
+  .station circle { fill: var(--bg); stroke-width: 1.6; }
+  .station text { font-family: var(--mono); font-size: 9.5px; font-weight: 600; text-anchor: middle; dominant-baseline: central; }
+  .station.e circle { stroke: var(--elec); } .station.e text { fill: var(--elec); }
+  .station.o circle { stroke: var(--opt); } .station.o text { fill: var(--opt); }
+
+  .strip { display: flex; align-items: flex-start; gap: 0; margin-top: 18px; overflow-x: auto; padding-bottom: 6px; }
+  .st { min-width: 128px; flex: 1; cursor: pointer; padding: 8px 10px; border-radius: 8px; border: 1px solid transparent; }
+  .st:hover { background: var(--panel); }
+  .st.sel { border-color: var(--fg-3); background: var(--panel); }
+  .st .n { font-size: 13.5px; font-weight: 600; line-height: 1.25; }
+  .st .k { font-family: var(--mono); font-size: 10.5px; color: var(--fg-3); margin-top: 2px; }
+  .st .k.e { color: var(--elec); } .st .k.o { color: var(--opt); }
+  .st .t { font-size: 11.5px; color: var(--fg-2); margin-top: 6px; line-height: 1.4; }
+  .arrow { align-self: center; color: var(--fg-3); padding: 0 4px; font-family: var(--mono); }
+
+  .detail { margin-top: 24px; display: grid; grid-template-columns: 300px 1fr; gap: 24px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px 22px; min-height: 160px; }
+  .detail .kv { font-size: 12.5px; color: var(--fg-2); }
+  .detail .kv b { color: var(--fg); font-weight: 500; }
+  .detail .kv p { margin: 6px 0; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .tag { font-family: var(--mono); font-size: 10.5px; color: var(--fg-2); border: 1px solid var(--line-2); border-radius: 4px; padding: 1px 6px; }
+  .stages { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px 18px; }
+  .stage h4 { margin: 0 0 6px; font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; color: var(--fg-3); text-transform: uppercase; }
+  .co { display: grid; grid-template-columns: 8px 1fr; gap: 8px; align-items: start; padding: 5px 0; border-top: 1px solid var(--line); font-size: 12.5px; }
+  .co:first-of-type { border-top: 0; }
+  .co .dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 6px; }
+  .co .nm { font-weight: 500; }
+  .co .tk { font-family: var(--mono); font-size: 10.5px; color: var(--fg-3); margin-left: 6px; }
+  .co .rl { color: var(--fg-2); font-size: 11.5px; }
+  .mk { display: inline-block; font-family: var(--mono); font-size: 9.5px; padding: 0 5px; border-radius: 3px; margin-left: 6px; vertical-align: 1px; border: 1px solid; }
+  .mk.A { color: var(--a); border-color: var(--a); } .mk.US { color: var(--us); border-color: var(--us); }
+  .mk.O { color: var(--other); border-color: var(--other); } .mk.P { color: var(--priv); border-color: var(--priv); }
+  .ev-verified { background: var(--ok); } .ev-consensus { background: var(--mid); } .ev-candidate { background: var(--low); }
+  .empty { color: var(--fg-3); font-size: 13px; }
+
+  .matrix { margin-top: 10px; overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; min-width: 1100px; font-size: 12px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); }
+  th { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; color: var(--fg-3); text-transform: uppercase; background: var(--panel); position: sticky; top: 0; }
+  td:first-child { width: 170px; min-width: 170px; font-weight: 500; background: var(--panel); position: sticky; left: 0; }
+  td:first-child small { display: block; color: var(--fg-3); font-family: var(--mono); font-size: 10px; font-weight: 400; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; margin: 2px 4px 2px 0; padding: 1px 7px 1px 5px; border: 1px solid var(--line-2); border-radius: 999px; font-size: 11.5px; white-space: nowrap; cursor: pointer; }
+  .chip:hover { border-color: var(--fg-2); }
+  .chip .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .chip.hide { display: none; }
+  .chip.hl { border-color: var(--fg); background: var(--panel-2); }
+  .cross-count { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px 20px; margin-top: 10px; font-size: 12.5px; }
+  .cross-count div { display: flex; justify-content: space-between; border-bottom: 1px solid var(--line); padding: 5px 0; }
+  .cross-count span:last-child { font-family: var(--mono); color: var(--fg-2); }
+  footer { margin-top: 40px; color: var(--fg-3); font-size: 11.5px; font-family: var(--mono); border-top: 1px solid var(--line); padding-top: 14px; }
+  @media (max-width: 900px) { .section, .detail, header { grid-template-columns: 1fr; } .specs { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Teardown · physical first</div>
+      <h1 id="title">—</h1>
+      <div class="sub" id="host">—</div>
+    </div>
+    <dl class="specs" id="specs"></dl>
+  </header>
+
+  <div class="section">
+    <aside>
+      <div class="eyebrow">Cross section</div>
+      <h2>横截面 · 信号怎么走</h2>
+      <p class="sub">侧视图，左边插在交换机 / 网卡的笼子里，右边是 MPO 光口。点任何一个部件，下面列出这个部件背后的公司；发 / 收切换信号路径。</p>
+      <p class="sub" id="layers"></p>
+    </aside>
+    <div>
+      <div class="bar">
+        <button class="btn on" data-dir="tx">发送 TX</button>
+        <button class="btn" data-dir="rx">接收 RX</button>
+        <button class="btn" data-dir="both">同时</button>
+        <div class="legend"><span class="e"><i></i>电信号</span><span class="o"><i></i>光信号</span><span class="r"><i></i>RX 虚线</span></div>
+      </div>
+      <div class="cross" id="cross"></div>
+      <div class="strip" id="strip"></div>
+    </div>
+  </div>
+
+  <div class="detail" id="detail"><div class="empty">点一个部件，或者点上面的信号站点。</div></div>
+
+  <div class="section">
+    <aside>
+      <div class="eyebrow">Part × stage</div>
+      <h2>全景表 · 谁在哪一层</h2>
+      <p class="sub">行是部件（按发送信号顺序），列是产业阶段。同一家公司在多行出现，说明它在这只模块里吃到多个环节。</p>
+      <div class="bar" id="mfilter">
+        <button class="btn on" data-m="all">全部</button>
+        <button class="btn" data-m="A">A 股</button>
+        <button class="btn" data-m="US">美股</button>
+        <button class="btn" data-m="other">其他市场</button>
+        <button class="btn" data-m="P">非上市</button>
+      </div>
+      <div class="bar" id="efilter">
+        <button class="btn on" data-e="all">全部证据级</button>
+        <button class="btn" data-e="verified">仅已核验</button>
+        <button class="btn" data-e="nocand">去掉候选</button>
+      </div>
+    </aside>
+    <div>
+      <div class="matrix" id="matrix"></div>
+      <div class="eyebrow" style="margin-top:22px">Multi-part exposure</div>
+      <div class="cross-count" id="cross-count"></div>
+    </div>
+  </div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>window.__TEARDOWN_DATA__ = null;window.__TEARDOWN_DATA__ = {"$comment": "物理优先的数据模型：一个真实在用的模块 → 横截面分层 → 部件 → 信号经过的顺序 → 每个部件背后的公司（按产业阶段）。公司条目的 evidence：verified=公开披露/官方资料可查；consensus=多家券商或行业媒体一致；candidate=方向正确但具体供货关系待核验。示例数据不含任何行情。", "schemaVersion": "0.1", "asOf": "2026-09-04", "module": {"id": "om.1p6t.osfp.dr8.siph", "name": "1.6T OSFP DR8 硅光模块", "nameEn": "1.6T OSFP224 DR8 silicon-photonics transceiver", "formFactor": "OSFP224（IHS / Closed Finned Top 风冷顶盖）", "spec": {"lanes": "8 × 200G PAM4（电口 8×224G，光口 8×200G 单波）", "wavelength": "1310 nm（O 波段），单模光纤", "reach": "500 m（DR8）", "connector": "双 MPO-12/APC 或 MPO-16/APC", "power": "约 22–25 W（全 DSP 重定时）；LRO 约 16 W；LPO 目标 ≤ 10 W", "architecture": "硅光 PIC + 外置 CW 激光器（2 颗，每颗供 4 路）+ 3nm DSP 重定时"}, "hostContext": {"summary": "插在英伟达 Quantum-X800（Q3400，72 个 twin-port OSFP 笼子）/ Spectrum-X800 交换机，以及 ConnectX-8/9 网卡侧（CX-8 用 800G 单口，CX-9 世代 1.6T/NIC）。Rubin 世代机柜的 scale-out 网络主力。", "platforms": [{"name": "NVIDIA Quantum-X800 Q3400", "role": "InfiniBand XDR 交换机，144×800G 逻辑口 / 72 个 1.6T 笼子"}, {"name": "NVIDIA Spectrum-X800 / X1600", "role": "以太网交换机，1.6T 前面板光口（部分 SKU 走 CPO）"}, {"name": "NVIDIA ConnectX-8 / ConnectX-9", "role": "网卡侧：CX-8 800G 单口（1.6T 笼子 2×800G 拆分），CX-9 1.6 Tb/s 每卡"}, {"name": "Broadcom Tomahawk 6", "role": "102.4T 以太网交换 ASIC，2026 年 3 月量产，同样消耗 1.6T 前面板模块"}]}, "stages": [{"id": "material", "name": "材料", "order": 1}, {"id": "chip", "name": "芯片", "order": 2}, {"id": "device", "name": "器件 / 封装", "order": 3}, {"id": "engine", "name": "引擎 / 组装", "order": 4}, {"id": "connect", "name": "连接", "order": 5}, {"id": "module", "name": "模块 / 客户", "order": 6}, {"id": "equip", "name": "设备 / 测试", "order": 7}], "layers": [{"id": "layer.lid", "name": "顶盖与散热", "order": 1, "note": "IHS 或翅片顶盖，下面是 TIM 与拉环机构"}, {"id": "layer.engine", "name": "光引擎", "order": 2, "note": "PIC 为底，Driver/TIA 倒装在 PIC 上或贴在旁边，CW 激光器与 FAU 与 PIC 边缘耦合"}, {"id": "layer.pcb", "name": "主 PCB 与电芯片", "order": 3, "note": "DSP、电源、MCU 在主板上，前端金手指插入主机笼子"}, {"id": "layer.shell", "name": "壳体与机械", "order": 4, "note": "OSFP 金属壳、EMI 弹片、MPO 插座座体"}], "signalPath": {"tx": [{"step": 1, "partId": "part.host-cage", "signal": "电", "text": "主机交换 ASIC / NIC 的 SerDes 经 OSFP 笼子与连接器送入"}, {"step": 2, "partId": "part.edge-fingers", "signal": "电", "text": "8 路 224G PAM4 差分信号进金手指"}, {"step": 3, "partId": "part.pcb", "signal": "电", "text": "低损耗 PCB 走线到 DSP"}, {"step": 4, "partId": "part.dsp", "signal": "电", "text": "DSP 做 CDR、均衡、FEC、重定时，输出 8×200G"}, {"step": 5, "partId": "part.driver", "signal": "电", "text": "驱动器把 DSP 输出放大到调制器所需摆幅"}, {"step": 6, "partId": "part.cw-laser", "signal": "光", "text": "外置 CW 激光器（2 颗）经隔离器 / 透镜 / 保偏光纤把连续光送入 PIC"}, {"step": 7, "partId": "part.pic", "signal": "电→光", "text": "PIC 上 1×4 分束后由 MZM 调制器把电信号写到光上，波导汇到边缘耦合器"}, {"step": 8, "partId": "part.fau", "signal": "光", "text": "FAU 把 8 路调制光（+ 2 路供光）与 PIC 边缘对准耦合"}, {"step": 9, "partId": "part.mpo", "signal": "光", "text": "MPO 插座把光纤带引到面板，接 MPO-12/16 跳线"}], "rx": [{"step": 1, "partId": "part.mpo", "signal": "光", "text": "8 路光从 MPO 进入"}, {"step": 2, "partId": "part.fau", "signal": "光", "text": "FAU 耦合到 PIC 接收波导"}, {"step": 3, "partId": "part.pd", "signal": "光→电", "text": "PIC 上的 Ge 光电探测器把光变成光电流"}, {"step": 4, "partId": "part.tia", "signal": "电", "text": "TIA 把微安级电流放大成电压"}, {"step": 5, "partId": "part.dsp", "signal": "电", "text": "DSP 做 ADC、均衡、FEC 解码、重定时"}, {"step": 6, "partId": "part.pcb", "signal": "电", "text": "走线回到金手指"}, {"step": 7, "partId": "part.edge-fingers", "signal": "电", "text": "送回主机 SerDes"}]}, "parts": [{"id": "part.host-cage", "layerId": "layer.shell", "name": "主机侧 OSFP 笼子 / 连接器", "nameEn": "Host OSFP cage and connector", "function": "模块与交换机/网卡主板之间的机械与电气接口，属于系统边界，不在模块内部", "keySpecs": ["OSFP 8 对差分 224G", "twin-port 笼子（Q3400）", "EMI 屏蔽、散热接触"], "materials": ["铜合金弹片", "LCP 塑胶", "镀金/镀镍"], "companies": [{"name": "Amphenol", "ticker": "APH", "market": "US", "stage": "connect", "role": "OSFP 笼子与连接器", "evidence": "verified"}, {"name": "TE Connectivity", "ticker": "TEL", "market": "US", "stage": "connect", "role": "OSFP 笼子与连接器", "evidence": "verified"}, {"name": "Molex（Koch 旗下）", "ticker": "", "market": "私有", "stage": "connect", "role": "OSFP 笼子与连接器", "evidence": "verified"}, {"name": "华丰科技", "ticker": "688629.SH", "market": "A", "stage": "connect", "role": "高速背板/IO 连接器，国产替代候选", "evidence": "candidate"}, {"name": "立讯精密", "ticker": "002475.SZ", "market": "A", "stage": "connect", "role": "高速连接器与线缆组件", "evidence": "consensus"}, {"name": "NVIDIA", "ticker": "NVDA", "market": "US", "stage": "module", "role": "主机：Quantum-X800 / Spectrum-X / ConnectX", "evidence": "verified"}, {"name": "Broadcom", "ticker": "AVGO", "market": "US", "stage": "chip", "role": "主机交换 ASIC Tomahawk 6", "evidence": "verified"}]}, {"id": "part.edge-fingers", "layerId": "layer.pcb", "name": "金手指", "nameEn": "Edge fingers", "function": "主 PCB 前端的镀金触点，承载 8 路发 + 8 路收的 224G 差分对以及供电、I2C 管理信号", "keySpecs": ["OSFP 60 pin", "镀硬金", "阻抗控制 ±10%"], "materials": ["同 PCB", "化学镍金 / 电镀硬金"], "companies": [{"name": "沪电股份", "ticker": "002463.SZ", "market": "A", "stage": "device", "role": "随主 PCB 一并制造", "evidence": "consensus"}, {"name": "深南电路", "ticker": "002916.SZ", "market": "A", "stage": "device", "role": "随主 PCB 一并制造", "evidence": "consensus"}]}, {"id": "part.pcb", "layerId": "layer.pcb", "name": "主 PCB（高速多层板）", "nameEn": "Module main PCB", "function": "承载 DSP、电源、MCU，并以低损耗走线把金手指接到 DSP、DSP 接到光引擎", "keySpecs": ["10–16 层", "超低损耗材料（M7/M8 级）", "背钻、阻抗控制", "224G 通道插损预算"], "materials": ["高速覆铜板（CCL）", "低粗糙度铜箔（HVLP）", "低介电玻纤布"], "companies": [{"name": "沪电股份", "ticker": "002463.SZ", "market": "A", "stage": "device", "role": "光模块/交换机高速 PCB 主力供应商", "evidence": "consensus"}, {"name": "深南电路", "ticker": "002916.SZ", "market": "A", "stage": "device", "role": "高速 PCB", "evidence": "consensus"}, {"name": "胜宏科技", "ticker": "300476.SZ", "market": "A", "stage": "device", "role": "AI 服务器/网络高多层板", "evidence": "consensus"}, {"name": "TTM Technologies", "ticker": "TTMI", "market": "US", "stage": "device", "role": "北美高速 PCB", "evidence": "consensus"}, {"name": "生益科技", "ticker": "600183.SH", "market": "A", "stage": "material", "role": "高速覆铜板", "evidence": "consensus"}, {"name": "台光电子", "ticker": "2383.TW", "market": "TW", "stage": "material", "role": "高速覆铜板（M8 级）", "evidence": "consensus"}, {"name": "Panasonic（Megtron）", "ticker": "6752.T", "market": "JP", "stage": "material", "role": "Megtron 6/7/8 高速材料", "evidence": "verified"}, {"name": "Rogers", "ticker": "ROG", "market": "US", "stage": "material", "role": "高频/低损耗基材", "evidence": "consensus"}, {"name": "中材科技", "ticker": "002080.SZ", "market": "A", "stage": "material", "role": "低介电玻纤布（Low-Dk 布）", "evidence": "candidate"}, {"name": "菲利华", "ticker": "300395.SZ", "market": "A", "stage": "material", "role": "石英/低介电玻纤候选", "evidence": "candidate"}]}, {"id": "part.dsp", "layerId": "layer.pcb", "name": "DSP（重定时芯片）", "nameEn": "1.6T PAM4 DSP", "function": "主机侧 8×224G 与光侧 8×200G 之间的 CDR、均衡、FEC、重定时；是模块功耗与 BOM 的最大单项", "keySpecs": ["3 nm", "8×224G ↔ 8×200G PAM4", "集成 Driver/TIA 的版本可选", "约 8–10 W"], "materials": ["先进逻辑代工（3 nm）", "倒装封装基板"], "companies": [{"name": "Broadcom（Sian3 / BCM83628）", "ticker": "AVGO", "market": "US", "stage": "chip", "role": "1.6T DSP 主力，2025 Q3 量产", "evidence": "verified"}, {"name": "Marvell（Ara）", "ticker": "MRVL", "market": "US", "stage": "chip", "role": "3 nm 1.6T DSP，2026 年放量；含 LRO / coherent-lite 变体", "evidence": "verified"}, {"name": "Credo", "ticker": "CRDO", "market": "US", "stage": "chip", "role": "DSP / AEC 与 LRO 侧候选", "evidence": "candidate"}, {"name": "TSMC", "ticker": "TSM / 2330.TW", "market": "TW", "stage": "chip", "role": "3 nm 逻辑代工", "evidence": "consensus"}, {"name": "国产 DSP（暂无成熟量产者）", "ticker": "", "market": "—", "stage": "chip", "role": "1.6T 级 DSP 仍是进口依赖项", "evidence": "consensus"}]}, {"id": "part.power-mgmt", "layerId": "layer.pcb", "name": "电源 / MCU / 存储", "nameEn": "Power, MCU, EEPROM", "function": "3.3V 转多路核心电压、模块管理（CMIS）、DDM 监控与温控", "keySpecs": ["多路 PMIC / LDO", "MCU 跑 CMIS 5.x", "I2C 管理接口"], "materials": ["通用半导体"], "companies": [{"name": "Monolithic Power Systems", "ticker": "MPWR", "market": "US", "stage": "chip", "role": "PMIC", "evidence": "consensus"}, {"name": "Texas Instruments", "ticker": "TXN", "market": "US", "stage": "chip", "role": "电源与模拟", "evidence": "consensus"}, {"name": "Analog Devices", "ticker": "ADI", "market": "US", "stage": "chip", "role": "电源与模拟", "evidence": "consensus"}, {"name": "圣邦股份", "ticker": "300661.SZ", "market": "A", "stage": "chip", "role": "国产电源管理候选", "evidence": "candidate"}]}, {"id": "part.driver", "layerId": "layer.engine", "name": "调制器驱动器（Driver）", "nameEn": "MZM driver", "function": "把 DSP 的输出放大到硅光 MZM 需要的驱动摆幅；LPO/LRO 路线里它还要兼做线性均衡", "keySpecs": ["8 通道 200G", "SiGe BiCMOS 或 CMOS", "倒装在 PIC 上或独立贴片"], "materials": ["SiGe / CMOS 晶圆"], "companies": [{"name": "MACOM", "ticker": "MTSI", "market": "US", "stage": "chip", "role": "Driver / TIA 主力（含 LPO）", "evidence": "verified"}, {"name": "Semtech", "ticker": "SMTC", "market": "US", "stage": "chip", "role": "Driver / TIA（200G/lane）", "evidence": "verified"}, {"name": "Broadcom", "ticker": "AVGO", "market": "US", "stage": "chip", "role": "与 DSP 配套的 Driver/TIA", "evidence": "consensus"}, {"name": "Marvell", "ticker": "MRVL", "market": "US", "stage": "chip", "role": "与 DSP 配套的 Driver/TIA", "evidence": "consensus"}, {"name": "厦门优迅", "ticker": "", "market": "私有", "stage": "chip", "role": "国产 Driver/TIA（含拟上市）", "evidence": "candidate"}, {"name": "中际旭创（自研）", "ticker": "300308.SZ", "market": "A", "stage": "chip", "role": "部分硅光方案自研驱动/TIA 的传闻", "evidence": "candidate"}]}, {"id": "part.tia", "layerId": "layer.engine", "name": "跨阻放大器（TIA）", "nameEn": "Transimpedance amplifier", "function": "把 PD 的微弱光电流放大为 DSP 可采样的电压，决定接收灵敏度", "keySpecs": ["8 通道 200G", "低噪声、高线性", "常与 Driver 同厂"], "materials": ["SiGe / CMOS 晶圆"], "companies": [{"name": "MACOM", "ticker": "MTSI", "market": "US", "stage": "chip", "role": "TIA", "evidence": "verified"}, {"name": "Semtech", "ticker": "SMTC", "market": "US", "stage": "chip", "role": "TIA", "evidence": "verified"}, {"name": "Broadcom", "ticker": "AVGO", "market": "US", "stage": "chip", "role": "TIA", "evidence": "consensus"}, {"name": "Marvell", "ticker": "MRVL", "market": "US", "stage": "chip", "role": "TIA", "evidence": "consensus"}, {"name": "厦门优迅", "ticker": "", "market": "私有", "stage": "chip", "role": "国产 TIA 候选", "evidence": "candidate"}]}, {"id": "part.cw-laser", "layerId": "layer.engine", "name": "CW 激光器（外置光源）", "nameEn": "High-power CW DFB laser", "function": "为硅光 PIC 提供 1310 nm 连续光；1.6T DR8 通常 2 颗高功率 CW，每颗分 4 路。是硅光路线最紧的上游", "keySpecs": ["InP DFB，1310 nm", "输出功率 70–100 mW 级", "无 TEC", "带隔离器耦合到 PIC"], "materials": ["InP 衬底", "MOCVD 外延", "AR/HR 镀膜"], "companies": [{"name": "Lumentum", "ticker": "LITE", "market": "US", "stage": "chip", "role": "高功率 CW 激光器（含 CPO 外置光源）", "evidence": "verified"}, {"name": "Coherent", "ticker": "COHR", "market": "US", "stage": "chip", "role": "InP 激光器（CW/EML）", "evidence": "verified"}, {"name": "Broadcom", "ticker": "AVGO", "market": "US", "stage": "chip", "role": "CW / EML 激光器", "evidence": "consensus"}, {"name": "Sumitomo Electric", "ticker": "5802.T", "market": "JP", "stage": "chip", "role": "InP 激光器", "evidence": "consensus"}, {"name": "Mitsubishi Electric", "ticker": "6503.T", "market": "JP", "stage": "chip", "role": "InP 激光器 / EML", "evidence": "consensus"}, {"name": "源杰科技", "ticker": "688498.SH", "market": "A", "stage": "chip", "role": "高功率 CW 光源与 200G EML，A 股最直接标的", "evidence": "verified"}, {"name": "长光华芯", "ticker": "688048.SH", "market": "A", "stage": "chip", "role": "CW 激光器进入送样/小批量", "evidence": "consensus"}, {"name": "仕佳光子", "ticker": "688313.SH", "market": "A", "stage": "chip", "role": "CW 激光器与 AWG", "evidence": "consensus"}, {"name": "武汉敏芯", "ticker": "", "market": "私有", "stage": "chip", "role": "国产 CW/EML 候选", "evidence": "candidate"}, {"name": "云岭光电", "ticker": "", "market": "私有", "stage": "chip", "role": "国产 CW/EML 候选", "evidence": "candidate"}, {"name": "Sumitomo Electric（衬底）", "ticker": "5802.T", "market": "JP", "stage": "material", "role": "InP 衬底", "evidence": "verified"}, {"name": "AXT / 北京通美", "ticker": "AXTI", "market": "US", "stage": "material", "role": "InP 衬底（产能在中国）", "evidence": "verified"}, {"name": "JX Advanced Metals", "ticker": "5016.T", "market": "JP", "stage": "material", "role": "InP 衬底", "evidence": "consensus"}, {"name": "云南锗业（鑫耀半导体）", "ticker": "002428.SZ", "market": "A", "stage": "material", "role": "InP 衬底国产候选", "evidence": "candidate"}, {"name": "Aixtron", "ticker": "AIXA.DE", "market": "DE", "stage": "equip", "role": "InP MOCVD 设备", "evidence": "verified"}, {"name": "Veeco", "ticker": "VECO", "market": "US", "stage": "equip", "role": "MOCVD 设备", "evidence": "consensus"}]}, {"id": "part.laser-coupling", "layerId": "layer.engine", "name": "光源耦合：隔离器 / 透镜 / 保偏光纤", "nameEn": "Laser coupling optics", "function": "把 CW 激光器的光稳定送进 PIC：隔离器防回光、透镜或保偏光纤对准", "keySpecs": ["微型隔离器", "非球面透镜", "PM 光纤或片上耦合"], "materials": ["磁光晶体（钆镓石榴石 / 铋铁石榴石）", "光学玻璃", "保偏光纤"], "companies": [{"name": "天孚通信", "ticker": "300394.SZ", "market": "A", "stage": "device", "role": "激光器封装、ELS 外置光源组件", "evidence": "verified"}, {"name": "光库科技", "ticker": "300620.SZ", "market": "A", "stage": "device", "role": "光隔离器、薄膜铌酸锂", "evidence": "consensus"}, {"name": "腾景科技", "ticker": "688195.SH", "market": "A", "stage": "device", "role": "精密光学元件（透镜、棱镜）", "evidence": "consensus"}, {"name": "福晶科技", "ticker": "002222.SZ", "market": "A", "stage": "material", "role": "光学晶体与元件", "evidence": "candidate"}, {"name": "Fujikura", "ticker": "5803.T", "market": "JP", "stage": "material", "role": "保偏光纤", "evidence": "consensus"}]}, {"id": "part.pic", "layerId": "layer.engine", "name": "硅光 PIC（调制器 + 波导 + 分束）", "nameEn": "Silicon-photonics PIC (MZM, waveguide, splitter, edge coupler)", "function": "模块的心脏：1×4 分束、8 路 MZM 调制器把电写到光上，波导汇到边缘耦合器；接收侧的波导与 Ge PD 也在同一颗芯片", "keySpecs": ["SOI 平台", "MZM 或环形调制器，200G/lane", "边缘耦合器 + 模斑转换", "Ge 外延 PD 单片集成"], "materials": ["SOI 晶圆", "Ge 外延", "SiN 层"], "companies": [{"name": "中际旭创（自研 PIC）", "ticker": "300308.SZ", "market": "A", "stage": "chip", "role": "自研硅光芯片、1.6T 硅光模块主力", "evidence": "verified"}, {"name": "新易盛", "ticker": "300502.SZ", "market": "A", "stage": "chip", "role": "硅光方案（自研 + 外采）", "evidence": "consensus"}, {"name": "光迅科技", "ticker": "002281.SZ", "market": "A", "stage": "chip", "role": "自研硅光与 EML 芯片", "evidence": "verified"}, {"name": "华工科技（华工正源）", "ticker": "000988.SZ", "market": "A", "stage": "chip", "role": "硅光 1.6T 模块与芯片", "evidence": "consensus"}, {"name": "Coherent", "ticker": "COHR", "market": "US", "stage": "chip", "role": "自有硅光平台", "evidence": "verified"}, {"name": "Marvell（原 Inphi 硅光）", "ticker": "MRVL", "market": "US", "stage": "chip", "role": "硅光 PIC + DSP 打包方案", "evidence": "verified"}, {"name": "Broadcom", "ticker": "AVGO", "market": "US", "stage": "chip", "role": "硅光 PIC（CPO 与可插拔）", "evidence": "verified"}, {"name": "Cisco / Acacia", "ticker": "CSCO", "market": "US", "stage": "chip", "role": "硅光 PIC 与模块", "evidence": "verified"}, {"name": "Tower Semiconductor", "ticker": "TSEM", "market": "US/IL", "stage": "chip", "role": "硅光代工头号玩家", "evidence": "verified"}, {"name": "GlobalFoundries", "ticker": "GFS", "market": "US", "stage": "chip", "role": "硅光代工（Fotonix）", "evidence": "verified"}, {"name": "TSMC（COUPE）", "ticker": "TSM / 2330.TW", "market": "TW", "stage": "chip", "role": "硅光代工与 CPO 平台", "evidence": "verified"}, {"name": "联合微电子中心 CUMEC", "ticker": "", "market": "私有", "stage": "chip", "role": "国产硅光代工", "evidence": "consensus"}, {"name": "中芯国际", "ticker": "688981.SH / 0981.HK", "market": "A/HK", "stage": "chip", "role": "硅光代工候选", "evidence": "candidate"}, {"name": "Soitec", "ticker": "SOI.PA", "market": "FR", "stage": "material", "role": "光子级 SOI 晶圆（Photonics-SOI）", "evidence": "verified"}, {"name": "沪硅产业（上海新傲）", "ticker": "688126.SH", "market": "A", "stage": "material", "role": "SOI 晶圆国产", "evidence": "consensus"}]}, {"id": "part.pd", "layerId": "layer.engine", "name": "Ge 光电探测器（PD）", "nameEn": "Germanium photodiode (on PIC)", "function": "接收侧把 8 路光转成电流；硅光方案里是 PIC 上外延生长的 Ge PD，不是独立芯片", "keySpecs": ["Ge-on-Si", "带宽 > 70 GHz", "响应度约 0.8–1 A/W"], "materials": ["Ge 外延源（锗烷）"], "companies": [{"name": "随硅光 PIC 代工（Tower / GF / TSMC）", "ticker": "", "market": "—", "stage": "chip", "role": "Ge PD 与 PIC 同片制造", "evidence": "verified"}, {"name": "三安光电", "ticker": "600703.SH", "market": "A", "stage": "chip", "role": "InP PD（EML 路线用的独立 PD）", "evidence": "candidate"}, {"name": "光迅科技", "ticker": "002281.SZ", "market": "A", "stage": "chip", "role": "自研 PD", "evidence": "consensus"}, {"name": "云南锗业", "ticker": "002428.SZ", "market": "A", "stage": "material", "role": "锗材料", "evidence": "candidate"}]}, {"id": "part.engine-assembly", "layerId": "layer.engine", "name": "光引擎组装（COB / 倒装 / 耦合）", "nameEn": "Optical engine assembly", "function": "把 Driver/TIA 倒装到 PIC、激光器贴装、FAU 主动对准耦合、打线与固化——是 1.6T 良率与产能的瓶颈工序", "keySpecs": ["亚微米主动对准", "倒装焊 / 打线", "UV 或热固化胶"], "materials": ["导电胶 / 底填胶", "UV 胶", "金线"], "companies": [{"name": "中际旭创", "ticker": "300308.SZ", "market": "A", "stage": "engine", "role": "自有引擎产线（泰国 + 苏州）", "evidence": "verified"}, {"name": "新易盛", "ticker": "300502.SZ", "market": "A", "stage": "engine", "role": "自有引擎产线（泰国）", "evidence": "verified"}, {"name": "天孚通信", "ticker": "300394.SZ", "market": "A", "stage": "engine", "role": "光引擎代工 / 无源器件组装", "evidence": "verified"}, {"name": "Fabrinet", "ticker": "FN", "market": "US", "stage": "engine", "role": "NVIDIA 自有品牌模块的主要代工", "evidence": "verified"}, {"name": "罗博特科（ficonTEC）", "ticker": "300757.SZ", "market": "A", "stage": "equip", "role": "光电子自动耦合 / 组装设备", "evidence": "verified"}, {"name": "ASMPT", "ticker": "0522.HK", "market": "HK", "stage": "equip", "role": "倒装 / 贴片设备", "evidence": "consensus"}, {"name": "Mycronic（MRSI）", "ticker": "MYCR.ST", "market": "SE", "stage": "equip", "role": "高精度光电子贴装", "evidence": "consensus"}, {"name": "Palomar Technologies", "ticker": "", "market": "私有", "stage": "equip", "role": "贴装与打线", "evidence": "consensus"}, {"name": "快克智能", "ticker": "603203.SH", "market": "A", "stage": "equip", "role": "精密焊接 / 组装设备候选", "evidence": "candidate"}]}, {"id": "part.fau", "layerId": "layer.engine", "name": "光纤阵列单元（FAU）", "nameEn": "Fiber array unit", "function": "把 10–18 根光纤按 127/250 µm 间距固定在 V 槽玻璃上，端面研磨后与 PIC 边缘耦合；硅光模块无源器件价值量最大的一项", "keySpecs": ["V 槽玻璃 + 盖板", "16–18 芯", "端面 8° 斜角", "耦合损耗 < 1 dB"], "materials": ["V 槽玻璃（硼硅 / 石英）", "单模光纤", "UV 胶"], "companies": [{"name": "天孚通信", "ticker": "300394.SZ", "market": "A", "stage": "device", "role": "FAU 全球主力，绑定头部模块厂与北美客户", "evidence": "verified"}, {"name": "太辰光", "ticker": "300570.SZ", "market": "A", "stage": "device", "role": "FAU 与 MPO 一体", "evidence": "verified"}, {"name": "Fujikura", "ticker": "5803.T", "market": "JP", "stage": "device", "role": "FAU / 光纤带", "evidence": "consensus"}, {"name": "Senko", "ticker": "", "market": "私有", "stage": "device", "role": "FAU / 连接器", "evidence": "consensus"}, {"name": "长飞光纤", "ticker": "601869.SH / 6869.HK", "market": "A/HK", "stage": "material", "role": "单模 / 特种光纤", "evidence": "consensus"}, {"name": "Corning", "ticker": "GLW", "market": "US", "stage": "material", "role": "光纤与特种玻璃", "evidence": "verified"}, {"name": "亨通光电", "ticker": "600487.SH", "market": "A", "stage": "material", "role": "光纤", "evidence": "candidate"}]}, {"id": "part.mpo", "layerId": "layer.shell", "name": "MPO 插座与 MT 插芯", "nameEn": "MPO receptacle and MT ferrule", "function": "模块面板上的光接口：MT 插芯把光纤带端面对准，插座固定在壳体上，外接 MPO-12/16 APC 跳线", "keySpecs": ["MPO-12 ×2 或 MPO-16", "APC 8°", "MT 插芯（US Conec MTP 标准）"], "materials": ["MT 插芯（PPS 塑胶 + 导销）", "陶瓷 / 金属导销"], "companies": [{"name": "US Conec", "ticker": "", "market": "私有", "stage": "connect", "role": "MT 插芯与 MTP 事实标准", "evidence": "verified"}, {"name": "太辰光", "ticker": "300570.SZ", "market": "A", "stage": "connect", "role": "MPO 连接器 / 跳线龙头", "evidence": "verified"}, {"name": "Senko", "ticker": "", "market": "私有", "stage": "connect", "role": "MPO 连接器", "evidence": "verified"}, {"name": "长芯盛", "ticker": "", "market": "私有", "stage": "connect", "role": "MPO 组件", "evidence": "candidate"}, {"name": "三环集团", "ticker": "300408.SZ", "market": "A", "stage": "material", "role": "陶瓷插芯（LC/SC 用，MT 为塑胶，相关性弱）", "evidence": "candidate"}, {"name": "Corning", "ticker": "GLW", "market": "US", "stage": "connect", "role": "数据中心光连接系统", "evidence": "consensus"}]}, {"id": "part.lid-thermal", "layerId": "layer.lid", "name": "顶盖 / 散热与 TIM", "nameEn": "IHS or finned top, TIM", "function": "把 DSP、Driver、激光器约 22–25 W 的热量导到笼子散热器；风冷用 Finned Top，液冷平台用 IHS 平顶", "keySpecs": ["锌合金 / 铜合金顶盖", "TIM 导热垫 / 相变材料", "翅片顶盖为 NVIDIA 平台专用形态"], "materials": ["锌合金压铸", "铜", "石墨 / 硅胶 TIM"], "companies": [{"name": "飞荣达", "ticker": "300602.SZ", "market": "A", "stage": "device", "role": "TIM 与散热结构件", "evidence": "consensus"}, {"name": "中石科技", "ticker": "300684.SZ", "market": "A", "stage": "device", "role": "TIM / 石墨", "evidence": "consensus"}, {"name": "精研科技", "ticker": "300709.SZ", "market": "A", "stage": "device", "role": "MIM 金属结构件候选", "evidence": "candidate"}, {"name": "Honeywell / Dow", "ticker": "HON / DOW", "market": "US", "stage": "material", "role": "TIM 材料", "evidence": "consensus"}]}, {"id": "part.shell", "layerId": "layer.shell", "name": "OSFP 壳体 / 拉环 / EMI", "nameEn": "OSFP housing, latch, EMI gasket", "function": "机械保护、EMI 屏蔽、插拔机构；OSFP 比 QSFP-DD 更大，为散热留空间", "keySpecs": ["锌合金压铸 + 镀镍", "EMI 弹片", "拉环 / 拉带"], "materials": ["锌合金", "不锈钢弹片", "塑胶"], "companies": [{"name": "天孚通信", "ticker": "300394.SZ", "market": "A", "stage": "device", "role": "精密结构件与壳体", "evidence": "consensus"}, {"name": "中瓷电子", "ticker": "003031.SZ", "market": "A", "stage": "device", "role": "陶瓷封装壳体（TO / 盒式封装更相关）", "evidence": "consensus"}, {"name": "铭普光磁", "ticker": "002902.SZ", "market": "A", "stage": "device", "role": "结构件 / 磁性元件候选", "evidence": "candidate"}, {"name": "东莞 / 深圳压铸厂（未上市为主）", "ticker": "", "market": "私有", "stage": "device", "role": "壳体压铸", "evidence": "candidate"}]}, {"id": "part.module-maker", "layerId": "layer.shell", "name": "整模块：组装、测试、客户", "nameEn": "Module integration, test, customers", "function": "把引擎、PCB、壳体装成模块，做老化、眼图、误码测试后出货给 NVIDIA / 云厂商", "keySpecs": ["1.6T 2026 年出货预期约 1000 万只级（券商口径有 3000 万只）", "Q4 放量", "产能瓶颈在激光器与引擎封装"], "materials": [], "companies": [{"name": "中际旭创", "ticker": "300308.SZ", "market": "A", "stage": "module", "role": "全球份额第一，2025 Q3 起向北美头部客户出货 1.6T", "evidence": "verified"}, {"name": "新易盛", "ticker": "300502.SZ", "market": "A", "stage": "module", "role": "1.6T 第二梯队头部", "evidence": "verified"}, {"name": "光迅科技", "ticker": "002281.SZ", "market": "A", "stage": "module", "role": "国内 + 自研芯片", "evidence": "verified"}, {"name": "华工科技", "ticker": "000988.SZ", "market": "A", "stage": "module", "role": "1.6T 送样 / 小批量", "evidence": "consensus"}, {"name": "剑桥科技", "ticker": "603083.SH", "market": "A", "stage": "module", "role": "1.6T 送样，客户拓展中", "evidence": "consensus"}, {"name": "联特科技", "ticker": "301205.SZ", "market": "A", "stage": "module", "role": "800G/1.6T 二线", "evidence": "consensus"}, {"name": "华西股份（索尔思）", "ticker": "000936.SZ", "market": "A", "stage": "module", "role": "并购 Source Photonics", "evidence": "consensus"}, {"name": "Coherent", "ticker": "COHR", "market": "US", "stage": "module", "role": "海外模块 + 自有芯片", "evidence": "verified"}, {"name": "Fabrinet", "ticker": "FN", "market": "US", "stage": "module", "role": "NVIDIA 自有品牌（MMS4A00 等）代工", "evidence": "verified"}, {"name": "Cisco", "ticker": "CSCO", "market": "US", "stage": "module", "role": "自用 + 外销模块", "evidence": "consensus"}, {"name": "NVIDIA", "ticker": "NVDA", "market": "US", "stage": "module", "role": "最大客户；自有品牌 MMS4A00 / MMS4C10", "evidence": "verified"}, {"name": "Arista", "ticker": "ANET", "market": "US", "stage": "module", "role": "交换机客户", "evidence": "consensus"}, {"name": "Celestica", "ticker": "CLS", "market": "US", "stage": "module", "role": "白牌交换机 ODM", "evidence": "consensus"}, {"name": "Keysight", "ticker": "KEYS", "market": "US", "stage": "equip", "role": "224G 误码 / 眼图测试", "evidence": "verified"}, {"name": "Anritsu", "ticker": "6754.T", "market": "JP", "stage": "equip", "role": "误码仪", "evidence": "consensus"}, {"name": "Viavi", "ticker": "VIAV", "market": "US", "stage": "equip", "role": "光测试", "evidence": "consensus"}, {"name": "EXFO", "ticker": "", "market": "私有", "stage": "equip", "role": "光测试", "evidence": "consensus"}]}]}};</script>
+<script>
+(async function () {
+  let data = window.__TEARDOWN_DATA__;
+  if (!data) {
+    try { data = await (await fetch('./data/module-1.6t-dr8-siph.json')).json(); }
+    catch (e) { document.getElementById('detail').innerHTML = '<div class="empty">读不到 data/module-1.6t-dr8-siph.json：请用 <code>python -m http.server</code> 在 physical/ 目录起个服务，或打开 dist/ 里内联好数据的单文件。</div>'; return; }
+  }
+  const M = data.module;
+  const parts = Object.fromEntries(M.parts.map(p => [p.id, p]));
+  const stages = M.stages.slice().sort((a, b) => a.order - b.order);
+  const stageName = Object.fromEntries(stages.map(s => [s.id, s.name]));
+
+  // ---------- header ----------
+  document.getElementById('title').textContent = M.name;
+  document.getElementById('host').textContent = M.hostContext.summary;
+  document.getElementById('specs').innerHTML = Object.entries({
+    '形态': M.formFactor, '通道': M.spec.lanes, '波长/距离': M.spec.wavelength + ' · ' + M.spec.reach,
+    '光口': M.spec.connector, '功耗': M.spec.power, '架构': M.spec.architecture
+  }).map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+  document.getElementById('layers').innerHTML = M.layers.slice().sort((a, b) => a.order - b.order)
+    .map(l => `<b style="color:var(--fg)">${l.name}</b> — ${l.note}`).join('<br>');
+  document.getElementById('foot').textContent = `schema ${data.schemaVersion} · as of ${data.asOf} · ${M.parts.length} 个部件 · ${M.parts.reduce((n, p) => n + p.companies.length, 0)} 条公司映射 · 证据级：● 已核验  ● 行业共识  ● 候选 · 不含任何行情数据`;
+
+  // ---------- cross-section geometry (side view, 1200 × 330) ----------
+  // Each shape: id → svg fragment. Anchor points (ax, ay) are where the signal path visits.
+  const G = {
+    'part.host-cage':     { rect: [10, 140, 110, 160], fill: '#1f1f1f', label: '主机 OSFP 笼子', big: true, ax: 60, ay: 250 },
+    'part.lid-thermal':   { custom: lidShape, ax: 620, ay: 171 },
+    'part.shell':         { custom: shellShape, ax: 400, ay: 292 },
+    'part.edge-fingers':  { rect: [122, 236, 34, 22], fill: '#b8860b', label: '金手指', ax: 140, ay: 247 },
+    'part.pcb':           { rect: [130, 258, 850, 16], fill: '#1b3a2a', label: '主 PCB · 高速多层板', ax: 240, ay: 266 },
+    'part.power-mgmt':    { rect: [175, 232, 70, 26], fill: '#2a2a2a', label: '电源/MCU', ax: 210, ay: 245 },
+    'part.dsp':           { rect: [300, 196, 150, 62], fill: '#3b2a5c', label: 'DSP 3nm', big: true, ax: 375, ay: 227 },
+    'part.cw-laser':      { rect: [500, 224, 66, 34], fill: '#4a1f1f', label: 'CW ×2', ax: 533, ay: 241 },
+    'part.laser-coupling':{ rect: [568, 228, 24, 26], fill: '#333', label: '', ax: 580, ay: 241 },
+    'part.pic':           { rect: [594, 232, 300, 26], fill: '#123a4a', label: '硅光 PIC · MZM · 波导 · 分束', ax: 700, ay: 245 },
+    'part.driver':        { rect: [612, 202, 74, 30], fill: '#3a2f14', label: 'Driver', ax: 649, ay: 217 },
+    'part.tia':           { rect: [726, 202, 74, 30], fill: '#3a2f14', label: 'TIA', ax: 763, ay: 217 },
+    'part.pd':            { rect: [830, 236, 50, 18], fill: '#1e5e6a', label: 'Ge PD', ax: 855, ay: 245 },
+    'part.engine-assembly': { custom: engineOutline, ax: 745, ay: 194 },
+    'part.fau':           { rect: [898, 226, 54, 34], fill: '#2b2b2b', label: 'FAU', ax: 925, ay: 243 },
+    'part.mpo':           { rect: [986, 205, 130, 82], fill: '#1c1c1c', label: 'MPO 插座', big: true, ax: 1051, ay: 246 },
+    'part.module-maker':  { custom: moduleOutline, ax: 1150, ay: 150 },
+  };
+  const SY = 1.75, Y0 = 44; const Y = y => Math.round((y - Y0) * SY + Y0); const H = h => Math.round(h * SY);
+  function lidShape() {
+    let fins = '';
+    for (let x = 140; x < 960; x += 20) fins += `<rect x="${x}" y="${Y(140)}" width="10" height="${H(22)}" fill="#2a2a2a"/>`;
+    return fins + `<rect x="130" y="${Y(162)}" width="850" height="${H(18)}" fill="#303030"/><rect x="130" y="${Y(180)}" width="850" height="${H(6)}" fill="#4b4b3a"/>` +
+      `<text class="lbl big" x="560" y="${Y(171)}" text-anchor="middle">顶盖 · Finned Top · TIM</text>`;
+  }
+  function shellShape() {
+    return `<rect x="122" y="${Y(274)}" width="864" height="${H(26)}" fill="#222"/><rect x="122" y="${Y(162)}" width="8" height="${H(138)}" fill="#222"/>` +
+      `<text class="lbl" x="560" y="${Y(291)}" text-anchor="middle">OSFP 壳体 · 拉环 · EMI</text>`;
+  }
+  function engineOutline() {
+    return `<rect x="494" y="${Y(190)}" width="466" height="${H(72)}" fill="none" stroke-dasharray="4 3"/><text class="lbl tiny" x="500" y="${Y(199)}">光引擎（COB / 倒装 / 耦合）</text>`;
+  }
+  function moduleOutline() {
+    return `<rect x="1128" y="${Y(128)}" width="62" height="${H(46)}" rx="6" fill="#151515"/><text class="lbl tiny" x="1159" y="${Y(142)}" text-anchor="middle">整模块</text><text class="lbl tiny" x="1159" y="${Y(154)}" text-anchor="middle">组装·测试</text><text class="lbl tiny" x="1159" y="${Y(166)}" text-anchor="middle">客户</text>`;
+  }
+  function shape(id, g) {
+    if (g.custom) return `<g class="part-shape" data-part="${id}">${g.custom()}</g>`;
+    const [x, y, w, h] = g.rect;
+    const lbl = g.label ? `<text class="lbl${g.big ? ' big' : ''}" x="${x + w / 2}" y="${Y(y + h / 2) + 4}" text-anchor="middle">${g.label}</text>` : '';
+    return `<g class="part-shape" data-part="${id}"><rect x="${x}" y="${Y(y)}" width="${w}" height="${H(h)}" rx="2" fill="${g.fill}"/>${lbl}</g>`;
+  }
+
+  // Signal paths: sequence of [x, y, kind] points; kind switches color from that point on.
+  const TX_PTS = [[30, 250, 'e'], [122, 250, 'e'], [140, 247, 'e'], [240, 266, 'e'], [300, 227, 'e'], [450, 227, 'e'], [612, 217, 'e'], [686, 217, 'e'], [700, 245, 'o'], [830, 245, 'o'], [898, 243, 'o'], [986, 246, 'o'], [1116, 246, 'o'], [1190, 246, 'o']];
+  const CW_PTS = [[533, 241, 'o'], [568, 241, 'o'], [594, 245, 'o'], [640, 245, 'o']];
+  const RX_PTS = [[1190, 254, 'o'], [1116, 254, 'o'], [952, 251, 'o'], [880, 251, 'o'], [855, 249, 'o'], [800, 224, 'e'], [763, 210, 'e'], [726, 210, 'e'], [450, 233, 'e'], [300, 233, 'e'], [250, 270, 'e'], [140, 253, 'e'], [122, 256, 'e'], [30, 256, 'e']];
+  function polyline(pts, rx) {
+    let out = '', cur = null, seg = [];
+    const flush = () => { if (seg.length > 1) out += `<polyline class="path-${cur}${rx ? ' path-rx' : ''}" points="${seg.map(p => p[0] + ',' + Y(p[1])).join(' ')}"/>`; };
+    pts.forEach(p => { if (cur !== p[2]) { if (cur) { seg.push(p); flush(); } cur = p[2]; seg = [p]; } else seg.push(p); });
+    flush(); return out;
+  }
+  function stations(list, dir) {
+    return list.map(s => {
+      const g = G[s.partId]; const k = s.signal.includes('光') && !s.signal.includes('→') ? 'o' : (s.signal === '电' ? 'e' : 'o');
+      const dy = dir === 'rx' ? 20 : -20;
+      return `<g class="station ${k}" data-part="${s.partId}" style="cursor:pointer"><circle cx="${g.ax}" cy="${Y(g.ay) + dy}" r="8"/><text x="${g.ax}" y="${Y(g.ay) + dy}">${dir === 'rx' ? 'R' : ''}${s.step}</text></g>`;
+    }).join('');
+  }
+  let dir = 'tx', selected = null;
+  function render() {
+    const svg = `<svg viewBox="0 ${Y(120)} 1200 ${Y(306) - Y(120)}" xmlns="http://www.w3.org/2000/svg">
+      <text class="lbl tiny" x="12" y="${Y(132)}">主机侧 · 交换机 / 网卡</text>
+      <text class="lbl tiny" x="1150" y="${Y(236)}">光纤 →</text>
+      ${Object.entries(G).map(([id, g]) => shape(id, g)).join('')}
+      <g id="paths">
+        ${dir !== 'rx' ? polyline(TX_PTS) + polyline(CW_PTS) : ''}
+        ${dir !== 'tx' ? polyline(RX_PTS, true) : ''}
+      </g>
+      ${dir !== 'rx' ? stations(M.signalPath.tx, 'tx') : ''}
+      ${dir !== 'tx' ? stations(M.signalPath.rx, 'rx') : ''}
+    </svg>`;
+    const el = document.getElementById('cross'); el.innerHTML = svg;
+    el.querySelectorAll('[data-part]').forEach(n => n.addEventListener('click', () => select(n.dataset.part)));
+    renderStrip(); applySel();
+  }
+  function renderStrip() {
+    const list = dir === 'rx' ? M.signalPath.rx : M.signalPath.tx;
+    document.getElementById('strip').innerHTML = list.map((s, i) => {
+      const k = s.signal === '电' ? 'e' : (s.signal === '光' ? 'o' : '');
+      return `${i ? '<div class="arrow">→</div>' : ''}<div class="st" data-part="${s.partId}"><div class="n">${parts[s.partId].name}</div><div class="k ${k}">${s.signal}</div><div class="t">${s.text}</div></div>`;
+    }).join('');
+    document.querySelectorAll('.st').forEach(n => n.addEventListener('click', () => select(n.dataset.part)));
+  }
+  function applySel() {
+    const onPath = new Set([...(dir !== 'rx' ? M.signalPath.tx : []), ...(dir !== 'tx' ? M.signalPath.rx : [])].map(s => s.partId));
+    const cross = document.getElementById('cross');
+    cross.classList.toggle('dim', !!selected);
+    cross.querySelectorAll('.part-shape').forEach(n => {
+      n.classList.toggle('sel', n.dataset.part === selected);
+      n.classList.toggle('onpath', false);
+    });
+    document.querySelectorAll('.st').forEach(n => n.classList.toggle('sel', n.dataset.part === selected));
+    document.querySelectorAll('.matrix tr[data-part]').forEach(n => n.style.background = n.dataset.part === selected ? 'var(--panel-2)' : '');
+  }
+  function select(id) { selected = selected === id ? null : id; applySel(); renderDetail(); }
+
+  // ---------- detail ----------
+  const mkClass = m => m === 'A' || m === 'A/HK' ? 'A' : (m === 'US' || m === 'US/IL' ? 'US' : (m === '私有' ? 'P' : 'O'));
+  const coHtml = c => `<div class="co"><div class="dot ev-${c.evidence}"></div><div><span class="nm">${c.name}</span>${c.ticker ? `<span class="tk">${c.ticker}</span>` : ''}<span class="mk ${mkClass(c.market)}">${c.market}</span><div class="rl">${c.role}</div></div></div>`;
+  function renderDetail() {
+    const el = document.getElementById('detail');
+    if (!selected) { el.innerHTML = '<div class="empty">点一个部件，或者点上面的信号站点。</div>'; return; }
+    const p = parts[selected];
+    const byStage = {}; p.companies.forEach(c => (byStage[c.stage] ||= []).push(c));
+    el.innerHTML = `<div class="kv">
+        <div class="eyebrow">${p.nameEn}</div><h2>${p.name}</h2>
+        <p>${p.function}</p>
+        <p><b>关键参数</b></p><div class="tags">${p.keySpecs.map(s => `<span class="tag">${s}</span>`).join('')}</div>
+        ${p.materials.length ? `<p><b>上游材料</b></p><div class="tags">${p.materials.map(s => `<span class="tag">${s}</span>`).join('')}</div>` : ''}
+        <p style="margin-top:12px;color:var(--fg-3);font-family:var(--mono);font-size:11px">${p.companies.length} 家 · ${p.companies.filter(c => mkClass(c.market) === 'A').length} 家 A 股</p>
+      </div>
+      <div class="stages">${stages.filter(s => byStage[s.id]).map(s => `<div class="stage"><h4>${s.name}</h4>${byStage[s.id].map(coHtml).join('')}</div>`).join('')}</div>`;
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // ---------- matrix ----------
+  let mf = 'all', ef = 'all', hlName = null;
+  const order = [...M.signalPath.tx.map(s => s.partId), ...M.signalPath.rx.map(s => s.partId), ...M.parts.map(p => p.id)].filter((v, i, a) => a.indexOf(v) === i);
+  function passes(c) {
+    const m = mkClass(c.market);
+    if (mf === 'A' && m !== 'A') return false; if (mf === 'US' && m !== 'US') return false;
+    if (mf === 'other' && m !== 'O') return false; if (mf === 'P' && m !== 'P') return false;
+    if (ef === 'verified' && c.evidence !== 'verified') return false;
+    if (ef === 'nocand' && c.evidence === 'candidate') return false;
+    return true;
+  }
+  function renderMatrix() {
+    const rows = order.map(id => {
+      const p = parts[id];
+      const cells = stages.map(s => `<td>${p.companies.filter(c => c.stage === s.id).map(c => `<span class="chip${passes(c) ? '' : ' hide'}${hlName === c.name ? ' hl' : ''}" data-name="${c.name}" title="${c.role}"><span class="dot ev-${c.evidence}"></span>${c.name}<span class="mk ${mkClass(c.market)}">${c.market}</span></span>`).join('')}</td>`).join('');
+      return `<tr data-part="${id}"><td><span style="cursor:pointer" data-part="${id}">${p.name}</span><small>${p.nameEn}</small></td>${cells}</tr>`;
+    }).join('');
+    document.getElementById('matrix').innerHTML = `<table><thead><tr><th>部件</th>${stages.map(s => `<th>${s.name}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>`;
+    document.querySelectorAll('.matrix [data-part]').forEach(n => n.addEventListener('click', () => select(n.dataset.part)));
+    document.querySelectorAll('.chip').forEach(n => n.addEventListener('click', () => { hlName = hlName === n.dataset.name ? null : n.dataset.name; renderMatrix(); }));
+    // cross-part exposure
+    const count = {};
+    M.parts.forEach(p => p.companies.filter(passes).forEach(c => { const k = c.name.replace(/（.*?）/, '').split('（')[0]; (count[k] ||= { n: 0, parts: new Set(), m: c.market }).parts.add(p.id); }));
+    const list = Object.entries(count).map(([k, v]) => [k, v.parts.size, v.m]).filter(x => x[1] > 1).sort((a, b) => b[1] - a[1]).slice(0, 18);
+    document.getElementById('cross-count').innerHTML = list.map(([k, n, m]) => `<div><span>${k}<span class="mk ${mkClass(m)}">${m}</span></span><span>${n} 个部件</span></div>`).join('') || '<div class="empty">当前筛选下没有跨部件的公司。</div>';
+    applySel();
+  }
+
+  // ---------- controls ----------
+  document.querySelectorAll('[data-dir]').forEach(b => b.addEventListener('click', () => { dir = b.dataset.dir; document.querySelectorAll('[data-dir]').forEach(x => x.classList.toggle('on', x === b)); render(); }));
+  document.querySelectorAll('#mfilter [data-m]').forEach(b => b.addEventListener('click', () => { mf = b.dataset.m; document.querySelectorAll('#mfilter .btn').forEach(x => x.classList.toggle('on', x === b)); renderMatrix(); }));
+  document.querySelectorAll('#efilter [data-e]').forEach(b => b.addEventListener('click', () => { ef = b.dataset.e; document.querySelectorAll('#efilter .btn').forEach(x => x.classList.toggle('on', x === b)); renderMatrix(); }));
+
+  render(); renderMatrix();
+})();
+</script>
+</body>
+</html>
