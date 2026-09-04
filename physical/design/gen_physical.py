@@ -102,7 +102,7 @@ EV = {"verified": "已核验", "consensus": "行业共识", "candidate": "候选
 # world: x = length (0 = MPO end … 300 = 金手指), y = width (0 … 80), z = height. Low-elevation dimetric like gen_base.
 IX, IY = 0.95, 0.30
 def Q(x, y, z):
-    return (120 + (x - y) * IX, 60 + (x + y) * IY - z)
+    return (470 - (128 + (x - y) * IX), 44 + (x + y) * IY - z)
 def _f(seq):
     return " ".join(f"{x:.1f},{y:.1f}" for x, y in seq)
 def ibox(x0, x1, y0, y1, z, t, top, left, right, op="", stroke=None):
@@ -163,12 +163,11 @@ def parts_iso():
         a0, c0, c1, a1 = Q(94, fy0, 11), Q(70, fy0, 12), Q(60, fy1, 14), Q(42, fy1, 14)
         fibers += f'<path d="M{a0[0]:.1f} {a0[1]:.1f} C{c0[0]:.1f} {c0[1]:.1f} {c1[0]:.1f} {c1[1]:.1f} {a1[0]:.1f} {a1[1]:.1f}" fill="none" stroke="{FIBER}" stroke-width="0.7" opacity="0.9"/>'
     out.append(("part.fau", fibers))
-    # removed lid, set aside behind the module (flat, with fins)
-    lid = ibox(0, 300, -104, -48, 0, 4, *alu)
-    fins = "".join(f'<line x1="{Q(x, -100, 4)[0]:.1f}" y1="{Q(x, -100, 4)[1]:.1f}" x2="{Q(x, -52, 4)[0]:.1f}" y2="{Q(x, -52, 4)[1]:.1f}" stroke="{FIN}" stroke-width="1.4" stroke-linecap="round"/>' for x in range(8, 300, 9))
-    out.insert(0, ("part.lid-thermal", f'<g opacity="0.6">{lid}{fins}</g>'))
-    A["part.lid-thermal"] = Q(150, -76, 5)
-    A["part.host-cage"] = Q(318, 40, 9)
+    # host side (ghost): switch front-panel cage the module plugs into, and the host PCB behind it
+    cage = (f'<g opacity="0.3">{ibox(296, 346, -4, 84, -2, 30, *alu)}</g>'
+            f'<g opacity="0.22">{ibox(330, 376, -8, 88, -14, 3, *pcb)}</g>')
+    out.insert(0, ("part.host-cage", cage))
+    A["part.host-cage"] = Q(334, 40, 32)
     A["part.engine-assembly"] = Q(130, 62, 10); A["part.module-maker"] = Q(300, 0, 30)
     return out, A
 
@@ -183,20 +182,20 @@ def section_svg(selected=None, scale=1.0, stations=True, path="tx", captions=Tru
         x, y = A[selected]
         g.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="5" fill="none" stroke="{ACC}" stroke-width="0.8"/>')
     if captions:
-        for pid, dx, dy, tx in (("part.lid-thermal", -196, 34, "顶盖 · 翅片 · TIM（已揭开）"), ("part.shell", -150, 40, "壳体 · 拉环"), ("part.mpo", -62, -16, "MPO × 2"), ("part.edge-fingers", 20, 16, "金手指 → 主机")):
+        for pid, dx, dy, tx in (("part.host-cage", -60, -44, "主机侧 · Quantum-X800 前面板 OSFP 笼子（蒙层）"), ("part.host-cage", -60, -37, "后方是交换机主板与交换 ASIC"), ("part.shell", 100, 40, "壳体 · 拉环"), ("part.mpo", 10, -16, "MPO × 2 · 光纤"), ("part.edge-fingers", -70, 22, "金手指 → 主机")):
             x, y = A[pid]
             g.append(f'<text x="{x + dx:.1f}" y="{y + dy:.1f}" font-family="{MONO}" font-size="4.6" fill="{T["muted"]}" letter-spacing="0.08em">{tx}</text>')
     if path:
         seq = TX if path == "tx" else RX
-        pts_e = [Q(320, 40, 9), A["part.edge-fingers"], A["part.pcb"], A["part.dsp"], A["part.driver"], A["part.pic"]]
-        pts_o = [A["part.pic"], A["part.fau"], A["part.mpo"], Q(-20, 24, 21)]
+        pts_e = [A["part.host-cage"], Q(330, 40, 12), A["part.edge-fingers"], A["part.pcb"], A["part.dsp"], A["part.driver"], A["part.pic"]]
+        pts_o = [A["part.pic"], A["part.fau"], A["part.mpo"], Q(-30, 24, 21)]
         if path == "tx":
             g.append(f'<polyline points="{_f(pts_e)}" fill="none" stroke="{INK_LINE}" stroke-width="0.9" stroke-linejoin="round"/>')
             g.append(f'<polyline points="{_f(pts_o)}" fill="none" stroke="{ACC}" stroke-width="1" stroke-linejoin="round"/>')
             g.append(f'<polyline points="{_f([A["part.cw-laser"], A["part.laser-coupling"], Q(160, 34, 10)])}" fill="none" stroke="{ACC}" stroke-width="1"/>')
         else:
-            r_o = [Q(-20, 56, 21), Q(24, 56, 21), Q(101, 50, 13), A["part.pd"]]
-            r_e = [A["part.pd"], A["part.tia"], Q(235, 52, 16), Q(292, 52, 9), Q(320, 52, 9)]
+            r_o = [Q(-30, 56, 21), Q(24, 56, 21), Q(101, 50, 13), A["part.pd"]]
+            r_e = [A["part.pd"], A["part.tia"], Q(235, 52, 16), Q(292, 52, 9), Q(340, 52, 30)]
             g.append(f'<polyline points="{_f(r_o)}" fill="none" stroke="{ACC}" stroke-width="1" stroke-dasharray="2 1.5"/><polyline points="{_f(r_e)}" fill="none" stroke="{INK_LINE}" stroke-width="0.9" stroke-dasharray="2 1.5"/>')
         if stations:
             for s_ in seq:
@@ -205,7 +204,7 @@ def section_svg(selected=None, scale=1.0, stations=True, path="tx", captions=Tru
                 col = ACC if optical else INK_LINE
                 g.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="4" fill="{T["bg"]}" stroke="{col}" stroke-width="0.6"/>'
                          f'<text x="{x:.1f}" y="{y + 1.6:.1f}" text-anchor="middle" font-family="{MONO}" font-size="4.2" font-weight="500" fill="{col}">{s_["step"]:02d}</text>')
-    W_, H_ = 470, 200
+    W_, H_ = 470, 190
     return (f'<svg viewBox="0 0 {W_} {H_}" width="{W_ * 2.72 * scale:.0f}" height="{H_ * 2.72 * scale:.0f}" style="display:block;overflow:visible" role="img" aria-label="1.6T 光模块揭盖示意">'
             f'{"".join(g)}</svg>')
 
@@ -232,33 +231,42 @@ def board_section():
     </div>
   </div>
 </section>"""
+    A = ANCH()
+    DT, GT = 40, 640            # drawing top / stations grid top (inside the section)
+    colw = (1280 - 8 * 20) / 9
+    leaders = []
+    for i, st in enumerate(TX):
+        ax, ay = A[st["partId"]]
+        px, py = 80 + ax, DT + ay
+        cx = 80 + i * (colw + 20) + 12
+        ym = DT + 560 + i * 5
+        leaders.append(f'<path d="M{px:.0f} {py + 12:.0f} V{ym} H{cx} V{GT - 6}" fill="none" stroke="{T["hair2"]}" stroke-width="1"/>'
+                       f'<circle cx="{cx}" cy="{GT - 6}" r="2.5" fill="{T["bg"]}" stroke="{T["ink2"]}" stroke-width="1.2"/>')
+    cols = []
+    for st in TX:
+        p = PARTS[st["partId"]]
+        optical = st["signal"] == "光" or st["partId"] == "part.pic"
+        cols.append(f"""
+    <div style="display:flex;flex-direction:column;gap:6px;padding:16px 0 0;border-top:1px solid {T['hair']}">
+      <span style="font-family:{MONO};font-size:12px;letter-spacing:0.06em;color:{ACC if optical else T['muted']}">{st['step']:02d} · {st['signal']}</span>
+      <span style="font-size:16px;font-weight:500;color:{T['ink']};line-height:1.3">{p['name'].split('（')[0].split('(')[0]}</span>
+      <span style="font-size:12.5px;color:{T['ink2']};line-height:1.45">{st['text']}</span>
+      <span style="font-family:{MONO};font-size:11px;color:{T['muted']};margin-top:4px">{len(p['companies'])} 家 · {a_count(p)} 家 A 股</span>
+    </div>""")
     drawing = f"""
-<section style="padding:64px 80px 0">
-  {section_svg()}
-  <div style="display:flex;gap:26px;margin-top:14px;align-items:baseline">
+<section style="position:relative;height:940px">
+  <div style="position:absolute;left:80px;top:{DT}px">{section_svg()}</div>
+  <svg style="position:absolute;left:0;top:0;overflow:visible" width="1440" height="940" viewBox="0 0 1440 940">{"".join(leaders)}</svg>
+  <div style="position:absolute;left:80px;top:{DT + 545}px;display:flex;gap:26px;align-items:baseline">
     <span style="display:inline-flex;align-items:center;gap:8px">{mono("电信号")}<span style="display:inline-block;width:22px;height:0;border-top:1.4px solid {INK_LINE}"></span></span>
     <span style="display:inline-flex;align-items:center;gap:8px">{mono("光信号")}<span style="display:inline-block;width:22px;height:0;border-top:1.6px solid {ACC}"></span></span>
     {mono("发送方向 · 接收沿虚线原路返回")}
   </div>
+  <div style="position:absolute;left:80px;top:{GT}px;width:1280px;display:grid;grid-template-columns:repeat(9, minmax(0,1fr));gap:20px">{"".join(cols)}</div>
 </section>"""
-    cols = []
-    for s in TX:
-        p = PARTS[s["partId"]]
-        optical = s["signal"] == "光" or s["partId"] == "part.pic"
-        cols.append(f"""
-    <div style="display:flex;flex-direction:column;gap:6px;padding:16px 0 0;border-top:1px solid {T['hair']}">
-      <span style="font-family:{MONO};font-size:12px;letter-spacing:0.06em;color:{ACC if optical else T['muted']}">{s['step']:02d} · {s['signal']}</span>
-      <span style="font-size:16px;font-weight:500;color:{T['ink']};line-height:1.3">{p['name'].split('（')[0].split('(')[0]}</span>
-      <span style="font-size:12.5px;color:{T['ink2']};line-height:1.45">{s['text']}</span>
-      <span style="font-family:{MONO};font-size:11px;color:{T['muted']};margin-top:4px">{len(p['companies'])} 家 · {a_count(p)} 家 A 股</span>
-    </div>""")
-    stations = f"""
-<section style="padding:40px 80px 0">
-  {head("信号怎么走 · 九站", link("接收 RX →"))}
-  <div style="display:grid;grid-template-columns:repeat(9, minmax(0,1fr));gap:20px">{"".join(cols)}</div>
-</section>"""
+    stations = ""
     body = nav(["Quantum-X800", "1.6T 光模块"]) + hero + drawing + stations + footer("剖面为示意,不按比例;部件与信号顺序对应 OSFP224 DR8 硅光方案的通用结构。公司映射 126 条,证据级见各部件与公司页。")
-    return wrap(T, body, height=1420)
+    return wrap(T, body, height=1440)
 
 # ---------------------------------------------------------------- B. 站点 (dense, companies on the page)
 def board_stations():
@@ -440,7 +448,7 @@ def board_selected():
 
 # ---------------------------------------------------------------- write
 BOARDS = [
-    ("DirectionA", board_section, 1420, "A · 俯视 — 揭开上盖的俯视图是主角,九站在下面"),
+    ("DirectionA", board_section, 1440, "A · 俯视 — 揭开上盖的俯视图是主角,九站在下面"),
     ("DirectionB", board_stations, 1140, "B · 站点 — 九站是主角,公司直接铺在页面上"),
     ("DirectionC", board_exploded, 1180, "C · 分层 — 沿用现在 main 的等距分层语言,但只画实物真有的四层"),
     ("Main", board_selected, 1444, "选中一个部件 — 剖面 A 的选中态(CW 激光器)"),
