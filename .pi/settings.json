@@ -3,6 +3,13 @@
   "project_root": ".",
   "instructions_file": "AGENTS.md",
   "agents_doc": ".pi/agents/README.md",
-  "prompts": ["prompt-templates"],
-  "enableSkillCommands": true
+  "prompts": [
+    "prompt-templates"
+  ],
+  "enableSkillCommands": true,
+  "packages": [
+    "npm:pi-web-access",
+    "npm:pi-subagents@0.60.0",
+    "npm:pi-frontend-check@1.1.0"
+  ]
 }
