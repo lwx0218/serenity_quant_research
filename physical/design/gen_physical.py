@@ -98,82 +98,123 @@ def footer(note):
 
 EV = {"verified": "已核验", "consensus": "行业共识", "candidate": "候选 · 待核验"}
 
-# ---------------------------------------------------------------- plan view (lid removed, looking down at the PCB)
-# drawing box 1280 × 360; left = 金手指 (host side), right = MPO (fiber side)
-def SEC():
-    return OrderedDict([
-        ("part.shell",         (60, 40, 1160, 280, BLK[0], BLK[1], "")),
-        ("part.pcb",           (74, 54, 1060, 252, PCB[0], PCB[1], "")),
-        ("part.edge-fingers",  (74, 54, 46, 252, GOLD[0], GOLD[1], "")),
-        ("part.power-mgmt",    (160, 84, 70, 52, BLK[0], BLK[1], "PMIC")),
-        ("part.dsp",           (280, 108, 150, 144, DIE[0], DIE[1], "DSP")),
-        ("part.cw-laser",      (482, 128, 40, 34, GOLD[0], GOLD[1], "CW")),
-        ("part.cw-laser-2",    (482, 198, 40, 34, GOLD[0], GOLD[1], "CW")),
-        ("part.laser-coupling",(528, 130, 20, 30, GLASS[0], GLASS[1], "")),
-        ("part.laser-coupling-2",(528, 200, 20, 30, GLASS[0], GLASS[1], "")),
-        ("part.pic",           (560, 98, 280, 164, SI[0], SI[1], "")),
-        ("part.driver",        (592, 112, 70, 46, DIE[0], DIE[1], "DRV")),
-        ("part.tia",           (592, 202, 70, 46, DIE[0], DIE[1], "TIA")),
-        ("part.pd",            (780, 206, 46, 40, PD, SI[1], "PD")),
-        ("part.fau",           (840, 116, 58, 128, GLASS[0], GLASS[1], "FAU")),
-        ("part.mpo",           (1134, 62, 86, 108, BLK[0], BLK[1], "MPO")),
-        ("part.mpo-2",         (1134, 190, 86, 108, BLK[0], BLK[1], "MPO")),
-    ])
-ALIAS = {"part.cw-laser-2": "part.cw-laser", "part.laser-coupling-2": "part.laser-coupling", "part.mpo-2": "part.mpo"}
-def ANCH():
-    return {"part.host-cage": (30, 180), "part.edge-fingers": (97, 180), "part.pcb": (230, 180), "part.dsp": (355, 180),
-            "part.driver": (627, 135), "part.cw-laser": (502, 145), "part.pic": (720, 150), "part.fau": (869, 150), "part.mpo": (1177, 116),
-            "part.pd": (803, 226), "part.tia": (627, 225), "part.lid-thermal": (640, 20), "part.shell": (640, 330),
-            "part.power-mgmt": (195, 110), "part.laser-coupling": (538, 145), "part.engine-assembly": (700, 84), "part.module-maker": (1240, 30)}
-TX = M["signalPath"]["tx"]
-RX = M["signalPath"]["rx"]
+# ---------------------------------------------------------------- opened module, isometric (lid removed), after the Intel 1.6T reference
+# world: x = length (0 = MPO end … 300 = 金手指), y = width (0 … 80), z = height. Low-elevation dimetric like gen_base.
+IX, IY = 0.95, 0.30
+def Q(x, y, z):
+    return (120 + (x - y) * IX, 60 + (x + y) * IY - z)
+def _f(seq):
+    return " ".join(f"{x:.1f},{y:.1f}" for x, y in seq)
+def ibox(x0, x1, y0, y1, z, t, top, left, right, op="", stroke=None):
+    zt = z + t
+    sk = f' stroke="{stroke}" stroke-width="0.4"' if stroke else ""
+    L = [Q(x0, y1, zt), Q(x1, y1, zt), Q(x1, y1, z), Q(x0, y1, z)]
+    R = [Q(x1, y0, zt), Q(x1, y1, zt), Q(x1, y1, z), Q(x1, y0, z)]
+    Tp = [Q(x0, y0, zt), Q(x1, y0, zt), Q(x1, y1, zt), Q(x0, y1, zt)]
+    return f'<g{op}><polygon points="{_f(L)}" fill="{left}"{sk}/><polygon points="{_f(R)}" fill="{right}"{sk}/><polygon points="{_f(Tp)}" fill="{top}"{sk}/></g>'
+def tri_(m, r_l, r_d):
+    return (m[0], m[1], r_l if THEME == "light" else r_d)
+
+def parts_iso():
+    """returns list of (partId, markup) in draw order + anchors {partId: (sx, sy)} in svg units"""
+    alu = tri_(ALU, "#C4C8CE", "#BFC4CA"); pcb = tri_(PCB, "#31473C", "#3A5546"); die = tri_(DIE, "#1F2226", "#262A30")
+    si = tri_(SI, "#84999F", "#8EA3AD"); gold = tri_(GOLD, "#BC9C55", "#C5A55F"); blk = tri_(BLK, "#2B2D31", "#33363B")
+    glass = (GLASS[0], GLASS[1], GLASS[1]); pd = (PD, SI[1], SI[1]); tab = tri_(PCB, "#31473C", "#3A5546")
+    out, A = [], {}
+    # housing: bottom, back wall (y=0 side), front wall low
+    out.append(("part.shell", ibox(0, 300, 0, 80, 0, 5, *alu) + ibox(0, 300, 0, 6, 5, 22, *alu) + ibox(0, 300, 74, 80, 5, 9, *alu)))
+    A["part.shell"] = Q(150, 3, 27)
+    # pull tab (loop beyond the MPO end)
+    p0, p1, p2, p3 = Q(2, 10, 18), Q(-46, 2, 18), Q(-46, 78, 18), Q(2, 70, 18)
+    out.append(("part.shell", f'<path d="M{p0[0]:.1f} {p0[1]:.1f} C{p1[0]:.1f} {p1[1]:.1f} {p2[0]:.1f} {p2[1]:.1f} {p3[0]:.1f} {p3[1]:.1f}" fill="none" stroke="{tab[0]}" stroke-width="7" stroke-linecap="round"/>'))
+    # MPO receptacles ×2 at the MPO end
+    out.append(("part.mpo", ibox(6, 42, 10, 38, 5, 16, *blk) + ibox(6, 42, 42, 70, 5, 16, *blk)))
+    A["part.mpo"] = Q(24, 24, 21)
+    # PCB with gold fingers
+    out.append(("part.pcb", ibox(44, 300, 8, 72, 5, 3, *pcb)))
+    A["part.pcb"] = Q(200, 66, 8)
+    pads = "".join(f'<polygon points="{_f([Q(284, y, 8.2), Q(300, y, 8.2), Q(300, y + 3, 8.2), Q(284, y + 3, 8.2)])}" fill="{gold[0]}"/>' for y in range(12, 70, 6))
+    out.append(("part.edge-fingers", pads))
+    A["part.edge-fingers"] = Q(292, 40, 9)
+    # DSP (BGA with metal lid) near the fingers; PMIC beside
+    out.append(("part.dsp", ibox(214, 256, 22, 58, 8, 6, *die) + ibox(218, 252, 26, 54, 14, 1.5, *alu)))
+    A["part.dsp"] = Q(235, 40, 16)
+    out.append(("part.power-mgmt", ibox(262, 276, 14, 26, 8, 3, *blk) + ibox(262, 276, 54, 66, 8, 3, *blk)))
+    A["part.power-mgmt"] = Q(269, 20, 11)
+    # external CW lasers ×2 (gold TO-can-less chips) between DSP and PIC, feeding the PIC input
+    out.append(("part.cw-laser", ibox(176, 186, 30, 38, 8, 3, *gold) + ibox(176, 186, 42, 50, 8, 3, *gold)))
+    A["part.cw-laser"] = Q(181, 34, 11)
+    out.append(("part.laser-coupling", ibox(170, 175, 29, 39, 8, 3, *glass) + ibox(170, 175, 41, 51, 8, 3, *glass)))
+    A["part.laser-coupling"] = Q(172, 34, 11)
+    # PIC (TX + RX on one die), driver on the TX side, TIA + PD array on the RX side
+    out.append(("part.pic", ibox(108, 168, 26, 58, 8, 2, *si)))
+    A["part.pic"] = Q(138, 34, 10)
+    out.append(("part.driver", ibox(146, 164, 29, 41, 10, 2.5, *die)))
+    A["part.driver"] = Q(155, 35, 12.5)
+    out.append(("part.pd", ibox(112, 128, 46, 56, 10, 1.5, *pd)))
+    A["part.pd"] = Q(120, 51, 11.5)
+    out.append(("part.tia", ibox(134, 156, 45, 57, 10, 2.5, *die)))
+    A["part.tia"] = Q(145, 51, 12.5)
+    # FAU ×2 (TX / RX) at the PIC's MPO-facing edge, fiber ribbons to the two MPOs
+    out.append(("part.fau", ibox(94, 108, 27, 41, 8, 5, *glass) + ibox(94, 108, 43, 57, 8, 5, *glass)))
+    A["part.fau"] = Q(101, 34, 13)
+    fibers = ""
+    for (fy0, fy1) in ((28, 12), (31, 16), (34, 20), (37, 24), (40, 28), (44, 44), (47, 48), (50, 52), (53, 56), (56, 60)):
+        a0, c0, c1, a1 = Q(94, fy0, 11), Q(70, fy0, 12), Q(60, fy1, 14), Q(42, fy1, 14)
+        fibers += f'<path d="M{a0[0]:.1f} {a0[1]:.1f} C{c0[0]:.1f} {c0[1]:.1f} {c1[0]:.1f} {c1[1]:.1f} {a1[0]:.1f} {a1[1]:.1f}" fill="none" stroke="{FIBER}" stroke-width="0.7" opacity="0.9"/>'
+    out.append(("part.fau", fibers))
+    # removed lid, set aside behind the module (flat, with fins)
+    lid = ibox(0, 300, -104, -48, 0, 4, *alu)
+    fins = "".join(f'<line x1="{Q(x, -100, 4)[0]:.1f}" y1="{Q(x, -100, 4)[1]:.1f}" x2="{Q(x, -52, 4)[0]:.1f}" y2="{Q(x, -52, 4)[1]:.1f}" stroke="{FIN}" stroke-width="1.4" stroke-linecap="round"/>' for x in range(8, 300, 9))
+    out.insert(0, ("part.lid-thermal", f'<g opacity="0.6">{lid}{fins}</g>'))
+    A["part.lid-thermal"] = Q(150, -76, 5)
+    A["part.host-cage"] = Q(318, 40, 9)
+    A["part.engine-assembly"] = Q(130, 62, 10); A["part.module-maker"] = Q(300, 0, 30)
+    return out, A
 
 def section_svg(selected=None, scale=1.0, stations=True, path="tx", captions=True):
-    dim = "0.3"
+    out, A = parts_iso()
+    dim = "0.22"
     g = []
-    A = ANCH()
-    # fingers pads + engine outline + fiber ribbon drawn per layer
-    pads = "".join(f'<rect x="78" y="{y}" width="38" height="10" fill="{GOLD[1]}" opacity="0.35"/>' for y in range(64, 300, 24))
-    ribbon = "".join(f'<line x1="898" y1="{y}" x2="1134" y2="{y2}" stroke="{FIBER}" stroke-width="1.2"/>' for y, y2 in ((130, 100), (150, 116), (170, 132), (190, 228), (210, 244), (230, 260)))
-    for pid, (x, y, w, h, fill, stroke, lab) in SEC().items():
-        key = ALIAS.get(pid, pid)
-        op = f' opacity="{dim}"' if (selected and key != selected) else ""
-        extra = pads if pid == "part.edge-fingers" else (ribbon if pid == "part.fau" else "")
-        sel = f'<rect x="{x - 4}" y="{y - 4}" width="{w + 8}" height="{h + 8}" rx="2" fill="none" stroke="{ACC}" stroke-width="1"/>' if selected == key else ""
-        col = DIETXT if fill in (DIE[0], BLK[0], PCB[0]) else T["ink2"]
-        ly = y + h - 12 if h > 44 else y + h / 2 + 4
-        lbl = f'<text x="{x + w / 2}" y="{ly}" text-anchor="middle" font-family="{MONO}" font-size="11" fill="{col}" letter-spacing="0.06em">{lab}</text>' if lab else ""
-        g.append(f'<g data-part="{key}"{op}><rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{fill}" stroke="{stroke}" stroke-width="0.8"/>{extra}{sel}{lbl}</g>')
-    g.append(f'<rect x="466" y="84" width="446" height="192" fill="none" stroke="{T["hair2"]}" stroke-dasharray="3 3"/>')
-    g.append(f'<text x="472" y="78" font-family="{MONO}" font-size="10" fill="{T["muted"]}" letter-spacing="0.1em">光引擎</text>')
-    g.append(f'<text x="720" y="94" text-anchor="middle" font-family="{MONO}" font-size="10" fill="{T["ink2"]}" letter-spacing="0.1em">硅光 PIC · 分束 · MZM · 波导</text>')
+    for pid, mk in out:
+        op = f' opacity="{dim}"' if (selected and pid != selected) else ""
+        g.append(f'<g data-part="{pid}"{op}>{mk}</g>')
+    if selected and selected in A:
+        x, y = A[selected]
+        g.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="5" fill="none" stroke="{ACC}" stroke-width="0.8"/>')
     if captions:
-        for cx, cy, tx, anc, col in [(60, 30, "顶盖已揭开 · 俯视", "start", T["muted"]), (1220, 30, "壳体", "end", T["muted"]), (97, 318, "金手指", "middle", T["muted"]), (230, 292, "主 PCB", "middle", DIETXT), (1177, 312, "MPO × 2", "middle", T["muted"]), (30, 200, "主机", "middle", T["muted"])]:
-            g.append(f'<text x="{cx}" y="{cy}" text-anchor="{anc}" font-family="{MONO}" font-size="10" fill="{col}" letter-spacing="0.08em">{tx}</text>')
+        for pid, dx, dy, tx in (("part.lid-thermal", -196, 34, "顶盖 · 翅片 · TIM（已揭开）"), ("part.shell", -150, 40, "壳体 · 拉环"), ("part.mpo", -62, -16, "MPO × 2"), ("part.edge-fingers", 20, 16, "金手指 → 主机")):
+            x, y = A[pid]
+            g.append(f'<text x="{x + dx:.1f}" y="{y + dy:.1f}" font-family="{MONO}" font-size="4.6" fill="{T["muted"]}" letter-spacing="0.08em">{tx}</text>')
     if path:
         seq = TX if path == "tx" else RX
-        f = lambda seq_: " ".join(f"{x},{y}" for x, y in seq_)
+        pts_e = [Q(320, 40, 9), A["part.edge-fingers"], A["part.pcb"], A["part.dsp"], A["part.driver"], A["part.pic"]]
+        pts_o = [A["part.pic"], A["part.fau"], A["part.mpo"], Q(-20, 24, 21)]
         if path == "tx":
-            e = [(-10, 180), (97, 180), (230, 180), (355, 180), (430, 150), (592, 135), (662, 135), (700, 150)]
-            o = [(700, 150), (840, 150), (869, 150), (898, 150), (1134, 116), (1177, 116), (1280, 116)]
-            g.append(f'<polyline points="{f(e)}" fill="none" stroke="{INK_LINE}" stroke-width="1.4" stroke-linejoin="round"/>')
-            g.append(f'<polyline points="{f(o)}" fill="none" stroke="{ACC}" stroke-width="1.6" stroke-linejoin="round"/>')
-            g.append(f'<polyline points="502,145 528,145 560,150 600,150" fill="none" stroke="{ACC}" stroke-width="1.6"/><polyline points="502,215 528,215 560,210 600,210" fill="none" stroke="{ACC}" stroke-width="1.6" opacity="0.6"/>')
+            g.append(f'<polyline points="{_f(pts_e)}" fill="none" stroke="{INK_LINE}" stroke-width="0.9" stroke-linejoin="round"/>')
+            g.append(f'<polyline points="{_f(pts_o)}" fill="none" stroke="{ACC}" stroke-width="1" stroke-linejoin="round"/>')
+            g.append(f'<polyline points="{_f([A["part.cw-laser"], A["part.laser-coupling"], Q(160, 34, 10)])}" fill="none" stroke="{ACC}" stroke-width="1"/>')
         else:
-            o = [(1280, 244), (1177, 244), (1134, 244), (898, 226), (869, 226), (803, 226)]
-            e = [(803, 226), (662, 225), (592, 225), (430, 210), (355, 210), (230, 210), (97, 210), (-10, 210)]
-            g.append(f'<polyline points="{f(o)}" fill="none" stroke="{ACC}" stroke-width="1.6" stroke-dasharray="4 4"/><polyline points="{f(e)}" fill="none" stroke="{INK_LINE}" stroke-width="1.4" stroke-dasharray="4 4"/>')
+            r_o = [Q(-20, 56, 21), Q(24, 56, 21), Q(101, 50, 13), A["part.pd"]]
+            r_e = [A["part.pd"], A["part.tia"], Q(235, 52, 16), Q(292, 52, 9), Q(320, 52, 9)]
+            g.append(f'<polyline points="{_f(r_o)}" fill="none" stroke="{ACC}" stroke-width="1" stroke-dasharray="2 1.5"/><polyline points="{_f(r_e)}" fill="none" stroke="{INK_LINE}" stroke-width="0.9" stroke-dasharray="2 1.5"/>')
         if stations:
             for s_ in seq:
                 x, y = A[s_["partId"]]
-                if path == "rx": y += 30 if s_["partId"] not in ("part.pd", "part.tia") else 0
                 optical = s_["signal"] == "光" or s_["partId"] in ("part.pic", "part.pd")
                 col = ACC if optical else INK_LINE
-                g.append(f'<circle cx="{x}" cy="{y}" r="9" fill="{T["bg"]}" stroke="{col}" stroke-width="1.2"/>'
-                         f'<text x="{x}" y="{y + 3.5}" text-anchor="middle" font-family="{MONO}" font-size="10" font-weight="500" fill="{col}">{s_["step"]:02d}</text>')
-    tr = f' transform="scale({scale})"' if scale != 1 else ""
-    return (f'<svg viewBox="0 0 1280 360" width="{1280 * scale:.0f}" height="{360 * scale:.0f}" style="display:block;overflow:visible" role="img" aria-label="1.6T 光模块俯视拆解">'
-            f'<g{tr}>{"".join(g)}</g></svg>')
+                g.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="4" fill="{T["bg"]}" stroke="{col}" stroke-width="0.6"/>'
+                         f'<text x="{x:.1f}" y="{y + 1.6:.1f}" text-anchor="middle" font-family="{MONO}" font-size="4.2" font-weight="500" fill="{col}">{s_["step"]:02d}</text>')
+    W_, H_ = 470, 200
+    return (f'<svg viewBox="0 0 {W_} {H_}" width="{W_ * 2.72 * scale:.0f}" height="{H_ * 2.72 * scale:.0f}" style="display:block;overflow:visible" role="img" aria-label="1.6T 光模块揭盖示意">'
+            f'{"".join(g)}</svg>')
+
+def ANCH():
+    _, A = parts_iso()
+    return {k: (v[0] * 2.72, v[1] * 2.72) for k, v in A.items()}
+
+TX = M["signalPath"]["tx"]
+RX = M["signalPath"]["rx"]
 
 # ---------------------------------------------------------------- A. 剖面
 def board_section():
@@ -183,7 +224,7 @@ def board_section():
     <div style="display:flex;flex-direction:column;gap:18px">
       {eyebrow("Quantum-X800 · OSFP224 · 1.6T DR8 · 硅光")}
       <h1 style="margin:0;font-size:68px;line-height:1.02;font-weight:600;letter-spacing:-0.025em;color:{T['ink']}">1.6T 光模块</h1>
-      <p style="margin:6px 0 0;font-size:19px;line-height:1.55;color:{T['ink2']};font-weight:300;max-width:640px;text-wrap:pretty">一只正在出货的模块,揭开上盖往下看。电信号从左边金手指进来,在硅光芯片上变成光,从右边 MPO 出去。沿这条线走一遍,每一站是一个部件,每个部件背后是一列公司。</p>
+      <p style="margin:6px 0 0;font-size:19px;line-height:1.55;color:{T['ink2']};font-weight:300;max-width:640px;text-wrap:pretty">一只正在出货的模块,揭开上盖。电信号从左边金手指进来,在硅光芯片上变成光,从右边 MPO 出去。沿这条线走一遍,每一站是一个部件,每个部件背后是一列公司。</p>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;padding-bottom:6px">
       {readouts([("通道", "8 × 200G PAM4"), ("波长", "1310 nm · 500 m"), ("功耗", "约 22 W"), ("光口", "MPO-16 APC")])}
@@ -217,7 +258,7 @@ def board_section():
   <div style="display:grid;grid-template-columns:repeat(9, minmax(0,1fr));gap:20px">{"".join(cols)}</div>
 </section>"""
     body = nav(["Quantum-X800", "1.6T 光模块"]) + hero + drawing + stations + footer("剖面为示意,不按比例;部件与信号顺序对应 OSFP224 DR8 硅光方案的通用结构。公司映射 126 条,证据级见各部件与公司页。")
-    return wrap(T, body, height=1240)
+    return wrap(T, body, height=1420)
 
 # ---------------------------------------------------------------- B. 站点 (dense, companies on the page)
 def board_stations():
@@ -250,7 +291,7 @@ def board_stations():
     <h1 style="margin:0;font-size:56px;line-height:1.02;font-weight:600;letter-spacing:-0.025em;color:{T['ink']}">1.6T 光模块<br>信号怎么走</h1>
     <p style="margin:6px 0 0;font-size:17px;line-height:1.55;color:{T['ink2']};font-weight:300;text-wrap:pretty">九站,从金手指到 MPO。每一站底下直接列出谁在做,按材料 → 芯片 → 器件 → 引擎 → 连接的顺序;一家公司出现在几站,它就吃到几个环节。</p>
   </div>
-  <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end">{section_svg(scale=0.62, stations=True, captions=False)}</div>
+  <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end">{section_svg(scale=0.6, stations=True, captions=False)}</div>
 </section>
 <section style="padding:44px 80px 0">
   <div style="display:grid;grid-template-columns:repeat(9, minmax(0,1fr));gap:18px">{"".join(cols)}</div>
@@ -356,10 +397,10 @@ def board_exploded():
 def board_selected():
     pid = "part.cw-laser"
     p = PARTS[pid]
-    svg = section_svg(selected=pid, scale=0.62, stations=False, captions=False)
+    svg = section_svg(selected=pid, scale=0.6, stations=False, captions=False)
     ax, ay = ANCH()[pid]
     LEFT, TOP = 80, 150
-    px, py = LEFT + ax * 0.62, TOP + ay * 0.62
+    px, py = LEFT + ax * 0.6, TOP + ay * 0.6
     CX_, ky = 900, 104
     leader = (f'<svg style="position:absolute;left:0;top:0;overflow:visible" width="1440" height="1400" viewBox="0 0 1440 1400" fill="none">'
               f'<path d="M{px:.0f} {py:.0f} V{TOP - 30} H{CX_ - 30} V{ky}" stroke="{ACC}" stroke-width="1" opacity="0.55"/>'
@@ -385,21 +426,21 @@ def board_selected():
   </div>
   <div style="display:flex;flex-direction:column">{head("上游材料 · 3")}{mats}{rows_end()}</div>
 </div>
-<div style="position:absolute;left:80px;top:{TOP + 320}px;width:740px;display:flex;flex-direction:column">
+<div style="position:absolute;left:80px;top:{TOP + 380}px;width:740px;display:flex;flex-direction:column">
   {head(f"公司 · {len(p['companies'])} · {a_count(p)} 家 A 股", link("查看该环节全部公司 →"))}
   {"".join(groups)}
 </div>"""
-    hint = f"""<div style="position:absolute;left:80px;top:1330px;display:flex;align-items:center;gap:14px;font-size:12px;color:{T['muted']}"><span style="font-family:{MONO};font-size:11px;letter-spacing:0.08em;padding:3px 6px;border:1px solid {T['hair2']};border-radius:4px">ESC</span><span>或点击空白处回到整只模块</span></div>"""
+    hint = f"""<div style="position:absolute;left:80px;top:1470px;display:flex;align-items:center;gap:14px;font-size:12px;color:{T['muted']}"><span style="font-family:{MONO};font-size:11px;letter-spacing:0.08em;padding:3px 6px;border:1px solid {T['hair2']};border-radius:4px">ESC</span><span>或点击空白处回到整只模块</span></div>"""
     body = nav(["Quantum-X800", "1.6T 光模块", "CW 激光器"]) + f"""
-<section style="position:relative;height:1380px">
+<section style="position:relative;height:1520px">
   <div style="position:absolute;left:{LEFT}px;top:{TOP}px">{svg}</div>
   {leader}{content}{hint}
 </section>"""
-    return wrap(T, body, height=1444)
+    return wrap(T, body, height=1584)
 
 # ---------------------------------------------------------------- write
 BOARDS = [
-    ("DirectionA", board_section, 1240, "A · 俯视 — 揭开上盖的俯视图是主角,九站在下面"),
+    ("DirectionA", board_section, 1420, "A · 俯视 — 揭开上盖的俯视图是主角,九站在下面"),
     ("DirectionB", board_stations, 1140, "B · 站点 — 九站是主角,公司直接铺在页面上"),
     ("DirectionC", board_exploded, 1180, "C · 分层 — 沿用现在 main 的等距分层语言,但只画实物真有的四层"),
     ("Main", board_selected, 1444, "选中一个部件 — 剖面 A 的选中态(CW 激光器)"),
