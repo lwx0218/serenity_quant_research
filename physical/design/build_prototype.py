@@ -73,8 +73,8 @@ button.st,button.segb{appearance:none;background:none;border:0;padding:0;margin:
 #crumb-mod.back{cursor:pointer}#crumb-mod.back:hover{color:var(--accent)}
 @media (prefers-reduced-motion:reduce){#stage,#drawing,.fade,#drawing g{transition:none!important}}
 #overlay{position:absolute;left:0;top:0;overflow:visible;pointer-events:none;transition:opacity .2s}
-#legend{position:absolute;left:80px;top:470px;display:grid;grid-template-columns:auto auto;gap:8px 22px;align-items:baseline;justify-content:start}
-#legend i{display:inline-block;width:22px;height:0;border-top:1.4px solid var(--ink-2);vertical-align:middle;margin-left:8px}#legend i.o{border-top:1.6px solid var(--accent)}
+#legend{position:absolute;left:80px;top:506px;display:flex;gap:22px;align-items:baseline}#legend2{position:absolute;left:80px;top:634px;display:flex;gap:22px;align-items:baseline}
+#legend2 i{display:inline-block;width:22px;height:0;border-top:1.4px solid var(--ink-2);vertical-align:middle;margin-left:8px}#legend2 i.o{border-top:1.6px solid var(--accent)}
 .seg{display:contents;font-family:var(--mono);font-size:12px;color:var(--muted)}.seg button{cursor:pointer;font:inherit;color:inherit}.seg .on{color:var(--ink);border-bottom:1px solid var(--ink)}
 #stations{position:absolute;left:80px;top:1000px;width:1280px;display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:20px}
 .st{display:flex;flex-direction:column;gap:6px;padding:16px 0 0;border-top:1px solid var(--hair);cursor:pointer;text-align:left;font:inherit;color:inherit}
@@ -187,7 +187,7 @@ function select(pid){
   if (selected === pid) pid = null;
   selected = pid;
   const sel = !!pid;
-  $("hero").classList.toggle("hidden", sel); $("stations").classList.toggle("hidden", sel); $("stations-headwrap").classList.toggle("hidden", sel); $("legend").classList.toggle("hidden", sel);
+  $("hero").classList.toggle("hidden", sel); $("stations").classList.toggle("hidden", sel); $("stations-headwrap").classList.toggle("hidden", sel); $("legend2").classList.toggle("hidden", sel); $("legend").classList.toggle("hidden", sel);
   $("detail").classList.toggle("hidden", !sel); $("companies").classList.toggle("hidden", !sel);
   $("crumb-sep").classList.toggle("hidden", !sel); $("crumb-part").classList.toggle("hidden", !sel); $("crumb-mod").classList.toggle("back", sel);
   drawing.style.top = (sel ? SEL.top : OV.top) + "px";
@@ -238,7 +238,8 @@ def build():
   </div>
   <div id="drawing"></div>
   <svg id="overlay" width="1440" height="1600" viewBox="0 0 1440 1600"></svg>
-  <div id="legend" class="fade"><span class="mono">电信号<i></i></span><span class="mono">光信号<i class="o"></i></span><span class="seg"><button class="segb on" data-dir="tx">发送 TX</button><button class="segb" data-dir="rx">接收 RX</button></span></div>
+  <div id="legend" class="fade"><span class="seg"><button class="segb on" data-dir="tx">发送 TX</button><button class="segb" data-dir="rx">接收 RX</button></span></div>
+  <div id="legend2" class="fade"><span class="mono">电信号<i></i></span><span class="mono">光信号<i class="o"></i></span></div>
   <div style="position:absolute;left:80px;top:966px" class="fade" id="stations-headwrap"><span class="eyebrow" id="stations-head"></span></div>
   <div id="stations" class="fade"></div>
   <div id="detail" class="fade hidden"></div>
