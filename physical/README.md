@@ -21,7 +21,12 @@ physical/
 改了 JSON 或几何之后：`python3 physical/design/gen_physical.py && python3 physical/design/build_prototype.py`。
 画布：`Teardown 实物剖面 · 1.6T 光模块`（Claude Design）。原型的 UX 预审记录见提交历史（ux-preflight）。
 
-## 数据模型（schema 0.1）
+## 接缝（物理 → 投研）
+
+`physical/seam.py` 给每条公司映射写 `companyId`（与 `data/seeds/cpo` 同一套 id：A 股 `cn.<代码>`，海外 `global.<slug>`，未上市 `private.<slug>`），main 没有主数据的公司补在 `data/seeds/physical/companies.json`（61 家）。占位条目（如「国产 DSP（暂无成熟量产者）」）`companyId` 为 null。
+下一步在 web/ 上落：公司页加一节「在实物里的位置」，研究收件箱事件表加「→ 部件」列（方向稿见画布第二页）。
+
+## 数据模型（schema 0.2）
 
 | 字段 | 含义 |
 |---|---|
@@ -32,6 +37,7 @@ physical/
 | `stages` | 产业阶段：材料 → 芯片 → 器件/封装 → 引擎/组装 → 连接 → 模块/客户 → 设备/测试 |
 | `companies[].evidence` | `verified` 公开披露可查 · `consensus` 券商/行业媒体一致 · `candidate` 方向对但供货关系待核验 |
 | `companies[].market` | `A` / `US` / `JP` / `TW` / `HK` / `私有` … 页面上按此上色和筛选 |
+| `companies[].companyId` | main 侧公司 id（`seam.py` 生成）；占位条目为 null |
 
 同一家公司可以出现在多个 part 下（旭创同时是 PIC 自研、引擎组装、整模块），页面底部的「Multi-part exposure」就是数这个。
 

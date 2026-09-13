@@ -1,6 +1,42 @@
 {
   "artboards": [
     {
+      "file": "CompanySeam.dc.html",
+      "title": "公司页 · 在实物里的位置 · 浅",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1000,
+      "page": "page-2"
+    },
+    {
+      "file": "InboxSeam.dc.html",
+      "title": "研究收件箱 · 事件落到部件 · 浅",
+      "x": 1580,
+      "y": 0,
+      "w": 1440,
+      "h": 760,
+      "page": "page-2"
+    },
+    {
+      "file": "CompanySeamDark.dc.html",
+      "title": "公司页 · 在实物里的位置 · 深",
+      "x": 0,
+      "y": 1200,
+      "w": 1440,
+      "h": 1000,
+      "page": "page-2"
+    },
+    {
+      "file": "InboxSeamDark.dc.html",
+      "title": "研究收件箱 · 事件落到部件 · 深",
+      "x": 1580,
+      "y": 1200,
+      "w": 1440,
+      "h": 760,
+      "page": "page-2"
+    },
+    {
       "file": "DirectionA.dc.html",
       "title": "A · 俯视 — 揭开上盖的俯视图是主角,九站在下面 · 浅",
       "x": 0,
@@ -100,9 +136,28 @@
       "y": -230,
       "w": 460,
       "text": "选中态(以 A 为例)\n\n点一个部件:剖面缩到左上并变淡,该部件成为主角,右栏是功能 / 参数 / 上游材料,下方是公司,按 材料 → 芯片 → 器件 → 设备 分组,每行带 ticker · 市场 · 证据级。\n\n这一页不管选 A/B/C 都需要,结构大致一样。"
+    },
+    {
+      "id": "note-seam",
+      "x": 0,
+      "y": -200,
+      "w": 520,
+      "page": "page-2",
+      "text": "接缝 · 公司 / 研究\n\n不新做页面。main 的公司页和研究收件箱各加一段:公司页多一节「在实物里的位置」(它站在哪只模块的哪些部件上,右边小图亮出这些部件);收件箱的事件表多一列「→ 部件」。\n\n数据侧已经接上:physical 的 126 条公司映射带 companyId,与 data/seeds/cpo 同一套 id;缺的 61 家主数据在 data/seeds/physical/companies.json。"
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "实物"
+    },
+    {
+      "id": "page-2",
+      "name": "接缝 · 公司 / 研究"
     }
   ],
   "launch": {
-    "view": "canvas"
+    "view": "canvas",
+    "page": "page-2"
   }
 }

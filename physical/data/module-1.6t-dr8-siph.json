@@ -1,6 +1,6 @@
 {
   "$comment": "物理优先的数据模型：一个真实在用的模块 → 横截面分层 → 部件 → 信号经过的顺序 → 每个部件背后的公司（按产业阶段）。公司条目的 evidence：verified=公开披露/官方资料可查；consensus=多家券商或行业媒体一致；candidate=方向正确但具体供货关系待核验。示例数据不含任何行情。",
-  "schemaVersion": "0.1",
+  "schemaVersion": "0.2",
   "asOf": "2026-09-04",
   "module": {
     "id": "om.1p6t.osfp.dr8.siph",
@@ -18,47 +18,187 @@
     "hostContext": {
       "summary": "插在英伟达 Quantum-X800（Q3400，72 个 twin-port OSFP 笼子）/ Spectrum-X800 交换机，以及 ConnectX-8/9 网卡侧（CX-8 用 800G 单口，CX-9 世代 1.6T/NIC）。Rubin 世代机柜的 scale-out 网络主力。",
       "platforms": [
-        { "name": "NVIDIA Quantum-X800 Q3400", "role": "InfiniBand XDR 交换机，144×800G 逻辑口 / 72 个 1.6T 笼子" },
-        { "name": "NVIDIA Spectrum-X800 / X1600", "role": "以太网交换机，1.6T 前面板光口（部分 SKU 走 CPO）" },
-        { "name": "NVIDIA ConnectX-8 / ConnectX-9", "role": "网卡侧：CX-8 800G 单口（1.6T 笼子 2×800G 拆分），CX-9 1.6 Tb/s 每卡" },
-        { "name": "Broadcom Tomahawk 6", "role": "102.4T 以太网交换 ASIC，2026 年 3 月量产，同样消耗 1.6T 前面板模块" }
+        {
+          "name": "NVIDIA Quantum-X800 Q3400",
+          "role": "InfiniBand XDR 交换机，144×800G 逻辑口 / 72 个 1.6T 笼子"
+        },
+        {
+          "name": "NVIDIA Spectrum-X800 / X1600",
+          "role": "以太网交换机，1.6T 前面板光口（部分 SKU 走 CPO）"
+        },
+        {
+          "name": "NVIDIA ConnectX-8 / ConnectX-9",
+          "role": "网卡侧：CX-8 800G 单口（1.6T 笼子 2×800G 拆分），CX-9 1.6 Tb/s 每卡"
+        },
+        {
+          "name": "Broadcom Tomahawk 6",
+          "role": "102.4T 以太网交换 ASIC，2026 年 3 月量产，同样消耗 1.6T 前面板模块"
+        }
       ]
     },
     "stages": [
-      { "id": "material", "name": "材料", "order": 1 },
-      { "id": "chip", "name": "芯片", "order": 2 },
-      { "id": "device", "name": "器件 / 封装", "order": 3 },
-      { "id": "engine", "name": "引擎 / 组装", "order": 4 },
-      { "id": "connect", "name": "连接", "order": 5 },
-      { "id": "module", "name": "模块 / 客户", "order": 6 },
-      { "id": "equip", "name": "设备 / 测试", "order": 7 }
+      {
+        "id": "material",
+        "name": "材料",
+        "order": 1
+      },
+      {
+        "id": "chip",
+        "name": "芯片",
+        "order": 2
+      },
+      {
+        "id": "device",
+        "name": "器件 / 封装",
+        "order": 3
+      },
+      {
+        "id": "engine",
+        "name": "引擎 / 组装",
+        "order": 4
+      },
+      {
+        "id": "connect",
+        "name": "连接",
+        "order": 5
+      },
+      {
+        "id": "module",
+        "name": "模块 / 客户",
+        "order": 6
+      },
+      {
+        "id": "equip",
+        "name": "设备 / 测试",
+        "order": 7
+      }
     ],
     "layers": [
-      { "id": "layer.lid", "name": "顶盖与散热", "order": 1, "note": "IHS 或翅片顶盖，下面是 TIM 与拉环机构" },
-      { "id": "layer.engine", "name": "光引擎", "order": 2, "note": "PIC 为底，Driver/TIA 倒装在 PIC 上或贴在旁边，CW 激光器与 FAU 与 PIC 边缘耦合" },
-      { "id": "layer.pcb", "name": "主 PCB 与电芯片", "order": 3, "note": "DSP、电源、MCU 在主板上，前端金手指插入主机笼子" },
-      { "id": "layer.shell", "name": "壳体与机械", "order": 4, "note": "OSFP 金属壳、EMI 弹片、MPO 插座座体" }
+      {
+        "id": "layer.lid",
+        "name": "顶盖与散热",
+        "order": 1,
+        "note": "IHS 或翅片顶盖，下面是 TIM 与拉环机构"
+      },
+      {
+        "id": "layer.engine",
+        "name": "光引擎",
+        "order": 2,
+        "note": "PIC 为底，Driver/TIA 倒装在 PIC 上或贴在旁边，CW 激光器与 FAU 与 PIC 边缘耦合"
+      },
+      {
+        "id": "layer.pcb",
+        "name": "主 PCB 与电芯片",
+        "order": 3,
+        "note": "DSP、电源、MCU 在主板上，前端金手指插入主机笼子"
+      },
+      {
+        "id": "layer.shell",
+        "name": "壳体与机械",
+        "order": 4,
+        "note": "OSFP 金属壳、EMI 弹片、MPO 插座座体"
+      }
     ],
     "signalPath": {
       "tx": [
-        { "step": 1, "partId": "part.host-cage", "signal": "电", "text": "主机交换 ASIC / NIC 的 SerDes 经 OSFP 笼子与连接器送入" },
-        { "step": 2, "partId": "part.edge-fingers", "signal": "电", "text": "8 路 224G PAM4 差分信号进金手指" },
-        { "step": 3, "partId": "part.pcb", "signal": "电", "text": "低损耗 PCB 走线到 DSP" },
-        { "step": 4, "partId": "part.dsp", "signal": "电", "text": "DSP 做 CDR、均衡、FEC、重定时，输出 8×200G" },
-        { "step": 5, "partId": "part.driver", "signal": "电", "text": "驱动器把 DSP 输出放大到调制器所需摆幅" },
-        { "step": 6, "partId": "part.cw-laser", "signal": "光", "text": "外置 CW 激光器（2 颗）经隔离器 / 透镜 / 保偏光纤把连续光送入 PIC" },
-        { "step": 7, "partId": "part.pic", "signal": "电→光", "text": "PIC 上 1×4 分束后由 MZM 调制器把电信号写到光上，波导汇到边缘耦合器" },
-        { "step": 8, "partId": "part.fau", "signal": "光", "text": "FAU 把 8 路调制光（+ 2 路供光）与 PIC 边缘对准耦合" },
-        { "step": 9, "partId": "part.mpo", "signal": "光", "text": "MPO 插座把光纤带引到面板，接 MPO-12/16 跳线" }
+        {
+          "step": 1,
+          "partId": "part.host-cage",
+          "signal": "电",
+          "text": "主机交换 ASIC / NIC 的 SerDes 经 OSFP 笼子与连接器送入"
+        },
+        {
+          "step": 2,
+          "partId": "part.edge-fingers",
+          "signal": "电",
+          "text": "8 路 224G PAM4 差分信号进金手指"
+        },
+        {
+          "step": 3,
+          "partId": "part.pcb",
+          "signal": "电",
+          "text": "低损耗 PCB 走线到 DSP"
+        },
+        {
+          "step": 4,
+          "partId": "part.dsp",
+          "signal": "电",
+          "text": "DSP 做 CDR、均衡、FEC、重定时，输出 8×200G"
+        },
+        {
+          "step": 5,
+          "partId": "part.driver",
+          "signal": "电",
+          "text": "驱动器把 DSP 输出放大到调制器所需摆幅"
+        },
+        {
+          "step": 6,
+          "partId": "part.cw-laser",
+          "signal": "光",
+          "text": "外置 CW 激光器（2 颗）经隔离器 / 透镜 / 保偏光纤把连续光送入 PIC"
+        },
+        {
+          "step": 7,
+          "partId": "part.pic",
+          "signal": "电→光",
+          "text": "PIC 上 1×4 分束后由 MZM 调制器把电信号写到光上，波导汇到边缘耦合器"
+        },
+        {
+          "step": 8,
+          "partId": "part.fau",
+          "signal": "光",
+          "text": "FAU 把 8 路调制光（+ 2 路供光）与 PIC 边缘对准耦合"
+        },
+        {
+          "step": 9,
+          "partId": "part.mpo",
+          "signal": "光",
+          "text": "MPO 插座把光纤带引到面板，接 MPO-12/16 跳线"
+        }
       ],
       "rx": [
-        { "step": 1, "partId": "part.mpo", "signal": "光", "text": "8 路光从 MPO 进入" },
-        { "step": 2, "partId": "part.fau", "signal": "光", "text": "FAU 耦合到 PIC 接收波导" },
-        { "step": 3, "partId": "part.pd", "signal": "光→电", "text": "PIC 上的 Ge 光电探测器把光变成光电流" },
-        { "step": 4, "partId": "part.tia", "signal": "电", "text": "TIA 把微安级电流放大成电压" },
-        { "step": 5, "partId": "part.dsp", "signal": "电", "text": "DSP 做 ADC、均衡、FEC 解码、重定时" },
-        { "step": 6, "partId": "part.pcb", "signal": "电", "text": "走线回到金手指" },
-        { "step": 7, "partId": "part.edge-fingers", "signal": "电", "text": "送回主机 SerDes" }
+        {
+          "step": 1,
+          "partId": "part.mpo",
+          "signal": "光",
+          "text": "8 路光从 MPO 进入"
+        },
+        {
+          "step": 2,
+          "partId": "part.fau",
+          "signal": "光",
+          "text": "FAU 耦合到 PIC 接收波导"
+        },
+        {
+          "step": 3,
+          "partId": "part.pd",
+          "signal": "光→电",
+          "text": "PIC 上的 Ge 光电探测器把光变成光电流"
+        },
+        {
+          "step": 4,
+          "partId": "part.tia",
+          "signal": "电",
+          "text": "TIA 把微安级电流放大成电压"
+        },
+        {
+          "step": 5,
+          "partId": "part.dsp",
+          "signal": "电",
+          "text": "DSP 做 ADC、均衡、FEC 解码、重定时"
+        },
+        {
+          "step": 6,
+          "partId": "part.pcb",
+          "signal": "电",
+          "text": "走线回到金手指"
+        },
+        {
+          "step": 7,
+          "partId": "part.edge-fingers",
+          "signal": "电",
+          "text": "送回主机 SerDes"
+        }
       ]
     },
     "parts": [
@@ -68,16 +208,80 @@
         "name": "主机侧 OSFP 笼子 / 连接器",
         "nameEn": "Host OSFP cage and connector",
         "function": "模块与交换机/网卡主板之间的机械与电气接口，属于系统边界，不在模块内部",
-        "keySpecs": ["OSFP 8 对差分 224G", "twin-port 笼子（Q3400）", "EMI 屏蔽、散热接触"],
-        "materials": ["铜合金弹片", "LCP 塑胶", "镀金/镀镍"],
+        "keySpecs": [
+          "OSFP 8 对差分 224G",
+          "twin-port 笼子（Q3400）",
+          "EMI 屏蔽、散热接触"
+        ],
+        "materials": [
+          "铜合金弹片",
+          "LCP 塑胶",
+          "镀金/镀镍"
+        ],
         "companies": [
-          { "name": "Amphenol", "ticker": "APH", "market": "US", "stage": "connect", "role": "OSFP 笼子与连接器", "evidence": "verified" },
-          { "name": "TE Connectivity", "ticker": "TEL", "market": "US", "stage": "connect", "role": "OSFP 笼子与连接器", "evidence": "verified" },
-          { "name": "Molex（Koch 旗下）", "ticker": "", "market": "私有", "stage": "connect", "role": "OSFP 笼子与连接器", "evidence": "verified" },
-          { "name": "华丰科技", "ticker": "688629.SH", "market": "A", "stage": "connect", "role": "高速背板/IO 连接器，国产替代候选", "evidence": "candidate" },
-          { "name": "立讯精密", "ticker": "002475.SZ", "market": "A", "stage": "connect", "role": "高速连接器与线缆组件", "evidence": "consensus" },
-          { "name": "NVIDIA", "ticker": "NVDA", "market": "US", "stage": "module", "role": "主机：Quantum-X800 / Spectrum-X / ConnectX", "evidence": "verified" },
-          { "name": "Broadcom", "ticker": "AVGO", "market": "US", "stage": "chip", "role": "主机交换 ASIC Tomahawk 6", "evidence": "verified" }
+          {
+            "name": "Amphenol",
+            "ticker": "APH",
+            "market": "US",
+            "stage": "connect",
+            "role": "OSFP 笼子与连接器",
+            "evidence": "verified",
+            "companyId": "global.amphenol"
+          },
+          {
+            "name": "TE Connectivity",
+            "ticker": "TEL",
+            "market": "US",
+            "stage": "connect",
+            "role": "OSFP 笼子与连接器",
+            "evidence": "verified",
+            "companyId": "global.te"
+          },
+          {
+            "name": "Molex（Koch 旗下）",
+            "ticker": "",
+            "market": "私有",
+            "stage": "connect",
+            "role": "OSFP 笼子与连接器",
+            "evidence": "verified",
+            "companyId": "global.molex"
+          },
+          {
+            "name": "华丰科技",
+            "ticker": "688629.SH",
+            "market": "A",
+            "stage": "connect",
+            "role": "高速背板/IO 连接器，国产替代候选",
+            "evidence": "candidate",
+            "companyId": "cn.688629"
+          },
+          {
+            "name": "立讯精密",
+            "ticker": "002475.SZ",
+            "market": "A",
+            "stage": "connect",
+            "role": "高速连接器与线缆组件",
+            "evidence": "consensus",
+            "companyId": "cn.002475"
+          },
+          {
+            "name": "NVIDIA",
+            "ticker": "NVDA",
+            "market": "US",
+            "stage": "module",
+            "role": "主机：Quantum-X800 / Spectrum-X / ConnectX",
+            "evidence": "verified",
+            "companyId": "global.nvidia"
+          },
+          {
+            "name": "Broadcom",
+            "ticker": "AVGO",
+            "market": "US",
+            "stage": "chip",
+            "role": "主机交换 ASIC Tomahawk 6",
+            "evidence": "verified",
+            "companyId": "global.broadcom"
+          }
         ]
       },
       {
@@ -86,11 +290,34 @@
         "name": "金手指",
         "nameEn": "Edge fingers",
         "function": "主 PCB 前端的镀金触点，承载 8 路发 + 8 路收的 224G 差分对以及供电、I2C 管理信号",
-        "keySpecs": ["OSFP 60 pin", "镀硬金", "阻抗控制 ±10%"],
-        "materials": ["同 PCB", "化学镍金 / 电镀硬金"],
+        "keySpecs": [
+          "OSFP 60 pin",
+          "镀硬金",
+          "阻抗控制 ±10%"
+        ],
+        "materials": [
+          "同 PCB",
+          "化学镍金 / 电镀硬金"
+        ],
         "companies": [
-          { "name": "沪电股份", "ticker": "002463.SZ", "market": "A", "stage": "device", "role": "随主 PCB 一并制造", "evidence": "consensus" },
-          { "name": "深南电路", "ticker": "002916.SZ", "market": "A", "stage": "device", "role": "随主 PCB 一并制造", "evidence": "consensus" }
+          {
+            "name": "沪电股份",
+            "ticker": "002463.SZ",
+            "market": "A",
+            "stage": "device",
+            "role": "随主 PCB 一并制造",
+            "evidence": "consensus",
+            "companyId": "cn.002463"
+          },
+          {
+            "name": "深南电路",
+            "ticker": "002916.SZ",
+            "market": "A",
+            "stage": "device",
+            "role": "随主 PCB 一并制造",
+            "evidence": "consensus",
+            "companyId": "cn.002916"
+          }
         ]
       },
       {
@@ -99,19 +326,108 @@
         "name": "主 PCB（高速多层板）",
         "nameEn": "Module main PCB",
         "function": "承载 DSP、电源、MCU，并以低损耗走线把金手指接到 DSP、DSP 接到光引擎",
-        "keySpecs": ["10–16 层", "超低损耗材料（M7/M8 级）", "背钻、阻抗控制", "224G 通道插损预算"],
-        "materials": ["高速覆铜板（CCL）", "低粗糙度铜箔（HVLP）", "低介电玻纤布"],
+        "keySpecs": [
+          "10–16 层",
+          "超低损耗材料（M7/M8 级）",
+          "背钻、阻抗控制",
+          "224G 通道插损预算"
+        ],
+        "materials": [
+          "高速覆铜板（CCL）",
+          "低粗糙度铜箔（HVLP）",
+          "低介电玻纤布"
+        ],
         "companies": [
-          { "name": "沪电股份", "ticker": "002463.SZ", "market": "A", "stage": "device", "role": "光模块/交换机高速 PCB 主力供应商", "evidence": "consensus" },
-          { "name": "深南电路", "ticker": "002916.SZ", "market": "A", "stage": "device", "role": "高速 PCB", "evidence": "consensus" },
-          { "name": "胜宏科技", "ticker": "300476.SZ", "market": "A", "stage": "device", "role": "AI 服务器/网络高多层板", "evidence": "consensus" },
-          { "name": "TTM Technologies", "ticker": "TTMI", "market": "US", "stage": "device", "role": "北美高速 PCB", "evidence": "consensus" },
-          { "name": "生益科技", "ticker": "600183.SH", "market": "A", "stage": "material", "role": "高速覆铜板", "evidence": "consensus" },
-          { "name": "台光电子", "ticker": "2383.TW", "market": "TW", "stage": "material", "role": "高速覆铜板（M8 级）", "evidence": "consensus" },
-          { "name": "Panasonic（Megtron）", "ticker": "6752.T", "market": "JP", "stage": "material", "role": "Megtron 6/7/8 高速材料", "evidence": "verified" },
-          { "name": "Rogers", "ticker": "ROG", "market": "US", "stage": "material", "role": "高频/低损耗基材", "evidence": "consensus" },
-          { "name": "中材科技", "ticker": "002080.SZ", "market": "A", "stage": "material", "role": "低介电玻纤布（Low-Dk 布）", "evidence": "candidate" },
-          { "name": "菲利华", "ticker": "300395.SZ", "market": "A", "stage": "material", "role": "石英/低介电玻纤候选", "evidence": "candidate" }
+          {
+            "name": "沪电股份",
+            "ticker": "002463.SZ",
+            "market": "A",
+            "stage": "device",
+            "role": "光模块/交换机高速 PCB 主力供应商",
+            "evidence": "consensus",
+            "companyId": "cn.002463"
+          },
+          {
+            "name": "深南电路",
+            "ticker": "002916.SZ",
+            "market": "A",
+            "stage": "device",
+            "role": "高速 PCB",
+            "evidence": "consensus",
+            "companyId": "cn.002916"
+          },
+          {
+            "name": "胜宏科技",
+            "ticker": "300476.SZ",
+            "market": "A",
+            "stage": "device",
+            "role": "AI 服务器/网络高多层板",
+            "evidence": "consensus",
+            "companyId": "cn.300476"
+          },
+          {
+            "name": "TTM Technologies",
+            "ticker": "TTMI",
+            "market": "US",
+            "stage": "device",
+            "role": "北美高速 PCB",
+            "evidence": "consensus",
+            "companyId": "global.ttm"
+          },
+          {
+            "name": "生益科技",
+            "ticker": "600183.SH",
+            "market": "A",
+            "stage": "material",
+            "role": "高速覆铜板",
+            "evidence": "consensus",
+            "companyId": "cn.600183"
+          },
+          {
+            "name": "台光电子",
+            "ticker": "2383.TW",
+            "market": "TW",
+            "stage": "material",
+            "role": "高速覆铜板（M8 级）",
+            "evidence": "consensus",
+            "companyId": "tw.2383"
+          },
+          {
+            "name": "Panasonic（Megtron）",
+            "ticker": "6752.T",
+            "market": "JP",
+            "stage": "material",
+            "role": "Megtron 6/7/8 高速材料",
+            "evidence": "verified",
+            "companyId": "global.panasonic"
+          },
+          {
+            "name": "Rogers",
+            "ticker": "ROG",
+            "market": "US",
+            "stage": "material",
+            "role": "高频/低损耗基材",
+            "evidence": "consensus",
+            "companyId": "global.rogers"
+          },
+          {
+            "name": "中材科技",
+            "ticker": "002080.SZ",
+            "market": "A",
+            "stage": "material",
+            "role": "低介电玻纤布（Low-Dk 布）",
+            "evidence": "candidate",
+            "companyId": "cn.002080"
+          },
+          {
+            "name": "菲利华",
+            "ticker": "300395.SZ",
+            "market": "A",
+            "stage": "material",
+            "role": "石英/低介电玻纤候选",
+            "evidence": "candidate",
+            "companyId": "cn.300395"
+          }
         ]
       },
       {
@@ -120,14 +436,62 @@
         "name": "DSP（重定时芯片）",
         "nameEn": "1.6T PAM4 DSP",
         "function": "主机侧 8×224G 与光侧 8×200G 之间的 CDR、均衡、FEC、重定时；是模块功耗与 BOM 的最大单项",
-        "keySpecs": ["3 nm", "8×224G ↔ 8×200G PAM4", "集成 Driver/TIA 的版本可选", "约 8–10 W"],
-        "materials": ["先进逻辑代工（3 nm）", "倒装封装基板"],
+        "keySpecs": [
+          "3 nm",
+          "8×224G ↔ 8×200G PAM4",
+          "集成 Driver/TIA 的版本可选",
+          "约 8–10 W"
+        ],
+        "materials": [
+          "先进逻辑代工（3 nm）",
+          "倒装封装基板"
+        ],
         "companies": [
-          { "name": "Broadcom（Sian3 / BCM83628）", "ticker": "AVGO", "market": "US", "stage": "chip", "role": "1.6T DSP 主力，2025 Q3 量产", "evidence": "verified" },
-          { "name": "Marvell（Ara）", "ticker": "MRVL", "market": "US", "stage": "chip", "role": "3 nm 1.6T DSP，2026 年放量；含 LRO / coherent-lite 变体", "evidence": "verified" },
-          { "name": "Credo", "ticker": "CRDO", "market": "US", "stage": "chip", "role": "DSP / AEC 与 LRO 侧候选", "evidence": "candidate" },
-          { "name": "TSMC", "ticker": "TSM / 2330.TW", "market": "TW", "stage": "chip", "role": "3 nm 逻辑代工", "evidence": "consensus" },
-          { "name": "国产 DSP（暂无成熟量产者）", "ticker": "", "market": "—", "stage": "chip", "role": "1.6T 级 DSP 仍是进口依赖项", "evidence": "consensus" }
+          {
+            "name": "Broadcom（Sian3 / BCM83628）",
+            "ticker": "AVGO",
+            "market": "US",
+            "stage": "chip",
+            "role": "1.6T DSP 主力，2025 Q3 量产",
+            "evidence": "verified",
+            "companyId": "global.broadcom"
+          },
+          {
+            "name": "Marvell（Ara）",
+            "ticker": "MRVL",
+            "market": "US",
+            "stage": "chip",
+            "role": "3 nm 1.6T DSP，2026 年放量；含 LRO / coherent-lite 变体",
+            "evidence": "verified",
+            "companyId": "global.marvell"
+          },
+          {
+            "name": "Credo",
+            "ticker": "CRDO",
+            "market": "US",
+            "stage": "chip",
+            "role": "DSP / AEC 与 LRO 侧候选",
+            "evidence": "candidate",
+            "companyId": "global.credo"
+          },
+          {
+            "name": "TSMC",
+            "ticker": "TSM / 2330.TW",
+            "market": "TW",
+            "stage": "chip",
+            "role": "3 nm 逻辑代工",
+            "evidence": "consensus",
+            "companyId": "global.tsmc"
+          },
+          {
+            "name": "国产 DSP（暂无成熟量产者）",
+            "ticker": "",
+            "market": "—",
+            "stage": "chip",
+            "role": "1.6T 级 DSP 仍是进口依赖项",
+            "evidence": "consensus",
+            "companyId": null
+          }
         ]
       },
       {
@@ -136,13 +500,51 @@
         "name": "电源 / MCU / 存储",
         "nameEn": "Power, MCU, EEPROM",
         "function": "3.3V 转多路核心电压、模块管理（CMIS）、DDM 监控与温控",
-        "keySpecs": ["多路 PMIC / LDO", "MCU 跑 CMIS 5.x", "I2C 管理接口"],
-        "materials": ["通用半导体"],
+        "keySpecs": [
+          "多路 PMIC / LDO",
+          "MCU 跑 CMIS 5.x",
+          "I2C 管理接口"
+        ],
+        "materials": [
+          "通用半导体"
+        ],
         "companies": [
-          { "name": "Monolithic Power Systems", "ticker": "MPWR", "market": "US", "stage": "chip", "role": "PMIC", "evidence": "consensus" },
-          { "name": "Texas Instruments", "ticker": "TXN", "market": "US", "stage": "chip", "role": "电源与模拟", "evidence": "consensus" },
-          { "name": "Analog Devices", "ticker": "ADI", "market": "US", "stage": "chip", "role": "电源与模拟", "evidence": "consensus" },
-          { "name": "圣邦股份", "ticker": "300661.SZ", "market": "A", "stage": "chip", "role": "国产电源管理候选", "evidence": "candidate" }
+          {
+            "name": "Monolithic Power Systems",
+            "ticker": "MPWR",
+            "market": "US",
+            "stage": "chip",
+            "role": "PMIC",
+            "evidence": "consensus",
+            "companyId": "global.mps"
+          },
+          {
+            "name": "Texas Instruments",
+            "ticker": "TXN",
+            "market": "US",
+            "stage": "chip",
+            "role": "电源与模拟",
+            "evidence": "consensus",
+            "companyId": "global.ti"
+          },
+          {
+            "name": "Analog Devices",
+            "ticker": "ADI",
+            "market": "US",
+            "stage": "chip",
+            "role": "电源与模拟",
+            "evidence": "consensus",
+            "companyId": "global.adi"
+          },
+          {
+            "name": "圣邦股份",
+            "ticker": "300661.SZ",
+            "market": "A",
+            "stage": "chip",
+            "role": "国产电源管理候选",
+            "evidence": "candidate",
+            "companyId": "cn.300661"
+          }
         ]
       },
       {
@@ -151,15 +553,69 @@
         "name": "调制器驱动器（Driver）",
         "nameEn": "MZM driver",
         "function": "把 DSP 的输出放大到硅光 MZM 需要的驱动摆幅；LPO/LRO 路线里它还要兼做线性均衡",
-        "keySpecs": ["8 通道 200G", "SiGe BiCMOS 或 CMOS", "倒装在 PIC 上或独立贴片"],
-        "materials": ["SiGe / CMOS 晶圆"],
+        "keySpecs": [
+          "8 通道 200G",
+          "SiGe BiCMOS 或 CMOS",
+          "倒装在 PIC 上或独立贴片"
+        ],
+        "materials": [
+          "SiGe / CMOS 晶圆"
+        ],
         "companies": [
-          { "name": "MACOM", "ticker": "MTSI", "market": "US", "stage": "chip", "role": "Driver / TIA 主力（含 LPO）", "evidence": "verified" },
-          { "name": "Semtech", "ticker": "SMTC", "market": "US", "stage": "chip", "role": "Driver / TIA（200G/lane）", "evidence": "verified" },
-          { "name": "Broadcom", "ticker": "AVGO", "market": "US", "stage": "chip", "role": "与 DSP 配套的 Driver/TIA", "evidence": "consensus" },
-          { "name": "Marvell", "ticker": "MRVL", "market": "US", "stage": "chip", "role": "与 DSP 配套的 Driver/TIA", "evidence": "consensus" },
-          { "name": "厦门优迅", "ticker": "", "market": "私有", "stage": "chip", "role": "国产 Driver/TIA（含拟上市）", "evidence": "candidate" },
-          { "name": "中际旭创（自研）", "ticker": "300308.SZ", "market": "A", "stage": "chip", "role": "部分硅光方案自研驱动/TIA 的传闻", "evidence": "candidate" }
+          {
+            "name": "MACOM",
+            "ticker": "MTSI",
+            "market": "US",
+            "stage": "chip",
+            "role": "Driver / TIA 主力（含 LPO）",
+            "evidence": "verified",
+            "companyId": "global.macom"
+          },
+          {
+            "name": "Semtech",
+            "ticker": "SMTC",
+            "market": "US",
+            "stage": "chip",
+            "role": "Driver / TIA（200G/lane）",
+            "evidence": "verified",
+            "companyId": "global.semtech"
+          },
+          {
+            "name": "Broadcom",
+            "ticker": "AVGO",
+            "market": "US",
+            "stage": "chip",
+            "role": "与 DSP 配套的 Driver/TIA",
+            "evidence": "consensus",
+            "companyId": "global.broadcom"
+          },
+          {
+            "name": "Marvell",
+            "ticker": "MRVL",
+            "market": "US",
+            "stage": "chip",
+            "role": "与 DSP 配套的 Driver/TIA",
+            "evidence": "consensus",
+            "companyId": "global.marvell"
+          },
+          {
+            "name": "厦门优迅",
+            "ticker": "",
+            "market": "私有",
+            "stage": "chip",
+            "role": "国产 Driver/TIA（含拟上市）",
+            "evidence": "candidate",
+            "companyId": "private.yourui"
+          },
+          {
+            "name": "中际旭创（自研）",
+            "ticker": "300308.SZ",
+            "market": "A",
+            "stage": "chip",
+            "role": "部分硅光方案自研驱动/TIA 的传闻",
+            "evidence": "candidate",
+            "companyId": "cn.300308"
+          }
         ]
       },
       {
@@ -168,14 +624,60 @@
         "name": "跨阻放大器（TIA）",
         "nameEn": "Transimpedance amplifier",
         "function": "把 PD 的微弱光电流放大为 DSP 可采样的电压，决定接收灵敏度",
-        "keySpecs": ["8 通道 200G", "低噪声、高线性", "常与 Driver 同厂"],
-        "materials": ["SiGe / CMOS 晶圆"],
+        "keySpecs": [
+          "8 通道 200G",
+          "低噪声、高线性",
+          "常与 Driver 同厂"
+        ],
+        "materials": [
+          "SiGe / CMOS 晶圆"
+        ],
         "companies": [
-          { "name": "MACOM", "ticker": "MTSI", "market": "US", "stage": "chip", "role": "TIA", "evidence": "verified" },
-          { "name": "Semtech", "ticker": "SMTC", "market": "US", "stage": "chip", "role": "TIA", "evidence": "verified" },
-          { "name": "Broadcom", "ticker": "AVGO", "market": "US", "stage": "chip", "role": "TIA", "evidence": "consensus" },
-          { "name": "Marvell", "ticker": "MRVL", "market": "US", "stage": "chip", "role": "TIA", "evidence": "consensus" },
-          { "name": "厦门优迅", "ticker": "", "market": "私有", "stage": "chip", "role": "国产 TIA 候选", "evidence": "candidate" }
+          {
+            "name": "MACOM",
+            "ticker": "MTSI",
+            "market": "US",
+            "stage": "chip",
+            "role": "TIA",
+            "evidence": "verified",
+            "companyId": "global.macom"
+          },
+          {
+            "name": "Semtech",
+            "ticker": "SMTC",
+            "market": "US",
+            "stage": "chip",
+            "role": "TIA",
+            "evidence": "verified",
+            "companyId": "global.semtech"
+          },
+          {
+            "name": "Broadcom",
+            "ticker": "AVGO",
+            "market": "US",
+            "stage": "chip",
+            "role": "TIA",
+            "evidence": "consensus",
+            "companyId": "global.broadcom"
+          },
+          {
+            "name": "Marvell",
+            "ticker": "MRVL",
+            "market": "US",
+            "stage": "chip",
+            "role": "TIA",
+            "evidence": "consensus",
+            "companyId": "global.marvell"
+          },
+          {
+            "name": "厦门优迅",
+            "ticker": "",
+            "market": "私有",
+            "stage": "chip",
+            "role": "国产 TIA 候选",
+            "evidence": "candidate",
+            "companyId": "private.yourui"
+          }
         ]
       },
       {
@@ -184,25 +686,162 @@
         "name": "CW 激光器（外置光源）",
         "nameEn": "High-power CW DFB laser",
         "function": "为硅光 PIC 提供 1310 nm 连续光；1.6T DR8 通常 2 颗高功率 CW，每颗分 4 路。是硅光路线最紧的上游",
-        "keySpecs": ["InP DFB，1310 nm", "输出功率 70–100 mW 级", "无 TEC", "带隔离器耦合到 PIC"],
-        "materials": ["InP 衬底", "MOCVD 外延", "AR/HR 镀膜"],
+        "keySpecs": [
+          "InP DFB，1310 nm",
+          "输出功率 70–100 mW 级",
+          "无 TEC",
+          "带隔离器耦合到 PIC"
+        ],
+        "materials": [
+          "InP 衬底",
+          "MOCVD 外延",
+          "AR/HR 镀膜"
+        ],
         "companies": [
-          { "name": "Lumentum", "ticker": "LITE", "market": "US", "stage": "chip", "role": "高功率 CW 激光器（含 CPO 外置光源）", "evidence": "verified" },
-          { "name": "Coherent", "ticker": "COHR", "market": "US", "stage": "chip", "role": "InP 激光器（CW/EML）", "evidence": "verified" },
-          { "name": "Broadcom", "ticker": "AVGO", "market": "US", "stage": "chip", "role": "CW / EML 激光器", "evidence": "consensus" },
-          { "name": "Sumitomo Electric", "ticker": "5802.T", "market": "JP", "stage": "chip", "role": "InP 激光器", "evidence": "consensus" },
-          { "name": "Mitsubishi Electric", "ticker": "6503.T", "market": "JP", "stage": "chip", "role": "InP 激光器 / EML", "evidence": "consensus" },
-          { "name": "源杰科技", "ticker": "688498.SH", "market": "A", "stage": "chip", "role": "高功率 CW 光源与 200G EML，A 股最直接标的", "evidence": "verified" },
-          { "name": "长光华芯", "ticker": "688048.SH", "market": "A", "stage": "chip", "role": "CW 激光器进入送样/小批量", "evidence": "consensus" },
-          { "name": "仕佳光子", "ticker": "688313.SH", "market": "A", "stage": "chip", "role": "CW 激光器与 AWG", "evidence": "consensus" },
-          { "name": "武汉敏芯", "ticker": "", "market": "私有", "stage": "chip", "role": "国产 CW/EML 候选", "evidence": "candidate" },
-          { "name": "云岭光电", "ticker": "", "market": "私有", "stage": "chip", "role": "国产 CW/EML 候选", "evidence": "candidate" },
-          { "name": "Sumitomo Electric（衬底）", "ticker": "5802.T", "market": "JP", "stage": "material", "role": "InP 衬底", "evidence": "verified" },
-          { "name": "AXT / 北京通美", "ticker": "AXTI", "market": "US", "stage": "material", "role": "InP 衬底（产能在中国）", "evidence": "verified" },
-          { "name": "JX Advanced Metals", "ticker": "5016.T", "market": "JP", "stage": "material", "role": "InP 衬底", "evidence": "consensus" },
-          { "name": "云南锗业（鑫耀半导体）", "ticker": "002428.SZ", "market": "A", "stage": "material", "role": "InP 衬底国产候选", "evidence": "candidate" },
-          { "name": "Aixtron", "ticker": "AIXA.DE", "market": "DE", "stage": "equip", "role": "InP MOCVD 设备", "evidence": "verified" },
-          { "name": "Veeco", "ticker": "VECO", "market": "US", "stage": "equip", "role": "MOCVD 设备", "evidence": "consensus" }
+          {
+            "name": "Lumentum",
+            "ticker": "LITE",
+            "market": "US",
+            "stage": "chip",
+            "role": "高功率 CW 激光器（含 CPO 外置光源）",
+            "evidence": "verified",
+            "companyId": "global.lumentum"
+          },
+          {
+            "name": "Coherent",
+            "ticker": "COHR",
+            "market": "US",
+            "stage": "chip",
+            "role": "InP 激光器（CW/EML）",
+            "evidence": "verified",
+            "companyId": "global.coherent"
+          },
+          {
+            "name": "Broadcom",
+            "ticker": "AVGO",
+            "market": "US",
+            "stage": "chip",
+            "role": "CW / EML 激光器",
+            "evidence": "consensus",
+            "companyId": "global.broadcom"
+          },
+          {
+            "name": "Sumitomo Electric",
+            "ticker": "5802.T",
+            "market": "JP",
+            "stage": "chip",
+            "role": "InP 激光器",
+            "evidence": "consensus",
+            "companyId": "global.sumitomo-electric"
+          },
+          {
+            "name": "Mitsubishi Electric",
+            "ticker": "6503.T",
+            "market": "JP",
+            "stage": "chip",
+            "role": "InP 激光器 / EML",
+            "evidence": "consensus",
+            "companyId": "global.mitsubishi-electric"
+          },
+          {
+            "name": "源杰科技",
+            "ticker": "688498.SH",
+            "market": "A",
+            "stage": "chip",
+            "role": "高功率 CW 光源与 200G EML，A 股最直接标的",
+            "evidence": "verified",
+            "companyId": "cn.688498"
+          },
+          {
+            "name": "长光华芯",
+            "ticker": "688048.SH",
+            "market": "A",
+            "stage": "chip",
+            "role": "CW 激光器进入送样/小批量",
+            "evidence": "consensus",
+            "companyId": "cn.688048"
+          },
+          {
+            "name": "仕佳光子",
+            "ticker": "688313.SH",
+            "market": "A",
+            "stage": "chip",
+            "role": "CW 激光器与 AWG",
+            "evidence": "consensus",
+            "companyId": "cn.688313"
+          },
+          {
+            "name": "武汉敏芯",
+            "ticker": "",
+            "market": "私有",
+            "stage": "chip",
+            "role": "国产 CW/EML 候选",
+            "evidence": "candidate",
+            "companyId": "private.minxin"
+          },
+          {
+            "name": "云岭光电",
+            "ticker": "",
+            "market": "私有",
+            "stage": "chip",
+            "role": "国产 CW/EML 候选",
+            "evidence": "candidate",
+            "companyId": "private.yunling"
+          },
+          {
+            "name": "Sumitomo Electric（衬底）",
+            "ticker": "5802.T",
+            "market": "JP",
+            "stage": "material",
+            "role": "InP 衬底",
+            "evidence": "verified",
+            "companyId": "global.sumitomo-electric"
+          },
+          {
+            "name": "AXT / 北京通美",
+            "ticker": "AXTI",
+            "market": "US",
+            "stage": "material",
+            "role": "InP 衬底（产能在中国）",
+            "evidence": "verified",
+            "companyId": "global.axt"
+          },
+          {
+            "name": "JX Advanced Metals",
+            "ticker": "5016.T",
+            "market": "JP",
+            "stage": "material",
+            "role": "InP 衬底",
+            "evidence": "consensus",
+            "companyId": "global.jx-metals"
+          },
+          {
+            "name": "云南锗业（鑫耀半导体）",
+            "ticker": "002428.SZ",
+            "market": "A",
+            "stage": "material",
+            "role": "InP 衬底国产候选",
+            "evidence": "candidate",
+            "companyId": "cn.002428"
+          },
+          {
+            "name": "Aixtron",
+            "ticker": "AIXA.DE",
+            "market": "DE",
+            "stage": "equip",
+            "role": "InP MOCVD 设备",
+            "evidence": "verified",
+            "companyId": "global.aixtron"
+          },
+          {
+            "name": "Veeco",
+            "ticker": "VECO",
+            "market": "US",
+            "stage": "equip",
+            "role": "MOCVD 设备",
+            "evidence": "consensus",
+            "companyId": "global.veeco"
+          }
         ]
       },
       {
@@ -211,14 +850,62 @@
         "name": "光源耦合：隔离器 / 透镜 / 保偏光纤",
         "nameEn": "Laser coupling optics",
         "function": "把 CW 激光器的光稳定送进 PIC：隔离器防回光、透镜或保偏光纤对准",
-        "keySpecs": ["微型隔离器", "非球面透镜", "PM 光纤或片上耦合"],
-        "materials": ["磁光晶体（钆镓石榴石 / 铋铁石榴石）", "光学玻璃", "保偏光纤"],
+        "keySpecs": [
+          "微型隔离器",
+          "非球面透镜",
+          "PM 光纤或片上耦合"
+        ],
+        "materials": [
+          "磁光晶体（钆镓石榴石 / 铋铁石榴石）",
+          "光学玻璃",
+          "保偏光纤"
+        ],
         "companies": [
-          { "name": "天孚通信", "ticker": "300394.SZ", "market": "A", "stage": "device", "role": "激光器封装、ELS 外置光源组件", "evidence": "verified" },
-          { "name": "光库科技", "ticker": "300620.SZ", "market": "A", "stage": "device", "role": "光隔离器、薄膜铌酸锂", "evidence": "consensus" },
-          { "name": "腾景科技", "ticker": "688195.SH", "market": "A", "stage": "device", "role": "精密光学元件（透镜、棱镜）", "evidence": "consensus" },
-          { "name": "福晶科技", "ticker": "002222.SZ", "market": "A", "stage": "material", "role": "光学晶体与元件", "evidence": "candidate" },
-          { "name": "Fujikura", "ticker": "5803.T", "market": "JP", "stage": "material", "role": "保偏光纤", "evidence": "consensus" }
+          {
+            "name": "天孚通信",
+            "ticker": "300394.SZ",
+            "market": "A",
+            "stage": "device",
+            "role": "激光器封装、ELS 外置光源组件",
+            "evidence": "verified",
+            "companyId": "cn.300394"
+          },
+          {
+            "name": "光库科技",
+            "ticker": "300620.SZ",
+            "market": "A",
+            "stage": "device",
+            "role": "光隔离器、薄膜铌酸锂",
+            "evidence": "consensus",
+            "companyId": "cn.300620"
+          },
+          {
+            "name": "腾景科技",
+            "ticker": "688195.SH",
+            "market": "A",
+            "stage": "device",
+            "role": "精密光学元件（透镜、棱镜）",
+            "evidence": "consensus",
+            "companyId": "cn.688195"
+          },
+          {
+            "name": "福晶科技",
+            "ticker": "002222.SZ",
+            "market": "A",
+            "stage": "material",
+            "role": "光学晶体与元件",
+            "evidence": "candidate",
+            "companyId": "cn.002222"
+          },
+          {
+            "name": "Fujikura",
+            "ticker": "5803.T",
+            "market": "JP",
+            "stage": "material",
+            "role": "保偏光纤",
+            "evidence": "consensus",
+            "companyId": "global.fujikura"
+          }
         ]
       },
       {
@@ -227,24 +914,153 @@
         "name": "硅光 PIC（调制器 + 波导 + 分束）",
         "nameEn": "Silicon-photonics PIC (MZM, waveguide, splitter, edge coupler)",
         "function": "模块的心脏：1×4 分束、8 路 MZM 调制器把电写到光上，波导汇到边缘耦合器；接收侧的波导与 Ge PD 也在同一颗芯片",
-        "keySpecs": ["SOI 平台", "MZM 或环形调制器，200G/lane", "边缘耦合器 + 模斑转换", "Ge 外延 PD 单片集成"],
-        "materials": ["SOI 晶圆", "Ge 外延", "SiN 层"],
+        "keySpecs": [
+          "SOI 平台",
+          "MZM 或环形调制器，200G/lane",
+          "边缘耦合器 + 模斑转换",
+          "Ge 外延 PD 单片集成"
+        ],
+        "materials": [
+          "SOI 晶圆",
+          "Ge 外延",
+          "SiN 层"
+        ],
         "companies": [
-          { "name": "中际旭创（自研 PIC）", "ticker": "300308.SZ", "market": "A", "stage": "chip", "role": "自研硅光芯片、1.6T 硅光模块主力", "evidence": "verified" },
-          { "name": "新易盛", "ticker": "300502.SZ", "market": "A", "stage": "chip", "role": "硅光方案（自研 + 外采）", "evidence": "consensus" },
-          { "name": "光迅科技", "ticker": "002281.SZ", "market": "A", "stage": "chip", "role": "自研硅光与 EML 芯片", "evidence": "verified" },
-          { "name": "华工科技（华工正源）", "ticker": "000988.SZ", "market": "A", "stage": "chip", "role": "硅光 1.6T 模块与芯片", "evidence": "consensus" },
-          { "name": "Coherent", "ticker": "COHR", "market": "US", "stage": "chip", "role": "自有硅光平台", "evidence": "verified" },
-          { "name": "Marvell（原 Inphi 硅光）", "ticker": "MRVL", "market": "US", "stage": "chip", "role": "硅光 PIC + DSP 打包方案", "evidence": "verified" },
-          { "name": "Broadcom", "ticker": "AVGO", "market": "US", "stage": "chip", "role": "硅光 PIC（CPO 与可插拔）", "evidence": "verified" },
-          { "name": "Cisco / Acacia", "ticker": "CSCO", "market": "US", "stage": "chip", "role": "硅光 PIC 与模块", "evidence": "verified" },
-          { "name": "Tower Semiconductor", "ticker": "TSEM", "market": "US/IL", "stage": "chip", "role": "硅光代工头号玩家", "evidence": "verified" },
-          { "name": "GlobalFoundries", "ticker": "GFS", "market": "US", "stage": "chip", "role": "硅光代工（Fotonix）", "evidence": "verified" },
-          { "name": "TSMC（COUPE）", "ticker": "TSM / 2330.TW", "market": "TW", "stage": "chip", "role": "硅光代工与 CPO 平台", "evidence": "verified" },
-          { "name": "联合微电子中心 CUMEC", "ticker": "", "market": "私有", "stage": "chip", "role": "国产硅光代工", "evidence": "consensus" },
-          { "name": "中芯国际", "ticker": "688981.SH / 0981.HK", "market": "A/HK", "stage": "chip", "role": "硅光代工候选", "evidence": "candidate" },
-          { "name": "Soitec", "ticker": "SOI.PA", "market": "FR", "stage": "material", "role": "光子级 SOI 晶圆（Photonics-SOI）", "evidence": "verified" },
-          { "name": "沪硅产业（上海新傲）", "ticker": "688126.SH", "market": "A", "stage": "material", "role": "SOI 晶圆国产", "evidence": "consensus" }
+          {
+            "name": "中际旭创（自研 PIC）",
+            "ticker": "300308.SZ",
+            "market": "A",
+            "stage": "chip",
+            "role": "自研硅光芯片、1.6T 硅光模块主力",
+            "evidence": "verified",
+            "companyId": "cn.300308"
+          },
+          {
+            "name": "新易盛",
+            "ticker": "300502.SZ",
+            "market": "A",
+            "stage": "chip",
+            "role": "硅光方案（自研 + 外采）",
+            "evidence": "consensus",
+            "companyId": "cn.300502"
+          },
+          {
+            "name": "光迅科技",
+            "ticker": "002281.SZ",
+            "market": "A",
+            "stage": "chip",
+            "role": "自研硅光与 EML 芯片",
+            "evidence": "verified",
+            "companyId": "cn.002281"
+          },
+          {
+            "name": "华工科技（华工正源）",
+            "ticker": "000988.SZ",
+            "market": "A",
+            "stage": "chip",
+            "role": "硅光 1.6T 模块与芯片",
+            "evidence": "consensus",
+            "companyId": "cn.000988"
+          },
+          {
+            "name": "Coherent",
+            "ticker": "COHR",
+            "market": "US",
+            "stage": "chip",
+            "role": "自有硅光平台",
+            "evidence": "verified",
+            "companyId": "global.coherent"
+          },
+          {
+            "name": "Marvell（原 Inphi 硅光）",
+            "ticker": "MRVL",
+            "market": "US",
+            "stage": "chip",
+            "role": "硅光 PIC + DSP 打包方案",
+            "evidence": "verified",
+            "companyId": "global.marvell"
+          },
+          {
+            "name": "Broadcom",
+            "ticker": "AVGO",
+            "market": "US",
+            "stage": "chip",
+            "role": "硅光 PIC（CPO 与可插拔）",
+            "evidence": "verified",
+            "companyId": "global.broadcom"
+          },
+          {
+            "name": "Cisco / Acacia",
+            "ticker": "CSCO",
+            "market": "US",
+            "stage": "chip",
+            "role": "硅光 PIC 与模块",
+            "evidence": "verified",
+            "companyId": "global.cisco"
+          },
+          {
+            "name": "Tower Semiconductor",
+            "ticker": "TSEM",
+            "market": "US/IL",
+            "stage": "chip",
+            "role": "硅光代工头号玩家",
+            "evidence": "verified",
+            "companyId": "global.tower"
+          },
+          {
+            "name": "GlobalFoundries",
+            "ticker": "GFS",
+            "market": "US",
+            "stage": "chip",
+            "role": "硅光代工（Fotonix）",
+            "evidence": "verified",
+            "companyId": "global.globalfoundries"
+          },
+          {
+            "name": "TSMC（COUPE）",
+            "ticker": "TSM / 2330.TW",
+            "market": "TW",
+            "stage": "chip",
+            "role": "硅光代工与 CPO 平台",
+            "evidence": "verified",
+            "companyId": "global.tsmc"
+          },
+          {
+            "name": "联合微电子中心 CUMEC",
+            "ticker": "",
+            "market": "私有",
+            "stage": "chip",
+            "role": "国产硅光代工",
+            "evidence": "consensus",
+            "companyId": "private.cumec"
+          },
+          {
+            "name": "中芯国际",
+            "ticker": "688981.SH / 0981.HK",
+            "market": "A/HK",
+            "stage": "chip",
+            "role": "硅光代工候选",
+            "evidence": "candidate",
+            "companyId": "cn.688981"
+          },
+          {
+            "name": "Soitec",
+            "ticker": "SOI.PA",
+            "market": "FR",
+            "stage": "material",
+            "role": "光子级 SOI 晶圆（Photonics-SOI）",
+            "evidence": "verified",
+            "companyId": "global.soitec"
+          },
+          {
+            "name": "沪硅产业（上海新傲）",
+            "ticker": "688126.SH",
+            "market": "A",
+            "stage": "material",
+            "role": "SOI 晶圆国产",
+            "evidence": "consensus",
+            "companyId": "cn.688126"
+          }
         ]
       },
       {
@@ -253,13 +1069,51 @@
         "name": "Ge 光电探测器（PD）",
         "nameEn": "Germanium photodiode (on PIC)",
         "function": "接收侧把 8 路光转成电流；硅光方案里是 PIC 上外延生长的 Ge PD，不是独立芯片",
-        "keySpecs": ["Ge-on-Si", "带宽 > 70 GHz", "响应度约 0.8–1 A/W"],
-        "materials": ["Ge 外延源（锗烷）"],
+        "keySpecs": [
+          "Ge-on-Si",
+          "带宽 > 70 GHz",
+          "响应度约 0.8–1 A/W"
+        ],
+        "materials": [
+          "Ge 外延源（锗烷）"
+        ],
         "companies": [
-          { "name": "随硅光 PIC 代工（Tower / GF / TSMC）", "ticker": "", "market": "—", "stage": "chip", "role": "Ge PD 与 PIC 同片制造", "evidence": "verified" },
-          { "name": "三安光电", "ticker": "600703.SH", "market": "A", "stage": "chip", "role": "InP PD（EML 路线用的独立 PD）", "evidence": "candidate" },
-          { "name": "光迅科技", "ticker": "002281.SZ", "market": "A", "stage": "chip", "role": "自研 PD", "evidence": "consensus" },
-          { "name": "云南锗业", "ticker": "002428.SZ", "market": "A", "stage": "material", "role": "锗材料", "evidence": "candidate" }
+          {
+            "name": "随硅光 PIC 代工（Tower / GF / TSMC）",
+            "ticker": "",
+            "market": "—",
+            "stage": "chip",
+            "role": "Ge PD 与 PIC 同片制造",
+            "evidence": "verified",
+            "companyId": null
+          },
+          {
+            "name": "三安光电",
+            "ticker": "600703.SH",
+            "market": "A",
+            "stage": "chip",
+            "role": "InP PD（EML 路线用的独立 PD）",
+            "evidence": "candidate",
+            "companyId": "cn.600703"
+          },
+          {
+            "name": "光迅科技",
+            "ticker": "002281.SZ",
+            "market": "A",
+            "stage": "chip",
+            "role": "自研 PD",
+            "evidence": "consensus",
+            "companyId": "cn.002281"
+          },
+          {
+            "name": "云南锗业",
+            "ticker": "002428.SZ",
+            "market": "A",
+            "stage": "material",
+            "role": "锗材料",
+            "evidence": "candidate",
+            "companyId": "cn.002428"
+          }
         ]
       },
       {
@@ -268,18 +1122,98 @@
         "name": "光引擎组装（COB / 倒装 / 耦合）",
         "nameEn": "Optical engine assembly",
         "function": "把 Driver/TIA 倒装到 PIC、激光器贴装、FAU 主动对准耦合、打线与固化——是 1.6T 良率与产能的瓶颈工序",
-        "keySpecs": ["亚微米主动对准", "倒装焊 / 打线", "UV 或热固化胶"],
-        "materials": ["导电胶 / 底填胶", "UV 胶", "金线"],
+        "keySpecs": [
+          "亚微米主动对准",
+          "倒装焊 / 打线",
+          "UV 或热固化胶"
+        ],
+        "materials": [
+          "导电胶 / 底填胶",
+          "UV 胶",
+          "金线"
+        ],
         "companies": [
-          { "name": "中际旭创", "ticker": "300308.SZ", "market": "A", "stage": "engine", "role": "自有引擎产线（泰国 + 苏州）", "evidence": "verified" },
-          { "name": "新易盛", "ticker": "300502.SZ", "market": "A", "stage": "engine", "role": "自有引擎产线（泰国）", "evidence": "verified" },
-          { "name": "天孚通信", "ticker": "300394.SZ", "market": "A", "stage": "engine", "role": "光引擎代工 / 无源器件组装", "evidence": "verified" },
-          { "name": "Fabrinet", "ticker": "FN", "market": "US", "stage": "engine", "role": "NVIDIA 自有品牌模块的主要代工", "evidence": "verified" },
-          { "name": "罗博特科（ficonTEC）", "ticker": "300757.SZ", "market": "A", "stage": "equip", "role": "光电子自动耦合 / 组装设备", "evidence": "verified" },
-          { "name": "ASMPT", "ticker": "0522.HK", "market": "HK", "stage": "equip", "role": "倒装 / 贴片设备", "evidence": "consensus" },
-          { "name": "Mycronic（MRSI）", "ticker": "MYCR.ST", "market": "SE", "stage": "equip", "role": "高精度光电子贴装", "evidence": "consensus" },
-          { "name": "Palomar Technologies", "ticker": "", "market": "私有", "stage": "equip", "role": "贴装与打线", "evidence": "consensus" },
-          { "name": "快克智能", "ticker": "603203.SH", "market": "A", "stage": "equip", "role": "精密焊接 / 组装设备候选", "evidence": "candidate" }
+          {
+            "name": "中际旭创",
+            "ticker": "300308.SZ",
+            "market": "A",
+            "stage": "engine",
+            "role": "自有引擎产线（泰国 + 苏州）",
+            "evidence": "verified",
+            "companyId": "cn.300308"
+          },
+          {
+            "name": "新易盛",
+            "ticker": "300502.SZ",
+            "market": "A",
+            "stage": "engine",
+            "role": "自有引擎产线（泰国）",
+            "evidence": "verified",
+            "companyId": "cn.300502"
+          },
+          {
+            "name": "天孚通信",
+            "ticker": "300394.SZ",
+            "market": "A",
+            "stage": "engine",
+            "role": "光引擎代工 / 无源器件组装",
+            "evidence": "verified",
+            "companyId": "cn.300394"
+          },
+          {
+            "name": "Fabrinet",
+            "ticker": "FN",
+            "market": "US",
+            "stage": "engine",
+            "role": "NVIDIA 自有品牌模块的主要代工",
+            "evidence": "verified",
+            "companyId": "global.fabrinet"
+          },
+          {
+            "name": "罗博特科（ficonTEC）",
+            "ticker": "300757.SZ",
+            "market": "A",
+            "stage": "equip",
+            "role": "光电子自动耦合 / 组装设备",
+            "evidence": "verified",
+            "companyId": "cn.300757"
+          },
+          {
+            "name": "ASMPT",
+            "ticker": "0522.HK",
+            "market": "HK",
+            "stage": "equip",
+            "role": "倒装 / 贴片设备",
+            "evidence": "consensus",
+            "companyId": "global.asmpt"
+          },
+          {
+            "name": "Mycronic（MRSI）",
+            "ticker": "MYCR.ST",
+            "market": "SE",
+            "stage": "equip",
+            "role": "高精度光电子贴装",
+            "evidence": "consensus",
+            "companyId": "global.mycronic"
+          },
+          {
+            "name": "Palomar Technologies",
+            "ticker": "",
+            "market": "私有",
+            "stage": "equip",
+            "role": "贴装与打线",
+            "evidence": "consensus",
+            "companyId": "private.palomar"
+          },
+          {
+            "name": "快克智能",
+            "ticker": "603203.SH",
+            "market": "A",
+            "stage": "equip",
+            "role": "精密焊接 / 组装设备候选",
+            "evidence": "candidate",
+            "companyId": "cn.603203"
+          }
         ]
       },
       {
@@ -288,16 +1222,81 @@
         "name": "光纤阵列单元（FAU）",
         "nameEn": "Fiber array unit",
         "function": "把 10–18 根光纤按 127/250 µm 间距固定在 V 槽玻璃上，端面研磨后与 PIC 边缘耦合；硅光模块无源器件价值量最大的一项",
-        "keySpecs": ["V 槽玻璃 + 盖板", "16–18 芯", "端面 8° 斜角", "耦合损耗 < 1 dB"],
-        "materials": ["V 槽玻璃（硼硅 / 石英）", "单模光纤", "UV 胶"],
+        "keySpecs": [
+          "V 槽玻璃 + 盖板",
+          "16–18 芯",
+          "端面 8° 斜角",
+          "耦合损耗 < 1 dB"
+        ],
+        "materials": [
+          "V 槽玻璃（硼硅 / 石英）",
+          "单模光纤",
+          "UV 胶"
+        ],
         "companies": [
-          { "name": "天孚通信", "ticker": "300394.SZ", "market": "A", "stage": "device", "role": "FAU 全球主力，绑定头部模块厂与北美客户", "evidence": "verified" },
-          { "name": "太辰光", "ticker": "300570.SZ", "market": "A", "stage": "device", "role": "FAU 与 MPO 一体", "evidence": "verified" },
-          { "name": "Fujikura", "ticker": "5803.T", "market": "JP", "stage": "device", "role": "FAU / 光纤带", "evidence": "consensus" },
-          { "name": "Senko", "ticker": "", "market": "私有", "stage": "device", "role": "FAU / 连接器", "evidence": "consensus" },
-          { "name": "长飞光纤", "ticker": "601869.SH / 6869.HK", "market": "A/HK", "stage": "material", "role": "单模 / 特种光纤", "evidence": "consensus" },
-          { "name": "Corning", "ticker": "GLW", "market": "US", "stage": "material", "role": "光纤与特种玻璃", "evidence": "verified" },
-          { "name": "亨通光电", "ticker": "600487.SH", "market": "A", "stage": "material", "role": "光纤", "evidence": "candidate" }
+          {
+            "name": "天孚通信",
+            "ticker": "300394.SZ",
+            "market": "A",
+            "stage": "device",
+            "role": "FAU 全球主力，绑定头部模块厂与北美客户",
+            "evidence": "verified",
+            "companyId": "cn.300394"
+          },
+          {
+            "name": "太辰光",
+            "ticker": "300570.SZ",
+            "market": "A",
+            "stage": "device",
+            "role": "FAU 与 MPO 一体",
+            "evidence": "verified",
+            "companyId": "cn.300570"
+          },
+          {
+            "name": "Fujikura",
+            "ticker": "5803.T",
+            "market": "JP",
+            "stage": "device",
+            "role": "FAU / 光纤带",
+            "evidence": "consensus",
+            "companyId": "global.fujikura"
+          },
+          {
+            "name": "Senko",
+            "ticker": "",
+            "market": "私有",
+            "stage": "device",
+            "role": "FAU / 连接器",
+            "evidence": "consensus",
+            "companyId": "global.senko"
+          },
+          {
+            "name": "长飞光纤",
+            "ticker": "601869.SH / 6869.HK",
+            "market": "A/HK",
+            "stage": "material",
+            "role": "单模 / 特种光纤",
+            "evidence": "consensus",
+            "companyId": "cn.601869"
+          },
+          {
+            "name": "Corning",
+            "ticker": "GLW",
+            "market": "US",
+            "stage": "material",
+            "role": "光纤与特种玻璃",
+            "evidence": "verified",
+            "companyId": "global.corning"
+          },
+          {
+            "name": "亨通光电",
+            "ticker": "600487.SH",
+            "market": "A",
+            "stage": "material",
+            "role": "光纤",
+            "evidence": "candidate",
+            "companyId": "cn.600487"
+          }
         ]
       },
       {
@@ -306,15 +1305,70 @@
         "name": "MPO 插座与 MT 插芯",
         "nameEn": "MPO receptacle and MT ferrule",
         "function": "模块面板上的光接口：MT 插芯把光纤带端面对准，插座固定在壳体上，外接 MPO-12/16 APC 跳线",
-        "keySpecs": ["MPO-12 ×2 或 MPO-16", "APC 8°", "MT 插芯（US Conec MTP 标准）"],
-        "materials": ["MT 插芯（PPS 塑胶 + 导销）", "陶瓷 / 金属导销"],
+        "keySpecs": [
+          "MPO-12 ×2 或 MPO-16",
+          "APC 8°",
+          "MT 插芯（US Conec MTP 标准）"
+        ],
+        "materials": [
+          "MT 插芯（PPS 塑胶 + 导销）",
+          "陶瓷 / 金属导销"
+        ],
         "companies": [
-          { "name": "US Conec", "ticker": "", "market": "私有", "stage": "connect", "role": "MT 插芯与 MTP 事实标准", "evidence": "verified" },
-          { "name": "太辰光", "ticker": "300570.SZ", "market": "A", "stage": "connect", "role": "MPO 连接器 / 跳线龙头", "evidence": "verified" },
-          { "name": "Senko", "ticker": "", "market": "私有", "stage": "connect", "role": "MPO 连接器", "evidence": "verified" },
-          { "name": "长芯盛", "ticker": "", "market": "私有", "stage": "connect", "role": "MPO 组件", "evidence": "candidate" },
-          { "name": "三环集团", "ticker": "300408.SZ", "market": "A", "stage": "material", "role": "陶瓷插芯（LC/SC 用，MT 为塑胶，相关性弱）", "evidence": "candidate" },
-          { "name": "Corning", "ticker": "GLW", "market": "US", "stage": "connect", "role": "数据中心光连接系统", "evidence": "consensus" }
+          {
+            "name": "US Conec",
+            "ticker": "",
+            "market": "私有",
+            "stage": "connect",
+            "role": "MT 插芯与 MTP 事实标准",
+            "evidence": "verified",
+            "companyId": "global.us-conec"
+          },
+          {
+            "name": "太辰光",
+            "ticker": "300570.SZ",
+            "market": "A",
+            "stage": "connect",
+            "role": "MPO 连接器 / 跳线龙头",
+            "evidence": "verified",
+            "companyId": "cn.300570"
+          },
+          {
+            "name": "Senko",
+            "ticker": "",
+            "market": "私有",
+            "stage": "connect",
+            "role": "MPO 连接器",
+            "evidence": "verified",
+            "companyId": "global.senko"
+          },
+          {
+            "name": "长芯盛",
+            "ticker": "",
+            "market": "私有",
+            "stage": "connect",
+            "role": "MPO 组件",
+            "evidence": "candidate",
+            "companyId": "private.changxinsheng"
+          },
+          {
+            "name": "三环集团",
+            "ticker": "300408.SZ",
+            "market": "A",
+            "stage": "material",
+            "role": "陶瓷插芯（LC/SC 用，MT 为塑胶，相关性弱）",
+            "evidence": "candidate",
+            "companyId": "cn.300408"
+          },
+          {
+            "name": "Corning",
+            "ticker": "GLW",
+            "market": "US",
+            "stage": "connect",
+            "role": "数据中心光连接系统",
+            "evidence": "consensus",
+            "companyId": "global.corning"
+          }
         ]
       },
       {
@@ -323,13 +1377,53 @@
         "name": "顶盖 / 散热与 TIM",
         "nameEn": "IHS or finned top, TIM",
         "function": "把 DSP、Driver、激光器约 22–25 W 的热量导到笼子散热器；风冷用 Finned Top，液冷平台用 IHS 平顶",
-        "keySpecs": ["锌合金 / 铜合金顶盖", "TIM 导热垫 / 相变材料", "翅片顶盖为 NVIDIA 平台专用形态"],
-        "materials": ["锌合金压铸", "铜", "石墨 / 硅胶 TIM"],
+        "keySpecs": [
+          "锌合金 / 铜合金顶盖",
+          "TIM 导热垫 / 相变材料",
+          "翅片顶盖为 NVIDIA 平台专用形态"
+        ],
+        "materials": [
+          "锌合金压铸",
+          "铜",
+          "石墨 / 硅胶 TIM"
+        ],
         "companies": [
-          { "name": "飞荣达", "ticker": "300602.SZ", "market": "A", "stage": "device", "role": "TIM 与散热结构件", "evidence": "consensus" },
-          { "name": "中石科技", "ticker": "300684.SZ", "market": "A", "stage": "device", "role": "TIM / 石墨", "evidence": "consensus" },
-          { "name": "精研科技", "ticker": "300709.SZ", "market": "A", "stage": "device", "role": "MIM 金属结构件候选", "evidence": "candidate" },
-          { "name": "Honeywell / Dow", "ticker": "HON / DOW", "market": "US", "stage": "material", "role": "TIM 材料", "evidence": "consensus" }
+          {
+            "name": "飞荣达",
+            "ticker": "300602.SZ",
+            "market": "A",
+            "stage": "device",
+            "role": "TIM 与散热结构件",
+            "evidence": "consensus",
+            "companyId": "cn.300602"
+          },
+          {
+            "name": "中石科技",
+            "ticker": "300684.SZ",
+            "market": "A",
+            "stage": "device",
+            "role": "TIM / 石墨",
+            "evidence": "consensus",
+            "companyId": "cn.300684"
+          },
+          {
+            "name": "精研科技",
+            "ticker": "300709.SZ",
+            "market": "A",
+            "stage": "device",
+            "role": "MIM 金属结构件候选",
+            "evidence": "candidate",
+            "companyId": "cn.300709"
+          },
+          {
+            "name": "Honeywell / Dow",
+            "ticker": "HON / DOW",
+            "market": "US",
+            "stage": "material",
+            "role": "TIM 材料",
+            "evidence": "consensus",
+            "companyId": "global.honeywell"
+          }
         ]
       },
       {
@@ -338,13 +1432,53 @@
         "name": "OSFP 壳体 / 拉环 / EMI",
         "nameEn": "OSFP housing, latch, EMI gasket",
         "function": "机械保护、EMI 屏蔽、插拔机构；OSFP 比 QSFP-DD 更大，为散热留空间",
-        "keySpecs": ["锌合金压铸 + 镀镍", "EMI 弹片", "拉环 / 拉带"],
-        "materials": ["锌合金", "不锈钢弹片", "塑胶"],
+        "keySpecs": [
+          "锌合金压铸 + 镀镍",
+          "EMI 弹片",
+          "拉环 / 拉带"
+        ],
+        "materials": [
+          "锌合金",
+          "不锈钢弹片",
+          "塑胶"
+        ],
         "companies": [
-          { "name": "天孚通信", "ticker": "300394.SZ", "market": "A", "stage": "device", "role": "精密结构件与壳体", "evidence": "consensus" },
-          { "name": "中瓷电子", "ticker": "003031.SZ", "market": "A", "stage": "device", "role": "陶瓷封装壳体（TO / 盒式封装更相关）", "evidence": "consensus" },
-          { "name": "铭普光磁", "ticker": "002902.SZ", "market": "A", "stage": "device", "role": "结构件 / 磁性元件候选", "evidence": "candidate" },
-          { "name": "东莞 / 深圳压铸厂（未上市为主）", "ticker": "", "market": "私有", "stage": "device", "role": "壳体压铸", "evidence": "candidate" }
+          {
+            "name": "天孚通信",
+            "ticker": "300394.SZ",
+            "market": "A",
+            "stage": "device",
+            "role": "精密结构件与壳体",
+            "evidence": "consensus",
+            "companyId": "cn.300394"
+          },
+          {
+            "name": "中瓷电子",
+            "ticker": "003031.SZ",
+            "market": "A",
+            "stage": "device",
+            "role": "陶瓷封装壳体（TO / 盒式封装更相关）",
+            "evidence": "consensus",
+            "companyId": "cn.003031"
+          },
+          {
+            "name": "铭普光磁",
+            "ticker": "002902.SZ",
+            "market": "A",
+            "stage": "device",
+            "role": "结构件 / 磁性元件候选",
+            "evidence": "candidate",
+            "companyId": "cn.002902"
+          },
+          {
+            "name": "东莞 / 深圳压铸厂（未上市为主）",
+            "ticker": "",
+            "market": "私有",
+            "stage": "device",
+            "role": "壳体压铸",
+            "evidence": "candidate",
+            "companyId": null
+          }
         ]
       },
       {
@@ -353,26 +1487,166 @@
         "name": "整模块：组装、测试、客户",
         "nameEn": "Module integration, test, customers",
         "function": "把引擎、PCB、壳体装成模块，做老化、眼图、误码测试后出货给 NVIDIA / 云厂商",
-        "keySpecs": ["1.6T 2026 年出货预期约 1000 万只级（券商口径有 3000 万只）", "Q4 放量", "产能瓶颈在激光器与引擎封装"],
+        "keySpecs": [
+          "1.6T 2026 年出货预期约 1000 万只级（券商口径有 3000 万只）",
+          "Q4 放量",
+          "产能瓶颈在激光器与引擎封装"
+        ],
         "materials": [],
         "companies": [
-          { "name": "中际旭创", "ticker": "300308.SZ", "market": "A", "stage": "module", "role": "全球份额第一，2025 Q3 起向北美头部客户出货 1.6T", "evidence": "verified" },
-          { "name": "新易盛", "ticker": "300502.SZ", "market": "A", "stage": "module", "role": "1.6T 第二梯队头部", "evidence": "verified" },
-          { "name": "光迅科技", "ticker": "002281.SZ", "market": "A", "stage": "module", "role": "国内 + 自研芯片", "evidence": "verified" },
-          { "name": "华工科技", "ticker": "000988.SZ", "market": "A", "stage": "module", "role": "1.6T 送样 / 小批量", "evidence": "consensus" },
-          { "name": "剑桥科技", "ticker": "603083.SH", "market": "A", "stage": "module", "role": "1.6T 送样，客户拓展中", "evidence": "consensus" },
-          { "name": "联特科技", "ticker": "301205.SZ", "market": "A", "stage": "module", "role": "800G/1.6T 二线", "evidence": "consensus" },
-          { "name": "华西股份（索尔思）", "ticker": "000936.SZ", "market": "A", "stage": "module", "role": "并购 Source Photonics", "evidence": "consensus" },
-          { "name": "Coherent", "ticker": "COHR", "market": "US", "stage": "module", "role": "海外模块 + 自有芯片", "evidence": "verified" },
-          { "name": "Fabrinet", "ticker": "FN", "market": "US", "stage": "module", "role": "NVIDIA 自有品牌（MMS4A00 等）代工", "evidence": "verified" },
-          { "name": "Cisco", "ticker": "CSCO", "market": "US", "stage": "module", "role": "自用 + 外销模块", "evidence": "consensus" },
-          { "name": "NVIDIA", "ticker": "NVDA", "market": "US", "stage": "module", "role": "最大客户；自有品牌 MMS4A00 / MMS4C10", "evidence": "verified" },
-          { "name": "Arista", "ticker": "ANET", "market": "US", "stage": "module", "role": "交换机客户", "evidence": "consensus" },
-          { "name": "Celestica", "ticker": "CLS", "market": "US", "stage": "module", "role": "白牌交换机 ODM", "evidence": "consensus" },
-          { "name": "Keysight", "ticker": "KEYS", "market": "US", "stage": "equip", "role": "224G 误码 / 眼图测试", "evidence": "verified" },
-          { "name": "Anritsu", "ticker": "6754.T", "market": "JP", "stage": "equip", "role": "误码仪", "evidence": "consensus" },
-          { "name": "Viavi", "ticker": "VIAV", "market": "US", "stage": "equip", "role": "光测试", "evidence": "consensus" },
-          { "name": "EXFO", "ticker": "", "market": "私有", "stage": "equip", "role": "光测试", "evidence": "consensus" }
+          {
+            "name": "中际旭创",
+            "ticker": "300308.SZ",
+            "market": "A",
+            "stage": "module",
+            "role": "全球份额第一，2025 Q3 起向北美头部客户出货 1.6T",
+            "evidence": "verified",
+            "companyId": "cn.300308"
+          },
+          {
+            "name": "新易盛",
+            "ticker": "300502.SZ",
+            "market": "A",
+            "stage": "module",
+            "role": "1.6T 第二梯队头部",
+            "evidence": "verified",
+            "companyId": "cn.300502"
+          },
+          {
+            "name": "光迅科技",
+            "ticker": "002281.SZ",
+            "market": "A",
+            "stage": "module",
+            "role": "国内 + 自研芯片",
+            "evidence": "verified",
+            "companyId": "cn.002281"
+          },
+          {
+            "name": "华工科技",
+            "ticker": "000988.SZ",
+            "market": "A",
+            "stage": "module",
+            "role": "1.6T 送样 / 小批量",
+            "evidence": "consensus",
+            "companyId": "cn.000988"
+          },
+          {
+            "name": "剑桥科技",
+            "ticker": "603083.SH",
+            "market": "A",
+            "stage": "module",
+            "role": "1.6T 送样，客户拓展中",
+            "evidence": "consensus",
+            "companyId": "cn.603083"
+          },
+          {
+            "name": "联特科技",
+            "ticker": "301205.SZ",
+            "market": "A",
+            "stage": "module",
+            "role": "800G/1.6T 二线",
+            "evidence": "consensus",
+            "companyId": "cn.301205"
+          },
+          {
+            "name": "华西股份（索尔思）",
+            "ticker": "000936.SZ",
+            "market": "A",
+            "stage": "module",
+            "role": "并购 Source Photonics",
+            "evidence": "consensus",
+            "companyId": "cn.000936"
+          },
+          {
+            "name": "Coherent",
+            "ticker": "COHR",
+            "market": "US",
+            "stage": "module",
+            "role": "海外模块 + 自有芯片",
+            "evidence": "verified",
+            "companyId": "global.coherent"
+          },
+          {
+            "name": "Fabrinet",
+            "ticker": "FN",
+            "market": "US",
+            "stage": "module",
+            "role": "NVIDIA 自有品牌（MMS4A00 等）代工",
+            "evidence": "verified",
+            "companyId": "global.fabrinet"
+          },
+          {
+            "name": "Cisco",
+            "ticker": "CSCO",
+            "market": "US",
+            "stage": "module",
+            "role": "自用 + 外销模块",
+            "evidence": "consensus",
+            "companyId": "global.cisco"
+          },
+          {
+            "name": "NVIDIA",
+            "ticker": "NVDA",
+            "market": "US",
+            "stage": "module",
+            "role": "最大客户；自有品牌 MMS4A00 / MMS4C10",
+            "evidence": "verified",
+            "companyId": "global.nvidia"
+          },
+          {
+            "name": "Arista",
+            "ticker": "ANET",
+            "market": "US",
+            "stage": "module",
+            "role": "交换机客户",
+            "evidence": "consensus",
+            "companyId": "global.arista"
+          },
+          {
+            "name": "Celestica",
+            "ticker": "CLS",
+            "market": "US",
+            "stage": "module",
+            "role": "白牌交换机 ODM",
+            "evidence": "consensus",
+            "companyId": "global.celestica"
+          },
+          {
+            "name": "Keysight",
+            "ticker": "KEYS",
+            "market": "US",
+            "stage": "equip",
+            "role": "224G 误码 / 眼图测试",
+            "evidence": "verified",
+            "companyId": "global.keysight"
+          },
+          {
+            "name": "Anritsu",
+            "ticker": "6754.T",
+            "market": "JP",
+            "stage": "equip",
+            "role": "误码仪",
+            "evidence": "consensus",
+            "companyId": "global.anritsu"
+          },
+          {
+            "name": "Viavi",
+            "ticker": "VIAV",
+            "market": "US",
+            "stage": "equip",
+            "role": "光测试",
+            "evidence": "consensus",
+            "companyId": "global.viavi"
+          },
+          {
+            "name": "EXFO",
+            "ticker": "",
+            "market": "私有",
+            "stage": "equip",
+            "role": "光测试",
+            "evidence": "consensus",
+            "companyId": "private.exfo"
+          }
         ]
       }
     ]

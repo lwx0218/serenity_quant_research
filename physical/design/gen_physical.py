@@ -175,12 +175,14 @@ def section_svg(selected=None, scale=1.0, stations=True, path="tx", captions=Tru
     out, A = parts_iso()
     dim = "0.22"
     g = []
+    sel = set(selected) if isinstance(selected, (set, list, tuple)) else ({selected} if selected else set())
     for pid, mk in out:
-        op = f' opacity="{dim}"' if (selected and pid != selected) else ""
+        op = f' opacity="{dim}"' if (sel and pid not in sel) else ""
         g.append(f'<g data-part="{pid}"{op}>{mk}</g>')
-    if selected and selected in A:
-        x, y = A[selected]
-        g.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="5" fill="none" stroke="{ACC}" stroke-width="0.8"/>')
+    for pid in sel:
+        if pid in A:
+            x, y = A[pid]
+            g.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="5" fill="none" stroke="{ACC}" stroke-width="0.8"/>')
     if captions:
         for pid, dx, dy, tx in (("part.host-cage", -60, -44, "主机侧 · Quantum-X800 前面板 OSFP 笼子（蒙层）"), ("part.host-cage", -60, -37, "后方是交换机主板与交换 ASIC"), ("part.shell", 100, 40, "壳体 · 拉环"), ("part.mpo", 10, -16, "MPO × 2 · 光纤"), ("part.edge-fingers", -70, 22, "金手指 → 主机")):
             x, y = A[pid]
@@ -446,6 +448,77 @@ def board_selected():
 </section>"""
     return wrap(T, body, height=1584)
 
+# ---------------------------------------------------------------- seam boards (page 2): main 的公司页 / 收件箱接上实物
+def company_parts(cid):
+    out, seen = [], set()
+    for st in TX:
+        p = PARTS[st["partId"]]
+        for c in p["companies"]:
+            if c.get("companyId") == cid and p["id"] not in seen:
+                out.append((st["step"], p, c)); seen.add(p["id"])
+    for p in PARTS.values():
+        if p["id"] in seen: continue
+        for c in p["companies"]:
+            if c.get("companyId") == cid:
+                out.append((None, p, c)); seen.add(p["id"]); break
+    return out
+
+def board_company_seam():
+    cid, name = "cn.300308", "中际旭创"
+    rows = company_parts(cid)
+    pids = [p["id"] for _, p, _ in rows]
+    svg = section_svg(selected=pids, scale=0.44, stations=False, captions=False)
+    lines = "".join(row("36px 150px 88px minmax(0,1fr) 84px", [
+        mono(f"{step:02d}" if step else "—"), title(p["name"].split("（")[0], 15), mono(STAGE_NAME[c["stage"]], size=11),
+        text(c["role"], 13), mono(EV[c["evidence"]], T["muted"] if c["evidence"] == "candidate" else T["ink2"], 11)], "11px 0") for step, p, c in rows)
+    body = nav(["公司", name], active="公司") + f"""
+<section style="position:relative;padding:40px 80px 0;display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:60px">
+  <div style="display:flex;flex-direction:column;gap:14px">
+    {eyebrow("300308 · 深交所 · 模块 / 客户")}
+    <h1 style="margin:0;font-size:56px;line-height:1.02;font-weight:600;letter-spacing:-0.025em;color:{T['ink']}">{name}</h1>
+    <span style="font-size:15px;color:{T['muted']}">中际旭创股份有限公司 · 光模块 · 硅光 · {link("篮子 →", 15)}</span>
+    <p style="margin:10px 0 0;font-size:17px;line-height:1.6;color:{T['ink2']};font-weight:300;max-width:640px;text-wrap:pretty">页首结论、行情与事件、拥挤度、共振沿用 main 的公司页 v3,此处略。下面这一节是新加的:这家公司在实物里站在哪几个部件上。</p>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px;padding-top:8px">
+    {readouts([("A 股", "300308.SZ"), ("覆盖", "core")])}
+    {readouts([("在实物里", f"{len(rows)} 个部件 · 1 只模块")])}
+  </div>
+</section>
+<section style="padding:44px 80px 0;display:grid;grid-template-columns:minmax(0,1fr) 560px;gap:48px;align-items:start">
+  <div style="display:flex;flex-direction:column">
+    {head("在实物里的位置 · 1.6T 光模块 · " + str(len(rows)) + " 个部件", link("打开这只模块 →"))}
+    {lines}{rows_end()}
+    <span style="font-size:12px;color:{T['muted']};margin-top:10px">站在几个部件上,就是在这只模块里吃到几个环节;证据级沿用 evidence-contract 三档。</span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px;padding-top:20px">{svg}<span style="font-family:{MONO};font-size:11px;color:{T['muted']};letter-spacing:0.06em">亮着的是它的部件 · 点任一个进部件页</span></div>
+</section>""" + footer("接缝规则:physical 的每条公司映射带 companyId,与 data/seeds/cpo 的公司主数据同一套 id;主数据缺的补在 data/seeds/physical/companies.json。")
+    return wrap(T, body, height=1000)
+
+INBOX_SAMPLE = [
+    ("09-11", "中际旭创", "关于投资建设硅光芯片封测产线的公告", "扩产", "part.engine-assembly", "▲ 偏多"),
+    ("09-10", "源杰科技", "投资者关系活动记录:CW 激光器送样进展", "认证导入", "part.cw-laser", "▲ 偏多"),
+    ("09-09", "天孚通信", "FAU 产能与北美客户订单说明", "订单合同", "part.fau", "▲ 偏多"),
+    ("09-08", "Broadcom", "Sian3 DSP 出货节奏与 Tomahawk 6 量产", "供需", "part.dsp", "● 中性"),
+    ("09-05", "沪电股份", "高速 PCB 涨价传闻澄清", "涨价", "part.pcb", "▼ 偏空"),
+]
+def board_inbox_seam():
+    ev = "".join(row("48px 90px minmax(0,1fr) 72px 150px 64px", [
+        mono(d), text(c, 13, T["ink"]), text(t, 13), mono(cat, ACC),
+        f'<span style="display:inline-flex;gap:8px;align-items:baseline">{mono("→", size=11)}{title(PARTS[pid]["name"].split("（")[0], 13)}</span>',
+        mono(sig, {"▲": ("#C0392B" if THEME == "light" else "#F07A6A"), "▼": ("#2E7D5B" if THEME == "light" else "#5DC391")}.get(sig[0], T["muted"]), 11)], "11px 0") for d, c, t, cat, pid, sig in INBOX_SAMPLE)
+    body = nav(["研究"], active="研究") + f"""
+<section style="padding:40px 80px 0;display:flex;flex-direction:column;gap:14px">
+  {eyebrow("Inbox · 截至 09-12 收盘 · 窗口 7 天")}
+  <h1 style="margin:0;font-size:56px;line-height:1.02;font-weight:600;letter-spacing:-0.025em;color:{T['ink']}">研究</h1>
+  <p style="margin:6px 0 0;font-size:17px;line-height:1.6;color:{T['ink2']};font-weight:300;max-width:680px;text-wrap:pretty">收件箱沿用 main;新加的只有一列:每条事件落在实物的哪个部件上。点部件名,回到那只模块、那一站。</p>
+</section>
+<section style="padding:44px 80px 0;display:flex;flex-direction:column">
+  {head("本周事件 · 5 条 · 样式示例", link("全部事件 →"))}
+  {ev}{rows_end()}
+  <span style="font-size:12px;color:{T['muted']};margin-top:10px">「→ 部件」由事件的公司 × 该公司在实物里的部件推出;一家公司站在多个部件上时,按事件类别归到最相关的一站(扩产 → 引擎 / 组装,认证导入 → 芯片),归错可手改。</span>
+</section>""" + footer("事件、方向、日期全部是样式示例。")
+    return wrap(T, body, height=760)
+
 # ---------------------------------------------------------------- write
 BOARDS = [
     ("DirectionA", board_section, 1440, "A · 俯视 — 揭开上盖的俯视图是主角,九站在下面"),
@@ -460,6 +533,18 @@ NOTES = {
     "Main": "选中态(以 A 为例)\n\n点一个部件:剖面缩到左上并变淡,该部件成为主角,右栏是功能 / 参数 / 上游材料,下方是公司,按 材料 → 芯片 → 器件 → 设备 分组,每行带 ticker · 市场 · 证据级。\n\n这一页不管选 A/B/C 都需要,结构大致一样。",
 }
 files, artboards, annotations = [], [], []
+SEAM = [("CompanySeam", board_company_seam, 1000, "公司页 · 在实物里的位置"), ("InboxSeam", board_inbox_seam, 760, "研究收件箱 · 事件落到部件")]
+pages = [{"id": "page-1", "name": "实物"}, {"id": "page-2", "name": "接缝 · 公司 / 研究"}]
+for theme, yy in (("light", 0), ("dark", 1200)):
+    set_theme(theme)
+    x = 0
+    for name, fn, h, ttl in SEAM:
+        fname = f"{name}{'' if theme == 'light' else 'Dark'}.dc.html"
+        with open(os.path.join(HERE, fname), "w", encoding="utf-8") as f:
+            f.write(fn())
+        files.append(fname)
+        artboards.append({"file": fname, "title": f"{ttl} · {'浅' if theme == 'light' else '深'}", "x": x, "y": yy, "w": 1440, "h": h, "page": "page-2"})
+        x += 1440 + 140
 for theme, yy in (("light", 0), ("dark", 1760)):
     set_theme(theme)
     x = 0
@@ -475,7 +560,8 @@ for theme, yy in (("light", 0), ("dark", 1760)):
 set_theme("light")
 annotations.insert(0, {"id": "brief", "x": -560, "y": 0, "w": 480, "text":
     "physical-first · 方向稿 v0(2026-09-04)\n\n问题:现在 main 上的「CPO 光模块」是产业链分类,不是一只在出货的模块。这里反过来:先拿一只真实模块(1.6T OSFP DR8 硅光,Quantum-X800 在用),让信号从金手指走到 MPO,每一站挂公司。\n\n三个方向只差「谁是主角」:A 剖面 · B 站点 · C 分层。上排浅色,下排深色。\n\n全部沿用 design-rules v3:页面即背景、无卡片、hairline rows、Geist + 系统中文、唯一强调色。公司名单来自 physical/data 的 126 条映射,证据级三档。"})
-canvas = {"artboards": artboards, "annotations": annotations, "launch": {"view": "canvas"}}
+annotations.append({"id": "note-seam", "x": 0, "y": -200, "w": 520, "page": "page-2", "text": "接缝 · 公司 / 研究\n\n不新做页面。main 的公司页和研究收件箱各加一段:公司页多一节「在实物里的位置」(它站在哪只模块的哪些部件上,右边小图亮出这些部件);收件箱的事件表多一列「→ 部件」。\n\n数据侧已经接上:physical 的 126 条公司映射带 companyId,与 data/seeds/cpo 同一套 id;缺的 61 家主数据在 data/seeds/physical/companies.json。"})
+canvas = {"artboards": artboards, "annotations": annotations, "pages": pages, "launch": {"view": "canvas", "page": "page-2"}}
 with open(os.path.join(HERE, "canvas.json"), "w", encoding="utf-8") as f:
     json.dump(canvas, f, ensure_ascii=False, indent=2)
 print("ok", files)
