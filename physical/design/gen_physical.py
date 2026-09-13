@@ -202,7 +202,7 @@ def section_svg(selected=None, scale=1.0, stations=True, path="tx", captions=Tru
                 x, y = A[s_["partId"]]
                 optical = s_["signal"] == "光" or s_["partId"] in ("part.pic", "part.pd")
                 col = ACC if optical else INK_LINE
-                g.append(f'<g data-station="{s_["partId"]}"><circle cx="{x:.1f}" cy="{y:.1f}" r="4" fill="{T["bg"]}" stroke="{col}" stroke-width="0.6"/>'
+                g.append(f'<g data-station="{s_["partId"]}"><circle cx="{x:.1f}" cy="{y:.1f}" r="5" fill="{T["bg"]}" stroke="{col}" stroke-width="0.6"/>'
                          f'<text x="{x:.1f}" y="{y + 1.6:.1f}" text-anchor="middle" font-family="{MONO}" font-size="4.2" font-weight="500" fill="{col}">{s_["step"]:02d}</text></g>')
     W_, H_ = 470, 190
     return (f'<svg viewBox="0 0 {W_} {H_}" width="{W_ * 2.72 * scale:.0f}" height="{H_ * 2.72 * scale:.0f}" style="display:block;overflow:visible" role="img" aria-label="1.6T 光模块揭盖示意">'
