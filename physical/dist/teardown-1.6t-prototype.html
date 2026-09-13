@@ -24,8 +24,11 @@ nav{display:flex;align-items:center;gap:32px;font-size:14px;color:var(--muted)}n
 #drawing svg{display:block;overflow:visible}
 #drawing g[data-part],#drawing g[data-station]{cursor:pointer;transition:opacity .2s}
 #drawing.sel g[data-part]:not(.on){opacity:var(--dim)}#drawing.sel g[data-station]{opacity:0}#drawing.sel svg>:not(g[data-part]):not(g[data-station]){opacity:.3}
-#drawing g[data-part]{transition:opacity .2s,filter .15s}#drawing g[data-part].hov{filter:brightness(1.14) saturate(1.06)}#drawing g[data-part].on{filter:brightness(1.1)}
-:root[data-theme="dark"] #drawing g[data-part].hov{filter:brightness(1.28) saturate(1.06)}:root[data-theme="dark"] #drawing g[data-part].on{filter:brightness(1.2)}
+#drawing g[data-part]{transition:opacity .2s,filter .15s}#drawing g[data-part] polygon{transition:stroke .15s}
+#drawing g[data-part].hov{filter:brightness(1.1) saturate(1.04)}#drawing g[data-part].on{filter:brightness(1.06)}
+#drawing g[data-part].hov polygon,#drawing g[data-part].on polygon{stroke:color-mix(in srgb,var(--accent) 38%,#fff);stroke-width:.55;stroke-linejoin:round;paint-order:stroke}
+:root[data-theme="dark"] #drawing g[data-part].hov{filter:brightness(1.22) saturate(1.04)}:root[data-theme="dark"] #drawing g[data-part].on{filter:brightness(1.14)}
+:root[data-theme="dark"] #drawing g[data-part].hov polygon,:root[data-theme="dark"] #drawing g[data-part].on polygon{stroke:color-mix(in srgb,var(--accent) 55%,#fff)}
 #drawing g[data-station].hov circle{stroke-width:1.2;fill:var(--accent)}#drawing g[data-station].hov text{fill:var(--bg)}
 #overlay path.hov{stroke:var(--accent)!important;stroke-width:1.4}#overlay circle.hov{stroke:var(--accent)!important;fill:var(--accent)!important}
 .st.hov .n{color:var(--accent)}.st.hov{border-top-color:var(--accent)}
