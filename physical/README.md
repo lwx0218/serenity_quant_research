@@ -10,14 +10,16 @@
 
 ```text
 physical/
-  data/module-1.6t-dr8-siph.json   唯一的数据源：模块 → 分层 → 部件 → 信号顺序 → 公司（按产业阶段）
-  index.html                       横截面视图（原生 JS，无依赖，fetch 上面的 JSON）
-  build.py                         校验 JSON 引用一致性，并把数据内联成 dist/ 单文件
-  dist/teardown-1.6t-dr8-siph.html 双击即开的单文件（已生成，随仓库提交）
+  data/module-1.6t-dr8-siph.json     唯一的数据源：模块 → 部件 → 信号顺序 → 公司（按产业阶段、证据级）
+  design/gen_physical.py             方向稿画板（Claude Design 画布用 .dc.html，浅深两版）；等距揭盖图的几何在这里
+  design/build_prototype.py          可交互原型：→ dist/teardown-1.6t-prototype.html（单文件，双击即开）
+  design/reference-intel-1.6t-opened.png  部件摆位参考（Intel 1.6T 拆解图）
+  dist/teardown-1.6t-prototype.html  当前的原型（选中部件 / 发收切换 / 浅深 / Esc 回整机）
+  index.html · build.py · dist/teardown-1.6t-dr8-siph.html  第一版横截面页（风格不合，已被原型取代，待删）
 ```
 
-本地看：`cd physical && python -m http.server 8080` 然后开 http://localhost:8080 ；或者直接双击 `dist/` 里的单文件。
-改了 JSON 之后跑 `python physical/build.py` 重新生成单文件。
+改了 JSON 或几何之后：`python3 physical/design/gen_physical.py && python3 physical/design/build_prototype.py`。
+画布：`Teardown 实物剖面 · 1.6T 光模块`（Claude Design）。原型的 UX 预审记录见提交历史（ux-preflight）。
 
 ## 数据模型（schema 0.1）
 
