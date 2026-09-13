@@ -59,7 +59,8 @@ nav{display:flex;align-items:center;gap:32px;font-size:14px;color:var(--muted)}n
 #drawing svg{display:block;overflow:visible}
 #drawing g[data-part],#drawing g[data-station]{cursor:pointer;transition:opacity .2s}
 #drawing.sel g[data-part]:not(.on){opacity:var(--dim)}#drawing.sel g[data-station]{opacity:0}#drawing.sel svg>:not(g[data-part]):not(g[data-station]){opacity:.3}
-#drawing g[data-part].hov polygon,#drawing g[data-part].on polygon{stroke:var(--accent);stroke-width:.7;stroke-linejoin:round;filter:brightness(1.08)}
+#drawing g[data-part]{transition:opacity .2s,filter .15s}#drawing g[data-part].hov{filter:brightness(1.14) saturate(1.06)}#drawing g[data-part].on{filter:brightness(1.1)}
+:root[data-theme="dark"] #drawing g[data-part].hov{filter:brightness(1.28) saturate(1.06)}:root[data-theme="dark"] #drawing g[data-part].on{filter:brightness(1.2)}
 #drawing g[data-station].hov circle{stroke-width:1.2;fill:var(--accent)}#drawing g[data-station].hov text{fill:var(--bg)}
 #overlay path.hov{stroke:var(--accent)!important;stroke-width:1.4}#overlay circle.hov{stroke:var(--accent)!important;fill:var(--accent)!important}
 .st.hov .n{color:var(--accent)}.st.hov{border-top-color:var(--accent)}
@@ -69,9 +70,9 @@ button.st,button.segb{appearance:none;background:none;border:0;padding:0;margin:
 #crumb-mod.back{cursor:pointer}#crumb-mod.back:hover{color:var(--accent)}
 @media (prefers-reduced-motion:reduce){#stage,#drawing,.fade,#drawing g{transition:none!important}}
 #overlay{position:absolute;left:0;top:0;overflow:visible;pointer-events:none;transition:opacity .2s}
-#legend{position:absolute;right:80px;top:966px;display:flex;gap:26px;align-items:baseline}
+#legend{position:absolute;left:80px;top:470px;display:grid;grid-template-columns:auto auto;gap:8px 22px;align-items:baseline;justify-content:start}
 #legend i{display:inline-block;width:22px;height:0;border-top:1.4px solid var(--ink-2);vertical-align:middle;margin-left:8px}#legend i.o{border-top:1.6px solid var(--accent)}
-.seg{display:inline-flex;gap:14px;font-family:var(--mono);font-size:12px;color:var(--muted);margin-left:14px}.seg button{cursor:pointer;font:inherit;color:inherit}.seg .on{color:var(--ink);border-bottom:1px solid var(--ink)}
+.seg{display:contents;font-family:var(--mono);font-size:12px;color:var(--muted)}.seg button{cursor:pointer;font:inherit;color:inherit}.seg .on{color:var(--ink);border-bottom:1px solid var(--ink)}
 #stations{position:absolute;left:80px;top:1000px;width:1280px;display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:20px}
 .st{display:flex;flex-direction:column;gap:6px;padding:16px 0 0;border-top:1px solid var(--hair);cursor:pointer;text-align:left;font:inherit;color:inherit}
 .st .n{font-size:16px;font-weight:500;line-height:1.3;transition:color .15s}.st{transition:border-top-color .15s}
