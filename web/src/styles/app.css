@@ -201,6 +201,7 @@ a.row:hover .row-title, button.row:hover .row-title { color: var(--accent); }
 .ev-row .ev-num { display: flex; flex-direction: column; gap: 3px; }
 .ev-row.is-head { padding: 6px 0; }
 .ev-wide { grid-template-columns: 48px 56px minmax(0, 1fr) 64px 60px 44px 108px; padding: 11px 0; }
+.ev-wide.has-part { grid-template-columns: 48px 56px minmax(0, 1fr) 64px 110px 60px 44px 108px; }
 .ev-wide .ev-title { font-size: 14px; color: var(--ink); line-height: 1.45; }
 .ev-wide .ev-cat { font-family: var(--font-mono); font-size: 12px; color: var(--accent); }
 .kv-row { grid-template-columns: 110px minmax(0, 1fr); padding: 10px 0; }

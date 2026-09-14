@@ -33,7 +33,7 @@ export function invalidatePending() {
 export function Shell({ crumbs = [], children, footer }: { crumbs?: Crumb[]; children: ReactNode; footer?: ReactNode }) {
   const { route } = useRouter();
   const p = route.path;
-  const area = p.startsWith("/companies") || p.startsWith("/baskets") ? "companies" : p.startsWith("/research") || p.startsWith("/judgement") ? "research" : "explore";
+  const area = p.startsWith("/physical") ? "physical" : p.startsWith("/companies") || p.startsWith("/baskets") ? "companies" : p.startsWith("/research") || p.startsWith("/judgement") ? "research" : "explore";
   const [pending, setPending] = useState(0);
   useEffect(() => {
     let live = true;
@@ -64,6 +64,9 @@ export function Shell({ crumbs = [], children, footer }: { crumbs?: Crumb[]; chi
           )}
         </div>
         <nav className="top-nav" aria-label="主导航">
+          <Link to="/physical" className={area === "physical" ? "is-active" : undefined}>
+            实物
+          </Link>
           <Link to="/" className={area === "explore" ? "is-active" : undefined}>
             光模块
           </Link>

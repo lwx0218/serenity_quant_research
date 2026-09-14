@@ -262,3 +262,18 @@ def build():
     print("ok →", os.path.relpath(OUT, os.path.join(HERE, "..", "..")), f"{len(html) // 1024} KB")
 
 build()
+
+
+# ---- assets for web/ (the React page loads the same drawings; see web/src/pages/PhysicalPage.tsx)
+def export_web_assets():
+    out = os.path.join(HERE, "..", "..", "web", "public", "physical")
+    os.makedirs(out, exist_ok=True)
+    oid = M["id"]
+    for theme in ("light", "dark"):
+        for d in ("tx", "rx"):
+            open(os.path.join(out, f"{oid}.{theme}.{d}.svg"), "w", encoding="utf-8").write(SVGS[theme][d])
+    json.dump({"object": oid, "width": 1278, "height": 517, "anchors": ANCHORS}, open(os.path.join(out, f"{oid}.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    print("ok → web/public/physical/", oid)
+
+
+export_web_assets()

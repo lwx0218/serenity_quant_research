@@ -232,6 +232,16 @@
       "coveragePriority": "physical"
     },
     {
+      "id": "cn.920045",
+      "name": "蘅东光通讯技术(深圳)股份有限公司",
+      "shortName": "蘅东光",
+      "ticker": "920045",
+      "exchange": "BSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
       "id": "global.adi",
       "name": "Analog Devices, Inc.",
       "shortName": "Analog Devices",

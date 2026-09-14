@@ -84,7 +84,7 @@ CN_NAMES = {
     "688126": "上海硅产业集团股份有限公司", "600183": "广东生益科技股份有限公司", "002222": "福建福晶科技股份有限公司",
     "002475": "立讯精密工业股份有限公司", "300709": "江苏精研科技股份有限公司", "301205": "武汉联特科技股份有限公司",
     "300476": "胜宏科技(惠州)股份有限公司", "688195": "腾景科技股份有限公司", "300395": "菲利华石英玻璃股份有限公司",
-    "002902": "东莞铭普光磁股份有限公司", "601869": "长飞光纤光缆股份有限公司",
+    "002902": "东莞铭普光磁股份有限公司", "601869": "长飞光纤光缆股份有限公司", "920045": "蘅东光通讯技术(深圳)股份有限公司",
 }
 
 
@@ -103,7 +103,7 @@ def resolve(c: dict) -> tuple[str | None, dict | None]:
     if c["market"].startswith("A"):
         code = re.match(r"(\d{6})", c["ticker"]).group(1)
         cid = f"cn.{code}"
-        exch = "SSE" if code.startswith(("6", "688")) else "SZSE"
+        exch = "BSE" if code.startswith(("8", "9", "4")) else ("SSE" if code.startswith("6") else "SZSE")
         return cid, {"id": cid, "name": CN_NAMES.get(code, b), "shortName": b, "ticker": code, "exchange": exch,
                      "countryRegion": "中国", "universeLayer": "a_share_focus", "coveragePriority": "physical"}
     if b in GLOBAL:

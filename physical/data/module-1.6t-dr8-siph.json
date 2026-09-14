@@ -1253,6 +1253,15 @@
             "companyId": "cn.300570"
           },
           {
+            "name": "蘅东光",
+            "ticker": "920045.BJ",
+            "market": "A",
+            "stage": "device",
+            "role": "多光纤并行 / CPO 无源内连光器件、光纤柔性线路；客户含 Coherent、Jabil",
+            "evidence": "consensus",
+            "companyId": "cn.920045"
+          },
+          {
             "name": "Fujikura",
             "ticker": "5803.T",
             "market": "JP",
@@ -1332,6 +1341,15 @@
             "role": "MPO 连接器 / 跳线龙头",
             "evidence": "verified",
             "companyId": "cn.300570"
+          },
+          {
+            "name": "蘅东光",
+            "ticker": "920045.BJ",
+            "market": "A",
+            "stage": "connect",
+            "role": "光纤连接器与超大芯数预端接布线（北交所）",
+            "evidence": "consensus",
+            "companyId": "cn.920045"
           },
           {
             "name": "Senko",

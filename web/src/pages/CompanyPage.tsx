@@ -3,11 +3,13 @@ import { LineChart } from "../components/LineChart";
 import { Backlinks, CROWD_RULE, CrowdingReadings, DirLegend, EventsWide, ResonanceBlock, ThesisBlock } from "../components/Research";
 import { Footer, Shell, invalidatePending } from "../components/Shell";
 import { AsOf, Conclusion, Head, Sig } from "../components/Signal";
-import { api, EVIDENCE_LABEL, market, md, mkt, pct, roleLabel, type CompanyDetail, type CompanyMarket, type Resonance, type Thesis } from "../lib/api";
+import { api, EVIDENCE_LABEL, PHYS_EVIDENCE_LABEL, market, md, mkt, pct, roleLabel, type CompanyDetail, type CompanyMarket, type CompanyPart, type Resonance, type Thesis } from "../lib/api";
+import { PhysicalThumb } from "../components/PhysicalThumb";
 import { Link } from "../lib/router";
 import "./companies.css";
 import "./research.css";
 
+const STAGE_LABEL: Record<string, string> = { material: "材料", chip: "芯片", device: "器件 / 封装", engine: "引擎 / 组装", connect: "连接", module: "模块 / 客户", equip: "设备 / 测试" };
 const LAYER_LABEL: Record<string, string> = {
   global_anchor: "全球锚点",
   a_share_focus: "A 股重点",
@@ -22,6 +24,7 @@ export function CompanyPage({ id }: { id: string }) {
   const [c, setC] = useState<CompanyDetail | null>(null);
   const [m, setM] = useState<CompanyMarket | null>(null);
   const [res, setRes] = useState<Resonance | null>(null);
+  const [phys, setPhys] = useState<CompanyPart[]>([]);
   const [resId, setResId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,6 +32,7 @@ export function CompanyPage({ id }: { id: string }) {
     setError(null);
     api.company(id).then((x) => { if (live.on) setC(x); }).catch((e) => { if (live.on) setError(String(e)); });
     mkt.companyMarket(id).then((x) => { if (live.on) setM(x); }).catch(() => { if (live.on) setM(null); });
+    api.companyPhysical(id).then((x) => { if (live.on) setPhys(x); }).catch(() => { if (live.on) setPhys([]); });
   }, [id]);
 
   useEffect(() => {
@@ -120,6 +124,29 @@ export function CompanyPage({ id }: { id: string }) {
               {res && <ResonanceBlock r={res} onSwitch={nextEvent} canSwitch={(m?.events_30d.length ?? 0) > 1} />}
 
               <ThesisBlock t={m?.thesis ?? null} subject={id} onChange={onThesis} />
+
+              {phys.length > 0 && (
+                <section className="block phys-pos">
+                  <div className="rows" style={{ minWidth: 0 }}>
+                    <div className="rows-head">
+                      <span className="eyebrow">在实物里的位置 · {phys[0].object_name} · {phys.length} 个部件</span>
+                      <Link to={`/physical/${encodeURIComponent(phys[0].object_id)}`} className="btn">打开这只模块 →</Link>
+                    </div>
+                    {phys.map((e) => (
+                      <div key={e.part_id} className="row phys-row">
+                        <span className="row-meta">{e.step ? String(e.step).padStart(2, "0") : "—"}</span>
+                        <Link to={`/physical/${encodeURIComponent(e.object_id)}?part=${encodeURIComponent(e.part_id)}`} className="row-title" style={{ fontSize: 15 }}>{e.part_name.split("（")[0]}</Link>
+                        <span className="row-meta" style={{ fontSize: 11 }}>{STAGE_LABEL[e.stage] ?? e.stage}</span>
+                        <span className="row-text">{e.role}</span>
+                        <span className="row-meta" style={{ fontSize: 11, color: e.evidence === "candidate" ? "var(--muted)" : "var(--ink-2)" }}>{PHYS_EVIDENCE_LABEL[e.evidence]}</span>
+                      </div>
+                    ))}
+                    <div style={{ borderTop: "1px solid var(--hair)" }} />
+                    <span className="rule-note">站在几个部件上,就是在这只模块里吃到几个环节;证据级沿用 evidence-contract 三档。</span>
+                  </div>
+                  <PhysicalThumb objectId={phys[0].object_id} parts={phys.map((e) => e.part_id)} width={620} />
+                </section>
+              )}
 
               <section className="rows">
                 <div className="rows-head">

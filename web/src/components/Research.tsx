@@ -91,20 +91,26 @@ export function EventsNarrow({ items, onPick, hotId }: { items: MarketEvent[]; o
 
 /** Wide events table for full-width columns: 日期 · 来源/对象 · 事件 · 类别 · T+1 · 量比 · 时效 */
 export function EventsWide({ items, who = "source", onPick, hotId }: { items: MarketEvent[]; who?: "source" | "subject"; onPick?: (e: MarketEvent) => void; hotId?: string | null }) {
+  const withPart = items.some((e) => e.part);   // the physical seam: which part an event lands on
   return (
     <div className="rows">
-      <div className="row ev-wide is-head" style={{ padding: "6px 0" }}>
+      <div className={`row ev-wide${withPart ? " has-part" : ""} is-head`} style={{ padding: "6px 0" }}>
         <span className="row-meta">日期</span><span className="row-meta">{who === "source" ? "来源" : "对象"}</span><span className="row-meta">事件</span>
-        <span className="row-meta">类别</span><span className="row-meta">T+1</span><span className="row-meta">量比</span><span className="row-meta">时效</span>
+        <span className="row-meta">类别</span>{withPart && <span className="row-meta">→ 部件</span>}<span className="row-meta">T+1</span><span className="row-meta">量比</span><span className="row-meta">时效</span>
       </div>
       {items.map((e) => {
         const s = subjectOf(e);
         return (
-          <div key={e.id} className={`row ev-wide${hotId === e.id ? " is-hot-row" : ""}`} onClick={onPick ? () => onPick(e) : undefined} style={onPick ? { cursor: "pointer" } : undefined}>
+          <div key={e.id} className={`row ev-wide${withPart ? " has-part" : ""}${hotId === e.id ? " is-hot-row" : ""}`} onClick={onPick ? () => onPick(e) : undefined} style={onPick ? { cursor: "pointer" } : undefined}>
             <span className="row-meta">{md(e.date)}</span>
             {who === "source" ? <span className="row-meta">{e.source_label}</span> : <span style={{ fontSize: 13 }}>{s.to ? <Link to={s.to}>{s.label}</Link> : s.label}</span>}
             <span className="ev-title">{e.source_url ? <a href={e.source_url} target="_blank" rel="noreferrer" style={{ color: "inherit" }}>{e.title}</a> : e.title}</span>
             <span className="ev-cat">{e.category_label}</span>
+            {withPart && (
+              <span className="ev-part" style={{ fontSize: 13 }}>
+                {e.part ? <Link to={`/physical/${encodeURIComponent(e.part.object_id)}?part=${encodeURIComponent(e.part.part_id)}`} style={{ color: "inherit" }} title={e.part.others ? `该公司还站在另 ${e.part.others} 个部件上` : undefined}>{e.part.part_name.split("（")[0]}</Link> : <span className="row-meta">—</span>}
+              </span>
+            )}
             <Sig v={e.reaction.t1} size={13} />
             <span className="row-meta" style={{ color: "var(--ink-2)" }}>{e.volume_ratio != null ? e.volume_ratio.toFixed(1) : "—"}</span>
             <Fresh f={e.freshness} />

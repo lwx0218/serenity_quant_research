@@ -1,0 +1,71 @@
+{
+ "object": "om.1p6t.osfp.dr8.siph",
+ "width": 1278,
+ "height": 517,
+ "anchors": {
+  "part.shell": [
+   550.4,
+   171.1
+  ],
+  "part.mpo": [
+   930.2,
+   101.7
+  ],
+  "part.pcb": [
+   584.0,
+   315.0
+  ],
+  "part.edge-fingers": [
+   279.1,
+   366.1
+  ],
+  "part.dsp": [
+   426.4,
+   300.6
+  ],
+  "part.power-mgmt": [
+   286.8,
+   325.6
+  ],
+  "part.cw-laser": [
+   550.4,
+   265.2
+  ],
+  "part.laser-coupling": [
+   573.6,
+   257.9
+  ],
+  "part.pic": [
+   661.5,
+   232.8
+  ],
+  "part.driver": [
+   620.2,
+   240.7
+  ],
+  "part.pd": [
+   751.9,
+   227.9
+  ],
+  "part.tia": [
+   687.3,
+   245.6
+  ],
+  "part.fau": [
+   757.1,
+   194.5
+  ],
+  "part.host-cage": [
+   170.5,
+   337.8
+  ],
+  "part.engine-assembly": [
+   754.5,
+   249.2
+  ],
+  "part.module-maker": [
+   155.0,
+   282.9
+  ]
+ }
+}

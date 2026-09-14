@@ -25,3 +25,9 @@
 .exp-row .row-note { font-size: 13px; color: var(--ink-2); line-height: 1.5; }
 .exp-row .row-src { display: block; font-size: 12px; color: var(--muted); margin-top: 4px; }
 .mod-row { grid-template-columns: 28px 96px minmax(0, 1fr) 16px; padding: 12px 0; }
+
+/* 在实物里的位置 (seam from the physical layer) */
+.phys-pos { display: flex; flex-direction: column; gap: 18px; }
+.phys-row { grid-template-columns: 30px 130px 78px minmax(0, 1fr) 84px; padding: 11px 0; }
+.phys-row .row-title { color: inherit; }
+.phys-row .row-title:hover { color: var(--accent); }

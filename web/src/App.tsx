@@ -4,6 +4,7 @@ import { CompaniesPage } from "./pages/CompaniesPage";
 import { CompanyPage } from "./pages/CompanyPage";
 import { ExplorerPage } from "./pages/ExplorerPage";
 import { JudgementPage } from "./pages/JudgementPage";
+import { PhysicalPage } from "./pages/PhysicalPage";
 import { ResearchPage } from "./pages/ResearchPage";
 
 export function App() {
@@ -13,6 +14,8 @@ export function App() {
   let m: Record<string, string> | null;
   if (p === "/" || p === "") return <ExplorerPage />;
   if ((m = match("/explore/:id", p))) return <ExplorerPage nodeId={m.id} />;
+  if (p === "/physical") return <PhysicalPage />;
+  if ((m = match("/physical/:id", p))) return <PhysicalPage id={m.id} part={route.params.get("part")} />;
   if (p === "/companies") return <CompaniesPage />;
   if ((m = match("/companies/:id", p))) return <CompanyPage id={m.id} />;
   if ((m = match("/baskets/:id", p))) return <BasketPage nodeId={m.id} />;

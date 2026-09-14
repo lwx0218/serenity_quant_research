@@ -1,0 +1,69 @@
+/* 实物 page. The drawing is plain SVG injected into .ph-drawing; the rest is the
+   same vocabulary as the Explorer (eyebrow / hairline rows / leaders). */
+.ph-stage { position: relative; transition: height 0.36s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.ph-fade { transition: opacity 0.28s ease, transform 0.36s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.is-hidden { opacity: 0; pointer-events: none; }
+
+.ph-hero { position: absolute; left: 0; top: 40px; width: 1280px; display: grid; grid-template-columns: minmax(0, 1fr) 480px; gap: 48px; align-items: end; }
+.ph-hero-title { display: flex; flex-direction: column; gap: 18px; }
+.ph-hero .display { font-size: 68px; line-height: 1.02; font-weight: 600; letter-spacing: -0.025em; margin: 0; }
+.ph-readouts { display: flex; flex-direction: column; gap: 10px; padding-bottom: 6px; }
+.ph-stage.is-sel .ph-hero { opacity: 0; pointer-events: none; }
+
+.ph-drawing { position: absolute; left: 0; transform-origin: 0 0; transition: transform 0.36s cubic-bezier(0.2, 0.7, 0.2, 1), top 0.36s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.ph-drawing svg { display: block; overflow: visible; }
+.ph-drawing g[data-part], .ph-drawing g[data-station] { cursor: pointer; transition: opacity 0.2s, filter 0.15s; }
+.ph-drawing g[data-part] polygon { transition: stroke 0.15s; }
+.ph-drawing.is-sel g[data-part]:not(.on) { opacity: var(--dim); }
+.ph-drawing.is-sel g[data-part]:not(.on).hov { opacity: 0.6; }
+.ph-drawing.is-sel g[data-station] { opacity: 0; }
+.ph-drawing.is-sel svg > :not(g[data-part]):not(g[data-station]) { opacity: 0.3; }
+.ph-drawing g[data-part].hov { filter: brightness(1.1) saturate(1.04); }
+.ph-drawing g[data-part].on { filter: brightness(1.06); }
+.ph-drawing g[data-part].hov polygon, .ph-drawing g[data-part].on polygon { stroke: color-mix(in srgb, var(--accent) 38%, #fff); stroke-width: 0.55; stroke-linejoin: round; paint-order: stroke; }
+:root[data-theme="dark"] .ph-drawing g[data-part].hov { filter: brightness(1.22) saturate(1.04); }
+:root[data-theme="dark"] .ph-drawing g[data-part].on { filter: brightness(1.14); }
+:root[data-theme="dark"] .ph-drawing g[data-part].hov polygon, :root[data-theme="dark"] .ph-drawing g[data-part].on polygon { stroke: color-mix(in srgb, var(--accent) 55%, #fff); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ph-drawing g[data-part].hov { filter: brightness(1.22) saturate(1.04); }
+  :root:not([data-theme="light"]) .ph-drawing g[data-part].on { filter: brightness(1.14); }
+}
+.ph-drawing g[data-station].hov circle { stroke-width: 1.2; fill: var(--accent); }
+.ph-drawing g[data-station].hov text { fill: var(--bg); }
+
+.ph-overlay { position: absolute; left: -80px; top: 0; overflow: visible; pointer-events: none; }
+.ph-overlay path { fill: none; stroke: var(--hair-2); stroke-width: 1; }
+.ph-overlay circle { fill: var(--bg); stroke: var(--ink-2); stroke-width: 1.2; }
+.ph-overlay .is-hot path { stroke: var(--accent); stroke-width: 1.4; }
+.ph-overlay .is-hot circle { stroke: var(--accent); fill: var(--accent); }
+.ph-overlay .leader-sel path { stroke: var(--accent); opacity: 0.55; }
+.ph-overlay .leader-sel circle { fill: var(--accent); stroke: var(--accent); }
+
+.ph-legend { position: absolute; left: 0; top: 426px; width: 280px; display: flex; flex-direction: column; }
+.ph-stage.is-sel .ph-legend { opacity: 0; pointer-events: none; }
+.ph-legend-cap { display: flex; flex-direction: column; gap: 2px; font-family: var(--font-mono); font-size: 11.5px; line-height: 1.6; color: var(--muted); letter-spacing: 0.02em; padding-bottom: 12px; border-bottom: 1px solid var(--hair); }
+.ph-legend-row { display: flex; gap: 22px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--hair); }
+.ph-legend-row:last-child { border-bottom: 0; }
+.ph-legend-row i { display: inline-block; width: 22px; height: 0; border-top: 1.4px solid var(--ink-2); vertical-align: middle; margin-left: 8px; }
+.ph-legend-row i.o { border-top: 1.6px solid var(--accent); }
+.ph-seg { gap: 18px; }
+.ph-seg button { appearance: none; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.ph-seg button.on { color: var(--ink); border-bottom: 1px solid var(--ink); }
+
+.ph-stations-head { position: absolute; left: 0; top: 966px; }
+.ph-stations { position: absolute; left: 0; top: 1000px; width: 1280px; display: grid; gap: 20px; }
+.ph-st { appearance: none; background: none; border: 0; margin: 0; font: inherit; color: inherit; text-align: left; display: flex; flex-direction: column; gap: 6px; padding: 16px 0 0; border-top: 1px solid var(--hair); cursor: pointer; transition: border-top-color 0.15s; }
+.ph-st:hover, .ph-st.hov { border-top-color: var(--accent); }
+.ph-st-name { font-size: 16px; font-weight: 500; line-height: 1.3; color: var(--ink); transition: color 0.15s; }
+.ph-st:hover .ph-st-name, .ph-st.hov .ph-st-name { color: var(--accent); }
+.ph-st-text { font-size: 12.5px; color: var(--ink-2); line-height: 1.45; }
+.ph-st .is-opt { color: var(--accent); }
+
+.ph-detail { position: absolute; left: 820px; top: 96px; width: 460px; display: flex; flex-direction: column; gap: 36px; }
+.ph-detail .h1 { font-size: 56px; line-height: 1.02; font-weight: 600; letter-spacing: -0.025em; margin: 0; }
+.ph-companies { position: absolute; left: 0; top: 540px; width: 740px; display: flex; flex-direction: column; }
+.ph-co-row { grid-template-columns: 150px 96px 40px minmax(0, 1fr) 84px; padding: 11px 0; }
+.rows-end { border-top: 1px solid var(--hair); }
+
+:focus-visible { outline: 1px solid var(--accent); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .ph-stage, .ph-drawing, .ph-fade, .ph-drawing g { transition: none !important; } }

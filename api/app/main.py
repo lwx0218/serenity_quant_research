@@ -15,7 +15,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import config
-from .routers import baskets, chain, companies, events, nodes, notes, overview, research
+from .routers import baskets, chain, companies, events, nodes, notes, overview, physical, research
 from .seed import ensure_database
 
 
@@ -42,6 +42,7 @@ app.include_router(events.router)
 app.include_router(baskets.router)
 app.include_router(notes.router)
 app.include_router(research.router)
+app.include_router(physical.router)
 
 
 @app.get("/api/health", tags=["meta"])

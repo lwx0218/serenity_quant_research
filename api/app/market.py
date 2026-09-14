@@ -9,6 +9,7 @@ from datetime import date, timedelta
 from typing import Any
 
 from . import analytics as A
+from . import physical as PH
 from .market_seed import basket_members, company_layers, primary_layer, product_members
 
 CATEGORY_LABEL = {
@@ -159,6 +160,7 @@ def event_public(conn: sqlite3.Connection, ev: dict, when: date, vcache: dict | 
                      "abs_t1": rx[1]["abs_return"] if 1 in rx else None},
         "volume_ratio": ev.get("volume_ratio"), "turnover_pct_rank": ev.get("turnover_pct_rank"),
         "freshness": fr, "status": ev.get("status", "candidate"), "is_sample": bool(ev.get("is_sample")),
+        "part": PH.part_for_event(conn, ev.get("company_id"), ev.get("category")),
     }
 
 

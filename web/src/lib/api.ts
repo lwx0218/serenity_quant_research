@@ -118,6 +118,12 @@ async function get<T>(path: string): Promise<T> {
 
 export const api = {
   product: (id: string) => get<Product>(`/api/products/${encodeURIComponent(id)}`),
+  physical: () => get<PhysObjectRef[]>(`/api/physical`),
+  physicalObject: (id: string) => get<PhysObject>(`/api/physical/${encodeURIComponent(id)}`),
+  companyPhysical: (id: string) => get<CompanyPart[]>(`/api/companies/${encodeURIComponent(id)}/physical`),
+  /** static drawing assets exported by physical/design/build_prototype.py */
+  physicalDrawing: (id: string) => fetch(`/physical/${encodeURIComponent(id)}.json`).then((r) => r.json() as Promise<PhysDrawing>),
+  physicalSvg: (id: string, theme: "light" | "dark", dir: "tx" | "rx") => fetch(`/physical/${encodeURIComponent(id)}.${theme}.${dir}.svg`).then((r) => r.text()),
   node: (id: string) => get<NodeDetail>(`/api/nodes/${encodeURIComponent(id)}`),
   chain: () => get<ChainNode[]>(`/api/chain`),
   companies: (q: { chain?: string; node?: string; q?: string } = {}) => {
@@ -202,7 +208,27 @@ export interface MarketEvent {
   reaction: { t1: number | null; t3: number | null; t5: number | null; t20: number | null; reference: string; abs_t1: number | null };
   volume_ratio: number | null; turnover_pct_rank: number | null;
   freshness: Freshness; status: string; is_sample: boolean;
+  part?: EventPart | null;
 }
+
+/** Where an event lands on a physical object (the seam physical → market). */
+export interface EventPart { object_id: string; object_name: string; part_id: string; part_name: string; step: number | null; stage: string; others: number }
+
+/* --------------------------------------------------------------- physical layer */
+export type PhysEvidence = "verified" | "consensus" | "candidate";
+export const PHYS_EVIDENCE_LABEL: Record<PhysEvidence, string> = { verified: "已核验", consensus: "行业图示", candidate: "候选 · 待核验" };
+export interface PhysStage { id: string; name: string; order: number }
+export interface PhysStep { step: number; partId: string; signal: string; text: string }
+export interface PhysLink { company_id: string | null; name: string; short_name: string | null; ticker: string | null; market: string | null; stage: string; role: string | null; evidence: PhysEvidence }
+export interface PhysPart { id: string; sort: number; name: string; name_en: string | null; function: string | null; key_specs: string[]; materials: string[]; companies: PhysLink[] }
+export interface PhysObject {
+  id: string; name: string; name_en: string | null; form_factor: string | null; as_of: string | null;
+  spec: Record<string, string>; host: { summary?: string; platforms?: { name: string; role: string }[] };
+  stages: PhysStage[]; signal: { tx: PhysStep[]; rx: PhysStep[] }; parts: PhysPart[];
+}
+export interface PhysObjectRef { id: string; name: string; name_en: string | null; form_factor: string | null; as_of: string | null; parts: number }
+export interface CompanyPart { object_id: string; object_name: string; part_id: string; part_name: string; step: number | null; stage: string; role: string | null; evidence: PhysEvidence }
+export interface PhysDrawing { object: string; width: number; height: number; anchors: Record<string, [number, number]> }
 
 export interface EventsResponse { as_of: string; window_days: number | null; count: number; items: MarketEvent[]; conclusion: Conclusion | null; validity_days: number | null; sample: boolean }
 

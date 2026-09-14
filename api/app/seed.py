@@ -20,6 +20,7 @@ from pathlib import Path
 from .config import DB_PATH, SEED_DIR
 from .db import connect, init_schema
 from .market_seed import import_market
+from .physical import import_physical
 
 
 def _load(seed_dir: Path, name: str) -> dict:
@@ -169,6 +170,7 @@ def import_seed(conn: sqlite3.Connection, seed_dir: Path = SEED_DIR, include_sam
     conn.commit()
 
     counts.update(import_market(conn, seed_dir, include_sample=include_sample))
+    counts.update(import_physical(conn))
     return counts
 
 
