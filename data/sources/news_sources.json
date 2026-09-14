@@ -1,0 +1,35 @@
+{
+  "$comment": "卡口事件的信息源。RSS 地址来自各站公开页面,部分未在本机验证过——先跑 scripts/news_fetch.py --probe,打不开的换地址或删。骨架沿用 simonlin1212/investment-news 的 {name,hint,type,url}，扩展 lang/region/tier/weight/tags/entity_match。tier 决定进入候选池时的证据级：0 公告/互动易 → verified；1 行业垂直媒体 → consensus；2 综合财经 → candidate；3 泛科技 → 只在没有更高层来源时入候选。type: rss | cninfo_announcement | cninfo_irm。entity_match=required 表示必须命中 physical/ 里的公司或部件词表才入池。",
+  "fetch": { "per_source": 40, "timeout": 15, "recent_days": 14, "threads": 12 },
+  "redline_keywords": ["涨停", "牛股", "主力", "荐股", "抄底", "翻倍", "彩票", "博彩", "赌", "加密货币", "比特币", "稳定币", "crypto", "bitcoin", "polymarket", "kalshi", "色情", "porn"],
+  "sources": [
+    { "name": "巨潮资讯 · 公告", "type": "cninfo_announcement", "url": "http://www.cninfo.com.cn/new/fulltextSearch/full", "lang": "zh", "region": "cn", "tier": 0, "weight": 1.0, "tags": ["announcement"], "entity_match": "by_company", "note": "按公司简称逐家查询；只取 A 股公司" },
+    { "name": "互动易 · 投资者问答", "type": "cninfo_irm", "url": "https://irm.cninfo.com.cn/ircs/index/search", "lang": "zh", "region": "cn", "tier": 0, "weight": 0.9, "tags": ["irm"], "entity_match": "by_company", "note": "深交所互动易；上证 e 互动另配适配器" },
+
+    { "name": "讯石光通讯", "type": "rss", "url": "https://www.iccsz.com/rss.aspx", "lang": "zh", "region": "cn", "tier": 1, "weight": 0.9, "tags": ["optics", "module"], "entity_match": "required" },
+    { "name": "C114 通信网 · 光通信", "type": "rss", "url": "https://www.c114.com.cn/rss/optical.xml", "lang": "zh", "region": "cn", "tier": 1, "weight": 0.8, "tags": ["optics", "telecom"], "entity_match": "required" },
+    { "name": "集微网", "type": "rss", "url": "https://www.laoyaoba.com/rss", "lang": "zh", "region": "cn", "tier": 1, "weight": 0.8, "tags": ["semi"], "entity_match": "required" },
+    { "name": "OFweek 光通讯", "type": "rss", "url": "https://fiber.ofweek.com/rss.xml", "lang": "zh", "region": "cn", "tier": 1, "weight": 0.7, "tags": ["optics"], "entity_match": "required" },
+    { "name": "Semiconductor Today", "type": "rss", "url": "https://www.semiconductor-today.com/news_feed.xml", "lang": "en", "region": "global", "tier": 1, "weight": 0.9, "tags": ["semi", "photonics", "InP", "laser"], "entity_match": "required" },
+    { "name": "Lightwave", "type": "rss", "url": "https://www.lightwaveonline.com/rss", "lang": "en", "region": "global", "tier": 1, "weight": 0.8, "tags": ["optics", "module"], "entity_match": "required" },
+    { "name": "DIGITIMES", "type": "rss", "url": "https://www.digitimes.com/rss/daily.xml", "lang": "en", "region": "global", "tier": 1, "weight": 0.8, "tags": ["semi", "supply-chain"], "entity_match": "required" },
+    { "name": "SemiAnalysis", "type": "rss", "url": "https://newsletter.semianalysis.com/feed", "lang": "en", "region": "global", "tier": 1, "weight": 0.9, "tags": ["semi", "ai-infra"], "entity_match": "required" },
+    { "name": "Semiconductor Engineering", "type": "rss", "url": "https://semiengineering.com/feed/", "lang": "en", "region": "global", "tier": 1, "weight": 0.6, "tags": ["semi"], "entity_match": "required" },
+    { "name": "EE Times", "type": "rss", "url": "https://www.eetimes.com/feed/", "lang": "en", "region": "global", "tier": 1, "weight": 0.6, "tags": ["semi"], "entity_match": "required" },
+
+    { "name": "东方财富 · 股票", "type": "rss", "url": "http://rss.eastmoney.com/rss_stock.xml", "lang": "zh", "region": "cn", "tier": 2, "weight": 0.5, "tags": ["finance"], "entity_match": "required" },
+    { "name": "华尔街见闻", "type": "rss", "url": "https://wallstreetcn.com/rss", "lang": "zh", "region": "cn", "tier": 2, "weight": 0.5, "tags": ["finance"], "entity_match": "required" },
+    { "name": "经济观察网", "type": "rss", "url": "http://www.eeo.com.cn/rss/", "lang": "zh", "region": "cn", "tier": 2, "weight": 0.4, "tags": ["finance"], "entity_match": "required" },
+
+    { "name": "量子位", "type": "rss", "url": "https://www.qbitai.com/feed", "lang": "zh", "region": "cn", "tier": 3, "weight": 0.3, "tags": ["ai", "nvidia"], "entity_match": "required" },
+    { "name": "智东西", "type": "rss", "url": "https://zhidx.com/feed", "lang": "zh", "region": "cn", "tier": 3, "weight": 0.3, "tags": ["ai", "nvidia"], "entity_match": "required" }
+  ],
+  "categories": {
+    "capex": { "label": "扩产", "zh": ["扩产", "产能", "投产", "新建", "募投", "扩建", "泰国", "马来西亚", "封测产线"], "en": ["capacity", "expansion", "new plant", "ramp", "fab", "expand production"] },
+    "order": { "label": "订单合同", "zh": ["订单", "合同", "中标", "框架协议", "长协", "供货协议"], "en": ["order", "contract", "award", "long-term agreement", "supply agreement", "purchase"] },
+    "qualification": { "label": "认证导入", "zh": ["认证", "导入", "送样", "验证通过", "批量出货", "小批量", "客户验证"], "en": ["qualification", "qualified", "sampling", "design win", "validated", "certified"] },
+    "supply": { "label": "供需", "zh": ["缺货", "紧缺", "供不应求", "交期", "分配", "产能紧张", "需求旺盛"], "en": ["shortage", "lead time", "allocation", "tight supply", "sold out", "demand"] },
+    "price": { "label": "涨价", "zh": ["涨价", "提价", "调价", "价格上涨"], "en": ["price hike", "price increase", "raise prices", "ASP"] },
+    "roadmap": { "label": "技术路线", "zh": ["CPO", "LPO", "LRO", "硅光", "薄膜铌酸锂", "EML", "VCSEL", "1.6T", "3.2T", "DR8", "OSFP", "200G/lane", "400G/lane"], "en": ["co-packaged", "linear pluggable", "silicon photonics", "TFLN", "1.6T", "3.2T", "DR8", "OSFP", "200G per lane"] }
+  }
+}

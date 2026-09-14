@@ -28,6 +28,6 @@
 
 /* 在实物里的位置 (seam from the physical layer) */
 .phys-pos { display: flex; flex-direction: column; gap: 18px; }
-.phys-row { grid-template-columns: 30px 130px 78px minmax(0, 1fr) 84px; padding: 11px 0; }
+.phys-row { grid-template-columns: 30px 130px 78px minmax(0, 1fr) 116px; padding: 11px 0; }
 .phys-row .row-title { color: inherit; }
 .phys-row .row-title:hover { color: var(--accent); }

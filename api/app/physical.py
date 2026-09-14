@@ -48,6 +48,8 @@ CREATE TABLE IF NOT EXISTS physical_part_companies (
   stage       TEXT NOT NULL,
   role        TEXT,
   evidence    TEXT NOT NULL,            -- verified | consensus | candidate
+  sources     TEXT,                     -- JSON [{type,title,url,publisher,date,quote}]
+  note        TEXT,
   PRIMARY KEY (part_id, seq)
 );
 CREATE INDEX IF NOT EXISTS ix_ppc_company ON physical_part_companies(company_id);
@@ -66,6 +68,7 @@ STAGE_RANK = ["material", "chip", "device", "engine", "connect", "module", "equi
 
 
 def import_physical(conn: sqlite3.Connection) -> dict[str, int]:
+    conn.executescript("DROP TABLE IF EXISTS physical_part_companies; DROP TABLE IF EXISTS physical_parts; DROP TABLE IF EXISTS physical_objects;")
     conn.executescript(SCHEMA)
     cur = conn.cursor()
     n_obj = n_part = n_link = n_co = 0
@@ -101,8 +104,9 @@ def import_physical(conn: sqlite3.Connection) -> dict[str, int]:
             n_part += 1
             for j, c in enumerate(p["companies"]):
                 cur.execute(
-                    "INSERT INTO physical_part_companies (part_id, seq, company_id, name, ticker, market, stage, role, evidence) VALUES (?,?,?,?,?,?,?,?,?)",
-                    (p["id"], j, c.get("companyId"), c["name"], c.get("ticker") or None, c.get("market"), c["stage"], c.get("role"), c["evidence"]),
+                    "INSERT INTO physical_part_companies (part_id, seq, company_id, name, ticker, market, stage, role, evidence, sources, note) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                    (p["id"], j, c.get("companyId"), c["name"], c.get("ticker") or None, c.get("market"), c["stage"], c.get("role"), c["evidence"],
+                     json.dumps(c.get("sources", []), ensure_ascii=False), c.get("note")),
                 )
                 n_link += 1
     conn.commit()
@@ -129,7 +133,8 @@ def _companies_of_part(conn: sqlite3.Connection, part_id: str) -> list[dict]:
         """SELECT l.*, c.short_name FROM physical_part_companies l LEFT JOIN companies c ON c.id = l.company_id
            WHERE l.part_id=? ORDER BY l.seq""", (part_id,)).fetchall()
     return [{"company_id": r["company_id"], "name": r["name"], "short_name": r["short_name"], "ticker": r["ticker"],
-             "market": r["market"], "stage": r["stage"], "role": r["role"], "evidence": r["evidence"]} for r in rows]
+             "market": r["market"], "stage": r["stage"], "role": r["role"], "evidence": r["evidence"],
+             "sources": _j(r["sources"]) or [], "note": r["note"]} for r in rows]
 
 
 def get_object(conn: sqlite3.Connection, object_id: str) -> dict | None:
@@ -149,7 +154,7 @@ def get_object(conn: sqlite3.Connection, object_id: str) -> dict | None:
 def company_parts(conn: sqlite3.Connection, company_id: str) -> list[dict]:
     """Where one company stands: every part (across objects) it is mapped to."""
     rows = conn.execute(
-        """SELECT l.part_id, l.stage, l.role, l.evidence, p.name AS part_name, p.sort, p.object_id, o.name AS object_name
+        """SELECT l.part_id, l.stage, l.role, l.evidence, l.sources, l.note, p.name AS part_name, p.sort, p.object_id, o.name AS object_name
            FROM physical_part_companies l JOIN physical_parts p ON p.id = l.part_id JOIN physical_objects o ON o.id = p.object_id
            WHERE l.company_id=? ORDER BY o.id, p.sort, l.seq""", (company_id,)).fetchall()
     out, seen = [], set()
@@ -158,7 +163,8 @@ def company_parts(conn: sqlite3.Connection, company_id: str) -> list[dict]:
             continue
         seen.add(r["part_id"])
         out.append({"object_id": r["object_id"], "object_name": r["object_name"], "part_id": r["part_id"], "part_name": r["part_name"],
-                    "step": r["sort"] + 1 if r["sort"] < 100 else None, "stage": r["stage"], "role": r["role"], "evidence": r["evidence"]})
+                    "step": r["sort"] + 1 if r["sort"] < 100 else None, "stage": r["stage"], "role": r["role"], "evidence": r["evidence"],
+                    "sources": _j(r["sources"]) or [], "note": r["note"]})
     return out
 
 

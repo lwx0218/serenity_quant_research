@@ -219,7 +219,9 @@ export type PhysEvidence = "verified" | "consensus" | "candidate";
 export const PHYS_EVIDENCE_LABEL: Record<PhysEvidence, string> = { verified: "已核验", consensus: "行业图示", candidate: "候选 · 待核验" };
 export interface PhysStage { id: string; name: string; order: number }
 export interface PhysStep { step: number; partId: string; signal: string; text: string }
-export interface PhysLink { company_id: string | null; name: string; short_name: string | null; ticker: string | null; market: string | null; stage: string; role: string | null; evidence: PhysEvidence }
+export interface PhysSource { type: "announcement" | "irm" | "filing" | "official" | "media" | "report"; title: string | null; url: string; publisher: string | null; date: string | null; quote: string | null; partial?: boolean }
+export const PHYS_SOURCE_LABEL: Record<PhysSource["type"], string> = { announcement: "公告", irm: "互动易", filing: "年报 / 招股书", official: "官网", media: "媒体", report: "研报" };
+export interface PhysLink { company_id: string | null; name: string; short_name: string | null; ticker: string | null; market: string | null; stage: string; role: string | null; evidence: PhysEvidence; sources: PhysSource[]; note: string | null }
 export interface PhysPart { id: string; sort: number; name: string; name_en: string | null; function: string | null; key_specs: string[]; materials: string[]; companies: PhysLink[] }
 export interface PhysObject {
   id: string; name: string; name_en: string | null; form_factor: string | null; as_of: string | null;
@@ -227,7 +229,7 @@ export interface PhysObject {
   stages: PhysStage[]; signal: { tx: PhysStep[]; rx: PhysStep[] }; parts: PhysPart[];
 }
 export interface PhysObjectRef { id: string; name: string; name_en: string | null; form_factor: string | null; as_of: string | null; parts: number }
-export interface CompanyPart { object_id: string; object_name: string; part_id: string; part_name: string; step: number | null; stage: string; role: string | null; evidence: PhysEvidence }
+export interface CompanyPart { object_id: string; object_name: string; part_id: string; part_name: string; step: number | null; stage: string; role: string | null; evidence: PhysEvidence; sources: PhysSource[]; note: string | null }
 export interface PhysDrawing { object: string; width: number; height: number; anchors: Record<string, [number, number]> }
 
 export interface EventsResponse { as_of: string; window_days: number | null; count: number; items: MarketEvent[]; conclusion: Conclusion | null; validity_days: number | null; sample: boolean }

@@ -1,7 +1,8 @@
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as RMouseEvent } from "react";
 import { Footer, Shell } from "../components/Shell";
 import { Head } from "../components/Signal";
-import { api, PHYS_EVIDENCE_LABEL, type PhysDrawing, type PhysLink, type PhysObject, type PhysPart, type PhysStep } from "../lib/api";
+import { api, type PhysDrawing, type PhysLink, type PhysObject, type PhysPart, type PhysStep } from "../lib/api";
+import { Evidence } from "../components/Evidence";
 import { Link, useRouter } from "../lib/router";
 import "./physical.css";
 
@@ -265,10 +266,11 @@ const PartDetail = forwardRef<HTMLDivElement, { p: PhysPart; step: number | null
 
 const PartCompanies = forwardRef<HTMLDivElement, { p: PhysPart; stages: PhysObject["stages"]; onBack: () => void }>(function PartCompanies({ p, stages, onBack }, ref) {
   const a = aCount(p);
+  const sourced = p.companies.filter((c) => c.sources && c.sources.length > 0).length;
   const groups = stages.slice().sort((x, y) => x.order - y.order).map((s) => ({ s, cs: p.companies.filter((c) => c.stage === s.id) })).filter((g) => g.cs.length > 0);
   return (
     <div ref={ref} className="ph-companies ph-fade">
-      <Head title={`公司 · ${p.companies.length} · ${a} 家 A 股`} right={<span className="quiet" style={{ display: "inline-flex", gap: 10, alignItems: "center" }}><kbd className="kbd">ESC</kbd><span>或点面包屑 / 空白处回到整只模块</span><button type="button" className="btn-quiet" onClick={onBack}>返回</button></span>} />
+      <Head title={`公司 · ${p.companies.length} · ${a} 家 A 股 · ${sourced} 条有来源`} right={<span className="quiet" style={{ display: "inline-flex", gap: 10, alignItems: "center" }}><kbd className="kbd">ESC</kbd><span>或点面包屑 / 空白处回到整只模块</span><button type="button" className="btn-quiet" onClick={onBack}>返回</button></span>} />
       {groups.map(({ s, cs }) => (
         <div key={s.id} className="rows" style={{ marginTop: 18 }}>
           <span className="eyebrow" style={{ marginBottom: 8 }}>{s.name} · {cs.length}</span>
@@ -288,7 +290,7 @@ function CompanyRow({ c }: { c: PhysLink }) {
       <span className="row-meta" style={{ fontSize: 11 }}>{c.ticker ?? "—"}</span>
       <span className="row-meta" style={{ fontSize: 11 }}>{mkt(c.market)}</span>
       <span className="row-text">{c.role}</span>
-      <span className="row-meta" style={{ fontSize: 11, color: c.evidence === "candidate" ? "var(--muted)" : "var(--ink-2)" }}>{PHYS_EVIDENCE_LABEL[c.evidence]}</span>
+      <Evidence level={c.evidence} sources={c.sources} note={c.note} />
     </div>
   );
 }

@@ -3,8 +3,9 @@ import { LineChart } from "../components/LineChart";
 import { Backlinks, CROWD_RULE, CrowdingReadings, DirLegend, EventsWide, ResonanceBlock, ThesisBlock } from "../components/Research";
 import { Footer, Shell, invalidatePending } from "../components/Shell";
 import { AsOf, Conclusion, Head, Sig } from "../components/Signal";
-import { api, EVIDENCE_LABEL, PHYS_EVIDENCE_LABEL, market, md, mkt, pct, roleLabel, type CompanyDetail, type CompanyMarket, type CompanyPart, type Resonance, type Thesis } from "../lib/api";
+import { api, EVIDENCE_LABEL, market, md, mkt, pct, roleLabel, type CompanyDetail, type CompanyMarket, type CompanyPart, type Resonance, type Thesis } from "../lib/api";
 import { PhysicalThumb } from "../components/PhysicalThumb";
+import { Evidence } from "../components/Evidence";
 import { Link } from "../lib/router";
 import "./companies.css";
 import "./research.css";
@@ -138,11 +139,11 @@ export function CompanyPage({ id }: { id: string }) {
                         <Link to={`/physical/${encodeURIComponent(e.object_id)}?part=${encodeURIComponent(e.part_id)}`} className="row-title" style={{ fontSize: 15 }}>{e.part_name.split("（")[0]}</Link>
                         <span className="row-meta" style={{ fontSize: 11 }}>{STAGE_LABEL[e.stage] ?? e.stage}</span>
                         <span className="row-text">{e.role}</span>
-                        <span className="row-meta" style={{ fontSize: 11, color: e.evidence === "candidate" ? "var(--muted)" : "var(--ink-2)" }}>{PHYS_EVIDENCE_LABEL[e.evidence]}</span>
+                        <Evidence level={e.evidence} sources={e.sources} note={e.note} />
                       </div>
                     ))}
                     <div style={{ borderTop: "1px solid var(--hair)" }} />
-                    <span className="rule-note">站在几个部件上,就是在这只模块里吃到几个环节;证据级沿用 evidence-contract 三档。</span>
+                    <span className="rule-note">站在几个部件上,就是在这只模块里吃到几个环节。证据级即链接:点开是最强的那条来源(公告 › 互动易 › 年报 › 官网 › 媒体),悬停看原文。</span>
                   </div>
                   <PhysicalThumb objectId={phys[0].object_id} parts={phys.map((e) => e.part_id)} width={620} />
                 </section>

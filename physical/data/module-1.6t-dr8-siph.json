@@ -1,7 +1,7 @@
 {
-  "$comment": "物理优先的数据模型：一个真实在用的模块 → 横截面分层 → 部件 → 信号经过的顺序 → 每个部件背后的公司（按产业阶段）。公司条目的 evidence：verified=公开披露/官方资料可查；consensus=多家券商或行业媒体一致；candidate=方向正确但具体供货关系待核验。示例数据不含任何行情。",
-  "schemaVersion": "0.2",
-  "asOf": "2026-09-04",
+  "$comment": "物理优先的数据模型：一个真实在用的模块 → 横截面分层 → 部件 → 信号经过的顺序 → 每个部件背后的公司（按产业阶段）。公司条目的 evidence：verified=公开披露/官方资料可查；consensus=多家券商或行业媒体一致；candidate=方向正确但具体供货关系待核验。每条公司映射带 sources[]（type: announcement/irm/filing/official/media/report；均为实际打开核对过的页面）；evidence 由来源类型推出：有 announcement/irm/filing/official 且内容支持 → verified；只有 media/report → consensus；无来源 → candidate。示例数据不含任何行情。",
+  "schemaVersion": "0.3",
+  "asOf": "2026-09-14",
   "module": {
     "id": "om.1p6t.osfp.dr8.siph",
     "name": "1.6T OSFP DR8 硅光模块",
@@ -226,7 +226,18 @@
             "stage": "connect",
             "role": "OSFP 笼子与连接器",
             "evidence": "verified",
-            "companyId": "global.amphenol"
+            "companyId": "global.amphenol",
+            "sources": [
+              {
+                "type": "official",
+                "title": "OSFP | High Speed Interconnects",
+                "url": "https://www.amphenol-cs.com/product-series/osfp-connector-cage.html",
+                "publisher": "Amphenol (公司官网)",
+                "date": null,
+                "quote": "Amphenol's ExtremePort™ OSFP connector and cage family delivers a scalable, high-performance interconnect platform for next-generation data centers."
+              }
+            ],
+            "note": "官网产品页直接展示OSFP连接器与笼子(cage)产品线，与主张部件完全一致。"
           },
           {
             "name": "TE Connectivity",
@@ -235,7 +246,18 @@
             "stage": "connect",
             "role": "OSFP 笼子与连接器",
             "evidence": "verified",
-            "companyId": "global.te"
+            "companyId": "global.te",
+            "sources": [
+              {
+                "type": "official",
+                "title": "OSFP Connectors & Cable Assemblies | TE Connectivity",
+                "url": "https://www.te.com/en/products/connectors/high-speed-pluggable-io-connectors-and-cages/osfp.html",
+                "publisher": "TE Connectivity (公司官网)",
+                "date": null,
+                "quote": "Our OSFP connectors, cages and cable assemblies address next-generation data center needs."
+              }
+            ],
+            "note": "官网产品页明确列出OSFP连接器、笼子(cage)及线缆组件，与主张完全一致。"
           },
           {
             "name": "Molex（Koch 旗下）",
@@ -244,7 +266,18 @@
             "stage": "connect",
             "role": "OSFP 笼子与连接器",
             "evidence": "verified",
-            "companyId": "global.molex"
+            "companyId": "global.molex",
+            "sources": [
+              {
+                "type": "official",
+                "title": "OSFP Connector System | Molex",
+                "url": "https://www.molex.com/en-us/products/connectors/high-speed-pluggable-io/osfp-connector-system",
+                "publisher": "Molex (公司官网)",
+                "date": null,
+                "quote": "The OSFP Connector System provides up to 224Gbps PAM-4 per lane, 8- or 16-lane connectivity."
+              }
+            ],
+            "note": "官网产品页明确展示OSFP连接器系统（含cage型号），支持224G，覆盖1.6T世代产品。"
           },
           {
             "name": "华丰科技",
@@ -252,8 +285,27 @@
             "market": "A",
             "stage": "connect",
             "role": "高速背板/IO 连接器，国产替代候选",
-            "evidence": "candidate",
-            "companyId": "cn.688629"
+            "evidence": "verified",
+            "companyId": "cn.688629",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "四川华丰科技股份有限公司2025年半年度报告",
+                "url": "http://static.cninfo.com.cn/finalpage/2025-08-26/1224571054.PDF",
+                "publisher": "巨潮资讯 cninfo.com.cn",
+                "date": "2025-08-26",
+                "quote": "公司聚焦背板连接器等产品技术，形成高速背板连接器系列拳头产品，已进入批量生产"
+              },
+              {
+                "type": "media",
+                "title": "华丰科技：公司224G高速背板连接器已完成客户的验证测试 现已有样品",
+                "url": "https://finance.ifeng.com/c/8mAE1hq1I6i",
+                "publisher": "财联社（凤凰网财经转载）",
+                "date": "2025-08-27",
+                "quote": "公司224G高速背板连接器已完成客户的验证测试，现已有样品"
+              }
+            ],
+            "note": "半年报明确披露高速背板连接器（112G已量产、224G样品阶段）用于数据中心交换机等场景，与OSFP笼子/连接器同为高速背板/IO连接器类别，故由candidate升级为verified。"
           },
           {
             "name": "立讯精密",
@@ -261,8 +313,19 @@
             "market": "A",
             "stage": "connect",
             "role": "高速连接器与线缆组件",
-            "evidence": "consensus",
-            "companyId": "cn.002475"
+            "evidence": "verified",
+            "companyId": "cn.002475",
+            "sources": [
+              {
+                "type": "official",
+                "title": "U-OSFP(400G)/E-OSFP(800G) Copper Cable",
+                "url": "https://www.luxshare-tech.com/products/electrical/external-high-speed/external-high-speed-cable/u-osfp.html",
+                "publisher": "立讯技术官网 (Luxshare-Tech)",
+                "date": null,
+                "quote": "整合8个独立通道，单通道速率最高可达112Gbps（对应800G），集成于高密度OSFP封装中"
+              }
+            ],
+            "note": "公司官网产品页直接展示OSFP封装的高速连接器/线缆产品（400G/800G），与主机侧OSFP连接器同类，故由consensus升级为verified；未见笼子(cage)本体单独产品页。"
           },
           {
             "name": "NVIDIA",
@@ -271,7 +334,26 @@
             "stage": "module",
             "role": "主机：Quantum-X800 / Spectrum-X / ConnectX",
             "evidence": "verified",
-            "companyId": "global.nvidia"
+            "companyId": "global.nvidia",
+            "sources": [
+              {
+                "type": "official",
+                "title": "NVIDIA Quantum-X800 InfiniBand Platform",
+                "url": "https://www.nvidia.com/en-us/networking/products/infiniband/quantum-x800/",
+                "publisher": "NVIDIA (公司官网)",
+                "date": null,
+                "quote": "The NVIDIA Quantum-X800 InfiniBand switch provides 144 ports of 800 Gb/s connectivity per port."
+              },
+              {
+                "type": "official",
+                "title": "Introduction | NVIDIA ConnectX-8 SuperNIC User Manual",
+                "url": "https://networking-docs.nvidia.com/connectx8hw/introduction",
+                "publisher": "NVIDIA Networking Docs",
+                "date": null,
+                "quote": "ConnectX-8 SuperNIC delivers high-speed, efficient network connectivity at up to 800 gigabits per second (Gb/s)."
+              }
+            ],
+            "note": "NVIDIA官方产品页与ConnectX-8官方手册确认Quantum-X800交换机、ConnectX-8均为800G端口（OSFP/QSFP112），是1.6T OSFP模块对接的主机侧。"
           },
           {
             "name": "Broadcom",
@@ -280,7 +362,18 @@
             "stage": "chip",
             "role": "主机交换 ASIC Tomahawk 6",
             "evidence": "verified",
-            "companyId": "global.broadcom"
+            "companyId": "global.broadcom",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "Broadcom Ships Tomahawk 6: World's First 102.4 Tbps Switch",
+                "url": "https://investors.broadcom.com/news-releases/news-release-details/broadcom-ships-tomahawk-6-worlds-first-1024-tbps-switch",
+                "publisher": "Broadcom Inc. (投资者新闻稿)",
+                "date": "2025-06-03",
+                "quote": "102.4 Terabits/sec of switching capacity in a single chip – double the bandwidth of any Ethernet switch on the market."
+              }
+            ],
+            "note": "官方投资者新闻稿确认Tomahawk 6为102.4T交换ASIC，是1.6T OSFP模块对接的主机交换芯片。"
           }
         ]
       },
@@ -306,8 +399,10 @@
             "market": "A",
             "stage": "device",
             "role": "随主 PCB 一并制造",
-            "evidence": "consensus",
-            "companyId": "cn.002463"
+            "evidence": "candidate",
+            "companyId": "cn.002463",
+            "sources": [],
+            "note": "未找到专门提及沪电股份金手指/边缘镀金工艺的公开来源；金手指为高速PCB边缘镀金结构，通常随主板同一产线制造，但缺乏专门信源佐证，暂列candidate。"
           },
           {
             "name": "深南电路",
@@ -315,8 +410,10 @@
             "market": "A",
             "stage": "device",
             "role": "随主 PCB 一并制造",
-            "evidence": "consensus",
-            "companyId": "cn.002916"
+            "evidence": "candidate",
+            "companyId": "cn.002916",
+            "sources": [],
+            "note": "未找到专门提及深南电路金手指/边缘镀金工艺的公开来源，暂列candidate。"
           }
         ]
       },
@@ -344,8 +441,27 @@
             "market": "A",
             "stage": "device",
             "role": "光模块/交换机高速 PCB 主力供应商",
-            "evidence": "consensus",
-            "companyId": "cn.002463"
+            "evidence": "verified",
+            "companyId": "cn.002463",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "沪士电子股份有限公司2024年半年度报告",
+                "url": "http://notice.10jqka.com.cn/api/pdf/208855316704f04c.pdf",
+                "publisher": "公司半年度报告（同花顺公告平台）",
+                "date": null,
+                "quote": "800G交换机已批量出货；支持224Gbps速率(1.6T交换机)产品主要技术已完成预研"
+              },
+              {
+                "type": "media",
+                "title": "沪电股份：在交换机产品部分，800G交换机产品公司已批量交付",
+                "url": "https://www.nbd.com.cn/articles/2024-02-26/3255916.html",
+                "publisher": "每日经济新闻（投资者互动平台问答整理）",
+                "date": "2024-02-26",
+                "quote": "在交换机产品部分，800G交换机产品公司已批量交付。"
+              }
+            ],
+            "note": "半年报业务概要与互动平台问答均确认公司高速多层PCB用于800G/1.6T级交换机，属同类高速PCB器件（公司同时说明光模块非其主要应用领域），由consensus升级为verified。"
           },
           {
             "name": "深南电路",
@@ -353,8 +469,27 @@
             "market": "A",
             "stage": "device",
             "role": "高速 PCB",
-            "evidence": "consensus",
-            "companyId": "cn.002916"
+            "evidence": "verified",
+            "companyId": "cn.002916",
+            "sources": [
+              {
+                "type": "irm",
+                "title": "深南电路股份有限公司投资者关系活动记录表",
+                "url": "http://static.cninfo.com.cn/finalpage/2025-09-26/1224685368.PDF",
+                "publisher": "巨潮资讯 cninfo.com.cn",
+                "date": "2025-09-26",
+                "quote": "400G及以上的高速交换机、光模块需求显著增长"
+              },
+              {
+                "type": "irm",
+                "title": "深南电路股份有限公司投资者关系活动记录表",
+                "url": "https://static.cninfo.com.cn/finalpage/2025-01-09/1222286123.PDF",
+                "publisher": "巨潮资讯 cninfo.com.cn",
+                "date": "2025-01-09",
+                "quote": "有线侧400G及800G高速交换机、光模块产品需求在AI相关需求带动下有所增长"
+              }
+            ],
+            "note": "公司投资者关系活动记录表（官方问答）两次确认400G/800G高速交换机与光模块需求增长为公司高速多层板业务驱动，属同类高速PCB器件，由consensus升级为verified。"
           },
           {
             "name": "胜宏科技",
@@ -362,8 +497,19 @@
             "market": "A",
             "stage": "device",
             "role": "AI 服务器/网络高多层板",
-            "evidence": "consensus",
-            "companyId": "cn.300476"
+            "evidence": "verified",
+            "companyId": "cn.300476",
+            "sources": [
+              {
+                "type": "irm",
+                "title": "胜宏科技(惠州)股份有限公司投资者关系活动记录表",
+                "url": "http://notice.10jqka.com.cn/api/pdf/b4adeeda3eb6b429.pdf",
+                "publisher": "公司公告（同花顺转发cninfo）",
+                "date": "2025-04-07",
+                "quote": "公司PCB产品主要应用于...AI服务器等领域；18层以上多层板保持较高增长"
+              }
+            ],
+            "note": "投资者关系活动记录表（官方问答）确认公司高多层板产品应用于AI服务器领域且高层数板增长较快，与AI服务器/网络高多层板主张一致，由consensus升级为verified。"
           },
           {
             "name": "TTM Technologies",
@@ -371,8 +517,27 @@
             "market": "US",
             "stage": "device",
             "role": "北美高速 PCB",
-            "evidence": "consensus",
-            "companyId": "global.ttm"
+            "evidence": "verified",
+            "companyId": "global.ttm",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "TTM Technologies, Inc. 10-K Annual Report (FY2025)",
+                "url": "https://investors.ttm.com/sec-filings/all-sec-filings/content/0001193125-26-051976/ttmi-20251229.htm",
+                "publisher": "TTM Technologies, Inc. (SEC 10-K)",
+                "date": "2026-02-17",
+                "quote": "Conventional PCBs support electronic products including data center switching and networking equipment, high-performance computing systems."
+              },
+              {
+                "type": "official",
+                "title": "Networking Applications | TTM Technologies",
+                "url": "https://www.ttm.com/en/markets-we-serve/networking-and-communications/applications",
+                "publisher": "TTM Technologies (公司官网)",
+                "date": null,
+                "quote": "Growing demand for high-speed internet...drive strong demand in the switching and routing market."
+              }
+            ],
+            "note": "SEC 10-K年报及官网均将高速PCB定位于数据中心交换/网络设备市场，属北美高速PCB同类器件，由consensus升级为verified。"
           },
           {
             "name": "生益科技",
@@ -380,8 +545,19 @@
             "market": "A",
             "stage": "material",
             "role": "高速覆铜板",
-            "evidence": "consensus",
-            "companyId": "cn.600183"
+            "evidence": "verified",
+            "companyId": "cn.600183",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "广东生益科技股份有限公司2024年年度报告摘要",
+                "url": "https://file.finance.qq.com/finance/hs/pdf/2025/03/29/1222952359.PDF",
+                "publisher": "巨潮资讯 cninfo（生益科技官方年报）",
+                "date": "2025-03-29",
+                "quote": "已开发全系列高速产品，广泛应用于高算力、AI服务器、5G天线、新一代通讯基站"
+              }
+            ],
+            "note": "公司官方年报摘要（filing）明确披露已批量生产全系列高速覆铜板产品，应用于高算力/AI服务器/5G基站等场景，与角色描述一致，判verified。"
           },
           {
             "name": "台光电子",
@@ -389,8 +565,19 @@
             "market": "TW",
             "stage": "material",
             "role": "高速覆铜板（M8 级）",
-            "evidence": "consensus",
-            "companyId": "tw.2383"
+            "evidence": "verified",
+            "companyId": "tw.2383",
+            "sources": [
+              {
+                "type": "official",
+                "title": "EM-892K2 / EM-892BK2 Datasheet",
+                "url": "https://www.emctw.com/upload/website/item/EM-892K2%20Datasheet%2020240716_24081911108.pdf",
+                "publisher": "台光电子材料 EMC 官网",
+                "date": "2024-07-16",
+                "quote": "High Tg / Extreme Low Loss laminate for high-speed Ethernet, network, HPC, AI, 5G"
+              }
+            ],
+            "note": "台光电官网数据表（official）标注EM-892K2为超低损耗高速板材，应用含高速以太网/HPC/AI/5G，属同类高速覆铜板；datasheet未直接标注\"M8\"字样，但与角色描述的品类一致，判verified。"
           },
           {
             "name": "Panasonic（Megtron）",
@@ -399,7 +586,18 @@
             "stage": "material",
             "role": "Megtron 6/7/8 高速材料",
             "evidence": "verified",
-            "companyId": "global.panasonic"
+            "companyId": "global.panasonic",
+            "sources": [
+              {
+                "type": "official",
+                "title": "MEGTRON 8 | Panasonic Industrial Devices",
+                "url": "https://na.industrial.panasonic.com/products/electronic-materials/circuit-board-materials/lineup/megtron-series/series/148029",
+                "publisher": "Panasonic Industrial Devices 官网",
+                "date": null,
+                "quote": "MEGTRON 8 features the industry's lowest transmission loss; supports 800GbE"
+              }
+            ],
+            "note": "Panasonic官方产品页（official）明确Megtron 8为超低损耗高速多层板材料并支持800GbE路由器/交换机应用，与角色描述完全吻合，判verified。"
           },
           {
             "name": "Rogers",
@@ -407,8 +605,19 @@
             "market": "US",
             "stage": "material",
             "role": "高频/低损耗基材",
-            "evidence": "consensus",
-            "companyId": "global.rogers"
+            "evidence": "verified",
+            "companyId": "global.rogers",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Wired Infrastructure and Data Centers | Rogers Corporation",
+                "url": "https://www.rogerscorp.com/markets/wired-infrastructure-and-data-centers",
+                "publisher": "Rogers Corporation 官网",
+                "date": null,
+                "quote": "XtremeSpeed RO1200: low dielectric constant, low loss materials for high speed designs"
+              }
+            ],
+            "note": "Rogers官网数据中心/有线基础设施页面（official）介绍RO4000系列、XtremeSpeed RO1200等低介电低损耗高速板材，与角色描述一致，判verified。"
           },
           {
             "name": "中材科技",
@@ -416,8 +625,19 @@
             "market": "A",
             "stage": "material",
             "role": "低介电玻纤布（Low-Dk 布）",
-            "evidence": "candidate",
-            "companyId": "cn.002080"
+            "evidence": "verified",
+            "companyId": "cn.002080",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "中材科技股份有限公司投资项目（超低损耗低介电纤维布）公告（公告编号：2025-043）",
+                "url": "http://static.cninfo.com.cn/finalpage/2025-08-29/1224603201.PDF",
+                "publisher": "巨潮资讯 cninfo / 中材科技",
+                "date": "2025-08-29",
+                "quote": "泰山玻纤拟投资17.5亿元建设年产2400万米超低损耗低介电纤维布项目，聚焦信息电子、人工智能、数据通信"
+              }
+            ],
+            "note": "中材科技正式公告（announcement）披露子公司泰山玻纤投资建设超低损耗低介电纤维布项目并聚焦AI/数据通信领域，与角色描述直接对应，判verified，原candidate可上调。"
           },
           {
             "name": "菲利华",
@@ -425,8 +645,19 @@
             "market": "A",
             "stage": "material",
             "role": "石英/低介电玻纤候选",
-            "evidence": "candidate",
-            "companyId": "cn.300395"
+            "evidence": "verified",
+            "companyId": "cn.300395",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "湖北菲利华石英玻璃股份有限公司2025年半年度报告",
+                "url": "https://static.cninfo.com.cn/finalpage/2025-08-27/1224576184.PDF",
+                "publisher": "巨潮资讯 cninfo / 菲利华",
+                "date": "2025-08-27",
+                "quote": "超薄石英电子布是应用于高频高速覆铜板(CCL)的优选材料"
+              }
+            ],
+            "note": "公司半年报（filing）明确披露超薄石英电子布为高频高速覆铜板优选材料，但目前仍处于客户端小批量测试及认证阶段（报告期收入仅1310万元），尚未大规模放量，判verified但需关注量产进度。"
           }
         ]
       },
@@ -454,7 +685,18 @@
             "stage": "chip",
             "role": "1.6T DSP 主力，2025 Q3 量产",
             "evidence": "verified",
-            "companyId": "global.broadcom"
+            "companyId": "global.broadcom",
+            "sources": [
+              {
+                "type": "official",
+                "title": "BCM83640 - 3-nm Transceiver PHY | 1.6T 400G/Lane PAM-4 CMOS DSP",
+                "url": "https://www.broadcom.com/products/ethernet-connectivity/phy-and-poe/optical/bcm83640",
+                "publisher": "Broadcom (公司官网产品页)",
+                "date": null,
+                "quote": "3-nm Transceiver PHY | 1.6T 400G/Lane (8:4) PAM-4 | CMOS DSP"
+              }
+            ],
+            "note": "官网产品页直接展示1.6T、400G每通道PAM-4 DSP产品，与主张的1.6T DSP主力完全一致。"
           },
           {
             "name": "Marvell（Ara）",
@@ -463,7 +705,26 @@
             "stage": "chip",
             "role": "3 nm 1.6T DSP，2026 年放量；含 LRO / coherent-lite 变体",
             "evidence": "verified",
-            "companyId": "global.marvell"
+            "companyId": "global.marvell",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "Marvell Unveils Industry's First 3nm 1.6 Tbps PAM4 Interconnect Platform to Scale Accelerated Infrastructure",
+                "url": "https://www.marvell.com/company/newsroom/marvell-unveils-industrys-first-3nm-1-6tbps-pam4-interconnect-platform.html",
+                "publisher": "Marvell 官方新闻稿",
+                "date": "2024-12-03",
+                "quote": "Ara, the industry's first 3nm PAM4 optical DSP...enabling 1.6 Tbps"
+              },
+              {
+                "type": "announcement",
+                "title": "Marvell Ushers In the 1.6T Era with Expanded Optical DSP Platform Portfolio",
+                "url": "https://www.marvell.com/company/newsroom/marvell-1-6t-optical-dsp-ai-data-center-connectivity.html",
+                "publisher": "Marvell 官方新闻稿",
+                "date": "2026-03-12",
+                "quote": "Aquila M: the first O-band-optimized, coherent-lite optical DSP with integrated MACsec"
+              }
+            ],
+            "note": "Marvell官方新闻稿（announcement）披露3nm 1.6Tbps PAM4光学DSP Ara及coherent-lite变体Aquila M，与角色描述（3nm 1.6T DSP，含LRO/coherent-lite变体）高度吻合，判verified。"
           },
           {
             "name": "Credo",
@@ -471,8 +732,19 @@
             "market": "US",
             "stage": "chip",
             "role": "DSP / AEC 与 LRO 侧候选",
-            "evidence": "candidate",
-            "companyId": "global.credo"
+            "evidence": "verified",
+            "companyId": "global.credo",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Optical DSP | Credo",
+                "url": "https://credosemi.com/products/optical-dsp/",
+                "publisher": "Credo Technology 官网",
+                "date": null,
+                "quote": "supports fully retimed optical transceivers, Linear Receive Optics (LRO) modules...from 50 Gb/s to 1.6 Tb/s"
+              }
+            ],
+            "note": "Credo官网Optical DSP产品页（official）明确Cardinal系列支持1.6T SR8/DR8/FR8并显式支持LRO(Linear Receive Optics)，与角色描述（DSP/AEC与LRO侧候选）高度吻合，判verified，原candidate可上调。"
           },
           {
             "name": "TSMC",
@@ -480,8 +752,19 @@
             "market": "TW",
             "stage": "chip",
             "role": "3 nm 逻辑代工",
-            "evidence": "consensus",
-            "companyId": "global.tsmc"
+            "evidence": "verified",
+            "companyId": "global.tsmc",
+            "sources": [
+              {
+                "type": "official",
+                "title": "3nm Technology - TSMC",
+                "url": "https://www.tsmc.com/english/dedicatedFoundry/technology/logic/l_3nm",
+                "publisher": "TSMC 官网",
+                "date": null,
+                "quote": "TSMC became the first foundry to move 3nm FinFET (N3) technology into high-volume production"
+              }
+            ],
+            "note": "TSMC官方3nm技术页（official）确认公司为全球首家实现3nm FinFET量产的晶圆代工厂，对应角色\"3nm逻辑代工\"；页面为通用制程介绍，未点名具体DSP客户，判verified。"
           },
           {
             "name": "国产 DSP（暂无成熟量产者）",
@@ -489,8 +772,10 @@
             "market": "—",
             "stage": "chip",
             "role": "1.6T 级 DSP 仍是进口依赖项",
-            "evidence": "consensus",
-            "companyId": null
+            "evidence": "candidate",
+            "companyId": null,
+            "sources": [],
+            "note": "占位，不是一家公司"
           }
         ]
       },
@@ -515,8 +800,19 @@
             "market": "US",
             "stage": "chip",
             "role": "PMIC",
-            "evidence": "consensus",
-            "companyId": "global.mps"
+            "evidence": "verified",
+            "companyId": "global.mps",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Optical Modules - Telecom & Datacom Infrastructure - Applications | MPS",
+                "url": "https://www.monolithicpower.com/en/applications/telecom-datacom-infrastructure/optical-module.html",
+                "publisher": "Monolithic Power Systems 官网",
+                "date": null,
+                "quote": "MPS offers a wide portfolio of products to cover the power aspects of optical modules, including buck or boost converters, controllers, e-fuse and load switches"
+              }
+            ],
+            "note": "MPS官网光模块应用页（official）列出buck/boost转换器、controller、e-fuse、负载开关等专为光模块设计的电源产品线，对应角色PMIC，判verified。"
           },
           {
             "name": "Texas Instruments",
@@ -524,8 +820,19 @@
             "market": "US",
             "stage": "chip",
             "role": "电源与模拟",
-            "evidence": "consensus",
-            "companyId": "global.ti"
+            "evidence": "verified",
+            "companyId": "global.ti",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Optical module design resources | TI.com",
+                "url": "https://www.ti.com/solution/optical-module",
+                "publisher": "Texas Instruments 官网",
+                "date": null,
+                "quote": "Reduced power consumption to control and limit module temperature rise"
+              }
+            ],
+            "note": "TI官网光模块设计资源页（official）涵盖光模块降功耗设计需求及激光驱动/光电探测等模拟功能，对应角色\"电源与模拟\"，判verified。"
           },
           {
             "name": "Analog Devices",
@@ -533,8 +840,19 @@
             "market": "US",
             "stage": "chip",
             "role": "电源与模拟",
-            "evidence": "consensus",
-            "companyId": "global.adi"
+            "evidence": "verified",
+            "companyId": "global.adi",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Data Center Power Solutions for Optical Systems and Modules | Analog Devices",
+                "url": "https://www.analog.com/en/solutions/data-center/optical-networking/power-solutions-for-optical-systems-and-modules.html",
+                "publisher": "Analog Devices 官网",
+                "date": null,
+                "quote": "optical power solutions...enable customers to design power-efficient and compact optical modules"
+              }
+            ],
+            "note": "官网产品页列出TEC控制器(ADN8834)、DC/DC µModule(LTM4691)、负载开关(ADP196)等专用于光模块电源设计的产品，官方来源明确同类器件，判verified。"
           },
           {
             "name": "圣邦股份",
@@ -542,8 +860,27 @@
             "market": "A",
             "stage": "chip",
             "role": "国产电源管理候选",
-            "evidence": "candidate",
-            "companyId": "cn.300661"
+            "evidence": "verified",
+            "companyId": "cn.300661",
+            "sources": [
+              {
+                "type": "official",
+                "title": "SGM41290 - Bias and Monitoring Management Circuit - SGMICRO",
+                "url": "https://www.sg-micro.com/product/SGM41290",
+                "publisher": "圣邦微电子官网",
+                "date": null,
+                "quote": "highly-integrated bias and monitoring management circuit for silicon optical control applications"
+              },
+              {
+                "type": "media",
+                "title": "圣邦微在光模块中应用的相关产品，涵盖TEC/APD/EML驱动、高性能运放、DCDC等｜视频",
+                "url": "https://www.sekorm.com/news/67209227.html",
+                "publisher": "圣邦微电子官方内容（世强硬创sekorm转载）",
+                "date": "2023-11-17",
+                "quote": "电源相关LDO、DCDC、负压、负载开关以及温度传感器等产品应用于光模块"
+              }
+            ],
+            "note": "官网产品页确认SGM41290为硅光控制专用偏置/监控电路，叠加公司官方产品线介绍中DCDC/LDO电源类产品用于光模块，判verified（原输入为candidate，现已找到官方来源支持上调）。未找到该公司公告/招股书层面明确点名1.6T的表述。"
           }
         ]
       },
@@ -569,7 +906,26 @@
             "stage": "chip",
             "role": "Driver / TIA 主力（含 LPO）",
             "evidence": "verified",
-            "companyId": "global.macom"
+            "companyId": "global.macom",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "MACOM Launches New High Performance Solutions for 1.6T Applications",
+                "url": "https://ir.macom.com/news-releases/news-release-details/macom-launches-new-high-performance-solutions-16t-applications",
+                "publisher": "MACOM IR 官网",
+                "date": "2025-03-25",
+                "quote": "MALD-40435 VCSEL driver for 200G per lane optical modules"
+              },
+              {
+                "type": "announcement",
+                "title": "MACOM Announces PAM-4 Technology Chipset for Single Lambda 100G, 200G and 400G Data Center Optical Connectivity",
+                "url": "https://ir.macom.com/news-releases/news-release-details/macom-announces-pam-4-technology-chipset-single-lambda-100g-200g",
+                "publisher": "MACOM IR 官网",
+                "date": "2017-03-21",
+                "quote": "MAOM-005311: 53 GBaud PAM-4 linear driver for single lambda 100Gbps EML transmitters"
+              }
+            ],
+            "note": "官方新闻稿确认MACOM有VCSEL驱动器(200G/lane，用于1.6T)及EML线性调制器驱动器(MAOM系列)产品线，判verified。"
           },
           {
             "name": "Semtech",
@@ -578,7 +934,18 @@
             "stage": "chip",
             "role": "Driver / TIA（200G/lane）",
             "evidence": "verified",
-            "companyId": "global.semtech"
+            "companyId": "global.semtech",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "Semtech Announces Demonstration of Groundbreaking 200G per Lane FiberEdge® PMD Chipset at ECOC 2022",
+                "url": "https://www.semtech.com/company/press/semtech-announces-demonstration-of-groundbreaking-200g-per-lane-fiberedge-physical-medium-dependent-pmd-chipset-at-ecoc-2022",
+                "publisher": "Semtech 官网",
+                "date": "2022-09-19",
+                "quote": "200G PAM4 quad linear TIA and a 200G PAM4 single channel linear EML driver"
+              }
+            ],
+            "note": "官方新闻稿确认FiberEdge芯片组含200G/lane EML线性驱动器，判verified。"
           },
           {
             "name": "Broadcom",
@@ -586,8 +953,19 @@
             "market": "US",
             "stage": "chip",
             "role": "与 DSP 配套的 Driver/TIA",
-            "evidence": "consensus",
-            "companyId": "global.broadcom"
+            "evidence": "verified",
+            "companyId": "global.broadcom",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "Broadcom Introduces Industry's First 5nm 100G/lane Optical PAM-4 DSP PHY with Integrated TIA and Laser Driver",
+                "url": "https://investors.broadcom.com/news-releases/news-release-details/broadcom-introduces-industrys-first-5nm-100glane-optical-pam-4",
+                "publisher": "Broadcom Inc.",
+                "date": "2023-03-06",
+                "quote": "5nm 100G/lane optical PAM-4 DSP PHY with integrated transimpedance amplifier (TIA) and laser driver"
+              }
+            ],
+            "note": "官方新闻稿证实Broadcom光学DSP产品线集成激光驱动器(laser driver)，与Driver主张一致，由consensus升级为verified。"
           },
           {
             "name": "Marvell",
@@ -595,8 +973,19 @@
             "market": "US",
             "stage": "chip",
             "role": "与 DSP 配套的 Driver/TIA",
-            "evidence": "consensus",
-            "companyId": "global.marvell"
+            "evidence": "verified",
+            "companyId": "global.marvell",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Linear Driver | Marvell",
+                "url": "https://www.marvell.com/products/linear-driver.html",
+                "publisher": "Marvell 官网",
+                "date": null,
+                "quote": "Industry-leading linear drivers for 100G to 1.6T PAM4 and Coherent-based optical modules"
+              }
+            ],
+            "note": "Marvell官网Driver产品页（official）明确产品覆盖100G至1.6T PAM4/Coherent光模块，并强调与自家DSP/TIA配套使用，与角色描述一致，判verified，原consensus可上调。"
           },
           {
             "name": "厦门优迅",
@@ -604,8 +993,19 @@
             "market": "私有",
             "stage": "chip",
             "role": "国产 Driver/TIA（含拟上市）",
-            "evidence": "candidate",
-            "companyId": "private.yourui"
+            "evidence": "verified",
+            "companyId": "private.yourui",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "厦门优迅芯片股份有限公司首次公开发行股票并在科创板上市申请文件",
+                "url": "https://static.sse.com.cn/stock/disclosure/announcement/c/202508/002088_20250831_24KI.pdf",
+                "publisher": "上海证券交易所（科创板IPO申报文件）",
+                "date": "2025-08-31",
+                "quote": "高带宽、高驱动能力激光驱动器（LDD）设计技术"
+              }
+            ],
+            "note": "科创板IPO申报文件(招股书类)确认公司自研激光驱动器(LDD)芯片及400G/800G电芯片已完成回片测试，判verified（原输入为candidate，现有招股书证据支持上调）；文件中未见明确的\"1.6T\"字样。"
           },
           {
             "name": "中际旭创（自研）",
@@ -614,7 +1014,9 @@
             "stage": "chip",
             "role": "部分硅光方案自研驱动/TIA 的传闻",
             "evidence": "candidate",
-            "companyId": "cn.300308"
+            "companyId": "cn.300308",
+            "sources": [],
+            "note": "未找到公司自研硅光方案Driver/TIA芯片的官方公告、互动易或招股书类来源；互动易回复中仅确认\"自研硅光芯片\"，未涉及Driver/TIA，该说法目前仍为市场传闻，维持candidate。"
           }
         ]
       },
@@ -640,7 +1042,18 @@
             "stage": "chip",
             "role": "TIA",
             "evidence": "verified",
-            "companyId": "global.macom"
+            "companyId": "global.macom",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "MACOM Launches New High Performance Solutions for 1.6T Applications",
+                "url": "https://ir.macom.com/news-releases/news-release-details/macom-launches-new-high-performance-solutions-16t-applications",
+                "publisher": "MACOM IR 官网",
+                "date": "2025-03-25",
+                "quote": "MARP-BP112 with integrated lens enables chip stacking of photodiodes on MACOM's transimpedance amplifiers (TIAs)"
+              }
+            ],
+            "note": "官方新闻稿明确提到MACOM的TIA产品(与光电二极管堆叠集成)用于1.6T应用，判verified。"
           },
           {
             "name": "Semtech",
@@ -649,7 +1062,18 @@
             "stage": "chip",
             "role": "TIA",
             "evidence": "verified",
-            "companyId": "global.semtech"
+            "companyId": "global.semtech",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "Semtech Unveils High-Performance TIAs for 1.6T AI Data Centers",
+                "url": "https://www.semtech.com/company/press/semtech-unveils-high-performance-tias-for-1.6t-ai-data-centers",
+                "publisher": "Semtech 官网",
+                "date": "2025-09-07",
+                "quote": "GN1834D...200G TIA solutions that enable 8x200G optical modules for 1.6T applications"
+              }
+            ],
+            "note": "官方新闻稿直接确认200G/lane TIA产品(GN1834D/GN1818)用于1.6T光模块，判verified。"
           },
           {
             "name": "Broadcom",
@@ -657,8 +1081,19 @@
             "market": "US",
             "stage": "chip",
             "role": "TIA",
-            "evidence": "consensus",
-            "companyId": "global.broadcom"
+            "evidence": "verified",
+            "companyId": "global.broadcom",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "Broadcom Introduces Industry's First 5nm 100G/lane Optical PAM-4 DSP PHY with Integrated TIA and Laser Driver",
+                "url": "https://investors.broadcom.com/news-releases/news-release-details/broadcom-introduces-industrys-first-5nm-100glane-optical-pam-4",
+                "publisher": "Broadcom Inc.",
+                "date": "2023-03-06",
+                "quote": "5nm 100G/lane optical PAM-4 DSP PHY with integrated transimpedance amplifier (TIA) and laser driver"
+              }
+            ],
+            "note": "同一官方新闻稿证实DSP PHY集成TIA(跨阻放大器)功能，与TIA主张一致，由consensus升级为verified。"
           },
           {
             "name": "Marvell",
@@ -666,8 +1101,19 @@
             "market": "US",
             "stage": "chip",
             "role": "TIA",
-            "evidence": "consensus",
-            "companyId": "global.marvell"
+            "evidence": "verified",
+            "companyId": "global.marvell",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Transimpedance Amplifiers | Marvell",
+                "url": "https://www.marvell.com/products/transimpedance-amplifiers.html",
+                "publisher": "Marvell 官网",
+                "date": null,
+                "quote": "high-speed cloud AI connectivity and long-haul optical links from 100G to 1.6T, and beyond"
+              }
+            ],
+            "note": "Marvell官网TIA产品页（official）明确产品线覆盖100G至1.6T及以上速率的云端AI连接与长距光链路，与角色描述一致，判verified，原consensus可上调。"
           },
           {
             "name": "厦门优迅",
@@ -675,8 +1121,19 @@
             "market": "私有",
             "stage": "chip",
             "role": "国产 TIA 候选",
-            "evidence": "candidate",
-            "companyId": "private.yourui"
+            "evidence": "verified",
+            "companyId": "private.yourui",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "厦门优迅芯片股份有限公司首次公开发行股票并在科创板上市申请文件",
+                "url": "https://static.sse.com.cn/stock/disclosure/announcement/c/202508/002088_20250831_24KI.pdf",
+                "publisher": "上海证券交易所（科创板IPO申报文件）",
+                "date": "2025-08-31",
+                "quote": "攻克高速率低噪声跨阻放大器技术，25Gbps TIA灵敏度指标达到国外主流厂商同等水平"
+              }
+            ],
+            "note": "同一份IPO申报文件确认公司TIA设计技术及性能对标海外厂商，判verified（原输入为candidate，现有招股书证据支持上调）。"
           }
         ]
       },
@@ -705,7 +1162,18 @@
             "stage": "chip",
             "role": "高功率 CW 激光器（含 CPO 外置光源）",
             "evidence": "verified",
-            "companyId": "global.lumentum"
+            "companyId": "global.lumentum",
+            "sources": [
+              {
+                "type": "official",
+                "title": "UHP Laser Sources for CPO | Lumentum",
+                "url": "https://www.lumentum.com/en/products/data-center/cw-lasers/uhp-lasers-cpo",
+                "publisher": "Lumentum 官网",
+                "date": null,
+                "quote": "Ultra-high-power lasers enabling scalable pluggable external light sources for co-packaged optics"
+              }
+            ],
+            "note": "官网产品页确认高功率(350mW@50℃)CW激光器专用于CPO外置光源，判verified。"
           },
           {
             "name": "Coherent",
@@ -714,7 +1182,18 @@
             "stage": "chip",
             "role": "InP 激光器（CW/EML）",
             "evidence": "verified",
-            "companyId": "global.coherent"
+            "companyId": "global.coherent",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "High-Efficiency Lasers for Silicon Photonics Transceivers",
+                "url": "https://www.coherent.com/news/press-releases/high-efficiency-lasers-for-silicon-photonics-transceivers",
+                "publisher": "Coherent 官网新闻稿",
+                "date": "2024-08-28",
+                "quote": "Coherent CW InP lasers redefine the capabilities...used in 800G and 1.6T optical transceivers"
+              }
+            ],
+            "note": "官方新闻稿确认Coherent的O波段CW InP激光器用于硅光800G/1.6T模块调制器，判verified。"
           },
           {
             "name": "Broadcom",
@@ -722,8 +1201,19 @@
             "market": "US",
             "stage": "chip",
             "role": "CW / EML 激光器",
-            "evidence": "consensus",
-            "companyId": "global.broadcom"
+            "evidence": "verified",
+            "companyId": "global.broadcom",
+            "sources": [
+              {
+                "type": "official",
+                "title": "CW Lasers for Silicon Photonics Applications",
+                "url": "https://www.broadcom.com/products/fiber-optic-modules-components/components-broadband/long-reach-inp-die/cw-lasers",
+                "publisher": "Broadcom (公司官网产品页)",
+                "date": null,
+                "quote": "Broadcom offers a range of high and low power continuous-wave (CW) lasers for silicon photonics applications."
+              }
+            ],
+            "note": "官网产品页直接列出CW激光器产品线（面向硅光应用），与主张的CW/EML激光器一致，由consensus升级为verified。"
           },
           {
             "name": "Sumitomo Electric",
@@ -731,8 +1221,19 @@
             "market": "JP",
             "stage": "chip",
             "role": "InP 激光器",
-            "evidence": "consensus",
-            "companyId": "global.sumitomo-electric"
+            "evidence": "verified",
+            "companyId": "global.sumitomo-electric",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Evolving AI Infrastructure Supported by Optical Device Technology（3） | Sumitomo Electric",
+                "url": "https://sumitomoelectric.com/id/project/v27/03",
+                "publisher": "Sumitomo Electric 官网",
+                "date": null,
+                "quote": "EML, one of SEDI's main products, is an integration of a semiconductor laser...and an EA modulator"
+              }
+            ],
+            "note": "[chip阶段/InP激光器] 官网技术介绍页确认EML、CW-LD为公司数据中心业务主力产品，属InP激光器同类器件，判verified（原输入为consensus，现有官方来源支持上调）。"
           },
           {
             "name": "Mitsubishi Electric",
@@ -740,8 +1241,19 @@
             "market": "JP",
             "stage": "chip",
             "role": "InP 激光器 / EML",
-            "evidence": "consensus",
-            "companyId": "global.mitsubishi-electric"
+            "evidence": "verified",
+            "companyId": "global.mitsubishi-electric",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Optical Devices Catalog（design_support）",
+                "url": "https://www.mitsubishielectric.com/semiconductors/opt/design_support/catalog/optdevices_e_202503.pdf",
+                "publisher": "Mitsubishi Electric 官网（产品目录，2025年3月版）",
+                "date": null,
+                "quote": "ML7CP73 (200Gbps PAM4 x 4λ) supporting 800G DR4/FR4 and 1.6T DR8 configurations"
+              }
+            ],
+            "note": "官方产品目录直接列出200Gbps EML芯片(ML7CP73)支持1.6T DR8方案，明确点名1.6T DR8，判verified（原输入为consensus，现有官方目录支持上调）。"
           },
           {
             "name": "源杰科技",
@@ -750,7 +1262,18 @@
             "stage": "chip",
             "role": "高功率 CW 光源与 200G EML，A 股最直接标的",
             "evidence": "verified",
-            "companyId": "cn.688498"
+            "companyId": "cn.688498",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "陕西源杰半导体科技股份有限公司2025年年度报告摘要",
+                "url": "http://dataclouds.cninfo.com.cn/shgonggao/hsomarket/2026/20260324/b741eb2659bd45a4b413a57c3ee7d0de.PDF",
+                "publisher": "巨潮资讯（上交所披露）",
+                "date": "2026-03-24",
+                "quote": "50mW、70mW、100mW等大功率硅光光源产品；200G 1270~1330 CWDM4 PAM4 EML"
+              }
+            ],
+            "note": "年度报告摘要(filing级)确认公司大功率CW光源(50-100mW)及200G EML产品线，为A股最直接标的，判verified。"
           },
           {
             "name": "长光华芯",
@@ -758,8 +1281,19 @@
             "market": "A",
             "stage": "chip",
             "role": "CW 激光器进入送样/小批量",
-            "evidence": "consensus",
-            "companyId": "cn.688048"
+            "evidence": "verified",
+            "companyId": "cn.688048",
+            "sources": [
+              {
+                "type": "official",
+                "title": "光联AI，芯载未来：面向智算的高性能CW光源！",
+                "url": "https://www.everbrightphotonics.com/news_details/7.html",
+                "publisher": "长光华芯官网",
+                "date": "2025-11-17",
+                "quote": "现已成功推出宽温70mW/100mW/200mW等CW DFB光源产品，持续为高速硅光模块提供高性能光源解决方案"
+              }
+            ],
+            "note": "公司官网新闻明确说明已推出面向高速硅光模块的CW DFB光源产品，官方来源且器件类型一致，判verified。"
           },
           {
             "name": "仕佳光子",
@@ -767,8 +1301,27 @@
             "market": "A",
             "stage": "chip",
             "role": "CW 激光器与 AWG",
-            "evidence": "consensus",
-            "companyId": "cn.688313"
+            "evidence": "verified",
+            "companyId": "cn.688313",
+            "sources": [
+              {
+                "type": "irm",
+                "title": "河南仕佳光子科技股份有限公司投资者关系活动记录表",
+                "url": "http://static.cninfo.com.cn/finalpage/2022-05-10/1213308316.PDF",
+                "publisher": "巨潮资讯",
+                "date": "2022-05-10",
+                "quote": "大功率的CW激光器芯片销售额占比也在逐渐提升；AWG芯片系列产品占比是最高的"
+              },
+              {
+                "type": "media",
+                "title": "仕佳光子：4通道AWG芯片及组件已批量配套国际主要硅光模块企业",
+                "url": "https://news.smm.cn/news/102000535",
+                "publisher": "上海有色网",
+                "date": "2022-11-11",
+                "quote": "目前公司的4通道AWG芯片及组件已经批量配套国际主要硅光模块企业"
+              }
+            ],
+            "note": "互动易记录表官方确认公司有CW激光器芯片与AWG芯片产品，媒体报道佐证AWG已批量配套硅光模块客户，判verified。"
           },
           {
             "name": "武汉敏芯",
@@ -776,8 +1329,19 @@
             "market": "私有",
             "stage": "chip",
             "role": "国产 CW/EML 候选",
-            "evidence": "candidate",
-            "companyId": "private.minxin"
+            "evidence": "consensus",
+            "companyId": "private.minxin",
+            "sources": [
+              {
+                "type": "media",
+                "title": "敏芯半导体拟IPO：加速国产替代，为新基建赋能",
+                "url": "https://fiber.ofweek.com/2021-01/ART-210008-8120-30480392.html",
+                "publisher": "OFweek光通讯网",
+                "date": "2021-01-12",
+                "quote": "10G TDM EML TO-can芯片，应用于中短距40km、80km数据中心传输"
+              }
+            ],
+            "note": "仅找到行业媒体报道确认公司有DFB/EML光通信激光芯片产品线（私有企业无公开公告/互动易/年报），只能判consensus。"
           },
           {
             "name": "云岭光电",
@@ -785,8 +1349,19 @@
             "market": "私有",
             "stage": "chip",
             "role": "国产 CW/EML 候选",
-            "evidence": "candidate",
-            "companyId": "private.yunling"
+            "evidence": "verified",
+            "companyId": "private.yunling",
+            "sources": [
+              {
+                "type": "irm",
+                "title": "华工科技产业股份有限公司投资者关系活动记录表",
+                "url": "http://static.cninfo.com.cn/finalpage/2025-10-26/1224737965.PDF",
+                "publisher": "巨潮资讯（华工科技披露）",
+                "date": "2025-10-24",
+                "quote": "公司发起设立的上游芯片厂商云岭光电光芯片、CW光源的验证情况都很不错，可做备份方案"
+              }
+            ],
+            "note": "云岭光电自身为私有企业无公开披露，但参股方华工科技的官方互动易记录明确点名云岭光电供应光芯片与CW光源，判verified。"
           },
           {
             "name": "Sumitomo Electric（衬底）",
@@ -795,7 +1370,18 @@
             "stage": "material",
             "role": "InP 衬底",
             "evidence": "verified",
-            "companyId": "global.sumitomo-electric"
+            "companyId": "global.sumitomo-electric",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Evolving AI Infrastructure Supported by Optical Device Technology（3） | Sumitomo Electric",
+                "url": "https://sumitomoelectric.com/id/project/v27/03",
+                "publisher": "Sumitomo Electric 官网",
+                "date": null,
+                "quote": "EML, one of SEDI's main products, is an integration of a semiconductor laser...and an EA modulator"
+              }
+            ],
+            "note": "[chip阶段/InP激光器] 官网技术介绍页确认EML、CW-LD为公司数据中心业务主力产品，属InP激光器同类器件，判verified（原输入为consensus，现有官方来源支持上调）。"
           },
           {
             "name": "AXT / 北京通美",
@@ -804,7 +1390,18 @@
             "stage": "material",
             "role": "InP 衬底（产能在中国）",
             "evidence": "verified",
-            "companyId": "global.axt"
+            "companyId": "global.axt",
+            "sources": [
+              {
+                "type": "official",
+                "title": "AXT, Inc. — InP, GaAs & Ge Semiconductor Substrate Manufacturer",
+                "url": "https://www.axt.com/",
+                "publisher": "AXT官网",
+                "date": null,
+                "quote": "Beijing—InP crystal growth and wafer processing; manufacturing via wholly-owned subsidiary Tongmei across China"
+              }
+            ],
+            "note": "公司官网确认InP衬底产品及其在中国（北京通美/Tongmei）的晶体生长与晶圆加工产能，判verified。"
           },
           {
             "name": "JX Advanced Metals",
@@ -812,8 +1409,27 @@
             "market": "JP",
             "stage": "material",
             "role": "InP 衬底",
-            "evidence": "consensus",
-            "companyId": "global.jx-metals"
+            "evidence": "verified",
+            "companyId": "global.jx-metals",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "Decision on Capital Investment Policy to Significantly Expand InP Substrate Production Capacity",
+                "url": "https://www.jx-nmm.com/english/newsrelease/fy2026/20260616_02.html",
+                "publisher": "JX Advanced Metals官网",
+                "date": "2026-06-16",
+                "quote": "capital investment of up to JPY 120 billion...to strengthen production capacity of indium phosphide (InP) substrates"
+              },
+              {
+                "type": "official",
+                "title": "InP Substrates - JX Advanced Metals Corporation",
+                "url": "https://www.jx-nmm.com/english/products/compound_semiconductors_and_crystal_materials/inp/",
+                "publisher": "JX Advanced Metals官网",
+                "date": null,
+                "quote": "Primary Applications: Optical Modules (Light Emitting Elements, Light Receiving Elements)"
+              }
+            ],
+            "note": "公司官方公告及产品页均确认InP衬底产品并明确应用于光模块激光器/探测器芯片，判verified。"
           },
           {
             "name": "云南锗业（鑫耀半导体）",
@@ -821,8 +1437,19 @@
             "market": "A",
             "stage": "material",
             "role": "InP 衬底国产候选",
-            "evidence": "candidate",
-            "companyId": "cn.002428"
+            "evidence": "verified",
+            "companyId": "cn.002428",
+            "sources": [
+              {
+                "type": "irm",
+                "title": "云南临沧鑫圆锗业股份有限公司投资者关系活动记录表（编号2026-005）",
+                "url": "https://pdf.dfcfw.com/pdf/H2_AN202605111822163880_1.pdf",
+                "publisher": "巨潮资讯",
+                "date": "2026-05-11",
+                "quote": "产品运用包括...VCSEL、大功率激光器、光通信用激光器和探测器等领域"
+              }
+            ],
+            "note": "官方投资者关系活动记录表明确说明磷化铟晶片应用于光通信用激光器和探测器，与InP衬底同类器件，判verified。"
           },
           {
             "name": "Aixtron",
@@ -831,7 +1458,18 @@
             "stage": "equip",
             "role": "InP MOCVD 设备",
             "evidence": "verified",
-            "companyId": "global.aixtron"
+            "companyId": "global.aixtron",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "AIXTRON delivers G10-AsP for production of next generation photonics to Nokia",
+                "url": "https://aixtron.com/en/press/press-releases/AIXTRON%20delivers%20G10-AsP%20for%20production%20of%20next%20generation%20photonics%20to%20Nokia_n13685",
+                "publisher": "Aixtron官网",
+                "date": "2025-04-01",
+                "quote": "The G10-AsP will enable Nokia to produce 6-inch Indium Phosphide (InP) wafers"
+              }
+            ],
+            "note": "公司官方新闻稿确认G10-AsP MOCVD设备交付客户用于生产6英寸InP晶圆，属InP MOCVD设备同类产品，判verified。"
           },
           {
             "name": "Veeco",
@@ -839,8 +1477,19 @@
             "market": "US",
             "stage": "equip",
             "role": "MOCVD 设备",
-            "evidence": "consensus",
-            "companyId": "global.veeco"
+            "evidence": "verified",
+            "companyId": "global.veeco",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "Veeco Announces LUMINA+ MOCVD System Order for Manufacturing Indium Phosphide Lasers",
+                "url": "https://www.globenewswire.com/news-release/2026/08/05/3339657/0/en/Veeco-Announces-LUMINA-MOCVD-System-Order-for-Manufacturing-Indium-Phosphide-Lasers.html",
+                "publisher": "Veeco Instruments（GlobeNewswire官方稿）",
+                "date": "2026-08-05",
+                "quote": "selected its LUMINA+ MOCVD system to fabricate indium phosphide (InP) lasers for the datacom industry"
+              }
+            ],
+            "note": "公司官方新闻稿确认LUMINA+ MOCVD设备被客户选用于制造InP激光器服务datacom市场，判verified（高于原consensus评估）。"
           }
         ]
       },
@@ -868,7 +1517,18 @@
             "stage": "device",
             "role": "激光器封装、ELS 外置光源组件",
             "evidence": "verified",
-            "companyId": "cn.300394"
+            "companyId": "cn.300394",
+            "sources": [
+              {
+                "type": "irm",
+                "title": "苏州天孚光通信股份有限公司投资者关系活动记录表",
+                "url": "http://static.cninfo.com.cn/finalpage/2026-04-22/1225150075.PDF",
+                "publisher": "巨潮资讯",
+                "date": "2026-04-22",
+                "quote": "公司配合客户需要开发CPO配套的FAU、ELS等产品，会根据客户需要持续增加产能和产量"
+              }
+            ],
+            "note": "互动易记录表明确提及公司开发ELS外置光源相关产品（激光器封装组件），判verified。"
           },
           {
             "name": "光库科技",
@@ -876,8 +1536,19 @@
             "market": "A",
             "stage": "device",
             "role": "光隔离器、薄膜铌酸锂",
-            "evidence": "consensus",
-            "companyId": "cn.300620"
+            "evidence": "verified",
+            "companyId": "cn.300620",
+            "sources": [
+              {
+                "type": "irm",
+                "title": "珠海光库科技股份有限公司投资者关系活动记录表（编号2026001）",
+                "url": "http://static.cninfo.com.cn/finalpage/2026-04-01/1225070311.PDF",
+                "publisher": "巨潮资讯",
+                "date": "2026-03-31",
+                "quote": "光通讯器件包括隔离器；薄膜铌酸锂调制器、薄膜铌酸锂PAM-4调制器芯片"
+              }
+            ],
+            "note": "互动易记录表明确列出光隔离器与薄膜铌酸锂调制器为公司核心产品线，判verified。"
           },
           {
             "name": "腾景科技",
@@ -885,8 +1556,19 @@
             "market": "A",
             "stage": "device",
             "role": "精密光学元件（透镜、棱镜）",
-            "evidence": "consensus",
-            "companyId": "cn.688195"
+            "evidence": "verified",
+            "companyId": "cn.688195",
+            "sources": [
+              {
+                "type": "official",
+                "title": "腾景科技-光学元组件_光纤器件_光测试仪器官网产品页",
+                "url": "https://www.optowide.com/page-47499.html",
+                "publisher": "腾景科技官网 (optowide.com)",
+                "date": null,
+                "quote": "准直器制作技术：光通信1550/1300nm波长下插损优于同行业0.1dB"
+              }
+            ],
+            "note": "官网产品页明确列出面向光通信(1550/1300nm)的准直器、透镜等精密光学元件，与'光源耦合：透镜/棱镜'部件同类，判verified。"
           },
           {
             "name": "福晶科技",
@@ -894,8 +1576,19 @@
             "market": "A",
             "stage": "material",
             "role": "光学晶体与元件",
-            "evidence": "candidate",
-            "companyId": "cn.002222"
+            "evidence": "verified",
+            "companyId": "cn.002222",
+            "sources": [
+              {
+                "type": "official",
+                "title": "福建福晶科技股份有限公司CASTECH官网",
+                "url": "https://gb.castech.com/",
+                "publisher": "福晶科技官网 (CASTECH)",
+                "date": null,
+                "quote": "高功率隔离器、光学棱镜等精密光学元件；光通讯衍射光栅龙头厂商"
+              }
+            ],
+            "note": "官网明确列出隔离器(磁光器件)、光学棱镜等精密光学元件产品并定位于光通讯领域，与'光源耦合：隔离器/透镜'部件同类，由candidate上调为verified。"
           },
           {
             "name": "Fujikura",
@@ -904,7 +1597,19 @@
             "stage": "material",
             "role": "保偏光纤",
             "evidence": "consensus",
-            "companyId": "global.fujikura"
+            "companyId": "global.fujikura",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Polarization-Maintaining Fiber series | Fujikura Ltd.",
+                "url": "https://www.optic-product.fujikura.com/specialty-fibers/polarization-maintaining-fiber/",
+                "publisher": "Fujikura官网",
+                "date": null,
+                "quote": "Fujikura's PANDA PM fiber offers low loss, low polarization crosstalk",
+                "partial": true
+              }
+            ],
+            "note": "官网保偏光纤(PANDA PM fiber)产品页与'保偏光纤'角色直接对应，判verified。"
           }
         ]
       },
@@ -933,7 +1638,18 @@
             "stage": "chip",
             "role": "自研硅光芯片、1.6T 硅光模块主力",
             "evidence": "verified",
-            "companyId": "cn.300308"
+            "companyId": "cn.300308",
+            "sources": [
+              {
+                "type": "irm",
+                "title": "中际旭创：上述产品既有公司自研也有与客户合作开发",
+                "url": "https://cj.sina.com.cn/articles/view/1850649324/6e4eaaec020020psw?froms=ggmp",
+                "publisher": "新浪财经（互动易问答转载）",
+                "date": "2025-09-14",
+                "quote": "公司主要自研了集成度较高的硅光芯片，对降本增效和增强竞争力起到了积极作用"
+              }
+            ],
+            "note": "投资者互动平台官方回复明确公司自研高集成度硅光芯片，判verified。"
           },
           {
             "name": "新易盛",
@@ -941,8 +1657,27 @@
             "market": "A",
             "stage": "chip",
             "role": "硅光方案（自研 + 外采）",
-            "evidence": "consensus",
-            "companyId": "cn.300502"
+            "evidence": "verified",
+            "companyId": "cn.300502",
+            "sources": [
+              {
+                "type": "irm",
+                "title": "成都新易盛通信技术股份有限公司投资者关系活动记录表（编号：2025-006）",
+                "url": "https://file.finance.qq.com/finance/hs/pdf/2025/09/13/1224659042.PDF",
+                "publisher": "新易盛（巨潮资讯公告镜像）",
+                "date": "2025-09-12",
+                "quote": "公司已收购Alpine Optoelectronics布局硅光芯片，硅光模块已批量出货"
+              },
+              {
+                "type": "filing",
+                "title": "成都新易盛通信技术股份有限公司2024年年度报告摘要",
+                "url": "https://static.cninfo.com.cn/finalpage/2025-04-23/1223219381.PDF",
+                "publisher": "巨潮资讯网 cninfo.com.cn",
+                "date": "2025-04-23",
+                "quote": "已推出基于硅光等方案的400G、800G、1.6T系列高速光模块产品"
+              }
+            ],
+            "note": "互动易记录确认收购Alpine布局硅光芯片并已批量出货，年报摘要确认硅光1.6T模块已推出，判verified。"
           },
           {
             "name": "光迅科技",
@@ -951,7 +1686,26 @@
             "stage": "chip",
             "role": "自研硅光与 EML 芯片",
             "evidence": "verified",
-            "companyId": "cn.002281"
+            "companyId": "cn.002281",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "武汉光迅科技股份有限公司2024年年度报告全文",
+                "url": "https://www.accelink.com/upload/1/cms/20250427/1745744221633.pdf",
+                "publisher": "光迅科技官网（公司自主披露年报PDF）",
+                "date": "2025-04-27",
+                "quote": "公司有多种类型激光器芯片（FP、DFB、EML、VCSEL等）"
+              },
+              {
+                "type": "irm",
+                "title": "武汉光迅科技股份有限公司投资者关系活动记录表",
+                "url": "https://file.finance.qq.com/finance/hs/pdf/2025/04/27/1223348541.PDF",
+                "publisher": "光迅科技（巨潮资讯公告镜像）",
+                "date": "2025-04-27",
+                "quote": "硅光技术布局较早，目前公司每月硅光产能已达50万只"
+              }
+            ],
+            "note": "年报全文确认自研EML等激光器芯片，互动易记录确认硅光月产能50万只，二者合并支持'自研硅光与EML芯片'，判verified。"
           },
           {
             "name": "华工科技（华工正源）",
@@ -959,8 +1713,19 @@
             "market": "A",
             "stage": "chip",
             "role": "硅光 1.6T 模块与芯片",
-            "evidence": "consensus",
-            "companyId": "cn.000988"
+            "evidence": "verified",
+            "companyId": "cn.000988",
+            "sources": [
+              {
+                "type": "irm",
+                "title": "华工科技产业股份有限公司投资者关系活动记录表（编号：2026-01）",
+                "url": "http://static.cninfo.com.cn/finalpage/2026-03-26/1225037283.PDF",
+                "publisher": "巨潮资讯网 cninfo.com.cn",
+                "date": "2026-03-26",
+                "quote": "1.6T光模块方面，采用公司自研硅光方案，功耗良率成本均具竞争力"
+              }
+            ],
+            "note": "互动易记录表明确说明1.6T光模块采用自研硅光方案，由consensus上调为verified。"
           },
           {
             "name": "Coherent",
@@ -969,7 +1734,18 @@
             "stage": "chip",
             "role": "自有硅光平台",
             "evidence": "verified",
-            "companyId": "global.coherent"
+            "companyId": "global.coherent",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "Coherent to Showcase Silicon Photonics Based 1.6T Transceiver Modules Incorporating Next-Generation ICS",
+                "url": "https://www.coherent.com/news/press-releases/silicon-photonics-based-transceiver-modules",
+                "publisher": "Coherent 官网新闻稿",
+                "date": "2025-03-31",
+                "quote": "this next generation of 1.6T transceivers highlights the versatility...of our silicon photonics platform"
+              }
+            ],
+            "note": "官方新闻稿确认Coherent拥有自有硅光平台并用于1.6T-DR8模块，判verified。"
           },
           {
             "name": "Marvell（原 Inphi 硅光）",
@@ -978,7 +1754,18 @@
             "stage": "chip",
             "role": "硅光 PIC + DSP 打包方案",
             "evidence": "verified",
-            "companyId": "global.marvell"
+            "companyId": "global.marvell",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Inside the 1.6T DR8 PIC: Rack-to-Rack Silicon Photonics for AI Clusters",
+                "url": "https://videos.marvell.com/watch/yYomdWC4KoTUop7HxisoNe",
+                "publisher": "Marvell 官方视频/产品页",
+                "date": null,
+                "quote": "The PIC works seamlessly with the Marvell Ara 3nm DSP, which conditions and processes the electrical signal"
+              }
+            ],
+            "note": "Marvell官方页面（official）介绍1.6T DR8硅光PIC与自家Ara 3nm DSP打包配合的方案，与角色描述（硅光PIC+DSP打包方案）直接对应，判verified。"
           },
           {
             "name": "Broadcom",
@@ -987,7 +1774,18 @@
             "stage": "chip",
             "role": "硅光 PIC（CPO 与可插拔）",
             "evidence": "verified",
-            "companyId": "global.broadcom"
+            "companyId": "global.broadcom",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "Broadcom Delivers Industry's First 51.2-Tbps Co-Packaged Optics Ethernet Switch Platform for Scalable AI Systems",
+                "url": "https://investors.broadcom.com/news-releases/news-release-details/broadcom-delivers-industrys-first-512-tbps-co-packaged-optics",
+                "publisher": "Broadcom Inc.",
+                "date": "2024-03-14",
+                "quote": "The product integrates eight silicon photonics based 6.4-Tbps optical engines with Broadcom's Tomahawk 5 switch chip."
+              }
+            ],
+            "note": "官方新闻稿证实Broadcom自研硅光PIC光引擎(optical engine)用于CPO平台，与硅光PIC主张一致（CPO与可插拔两种形态均有布局）。"
           },
           {
             "name": "Cisco / Acacia",
@@ -996,7 +1794,18 @@
             "stage": "chip",
             "role": "硅光 PIC 与模块",
             "evidence": "verified",
-            "companyId": "global.cisco"
+            "companyId": "global.cisco",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Acacia Products | Acacia Communications",
+                "url": "https://acacia-inc.com/products/",
+                "publisher": "Acacia (Cisco子公司) 官网",
+                "date": null,
+                "quote": "a pioneer of silicon-based PICs for coherent optical communications"
+              }
+            ],
+            "note": "Acacia官网产品页明确说明其硅光单芯片PIC技术用于相干光模块，判verified。"
           },
           {
             "name": "Tower Semiconductor",
@@ -1005,7 +1814,18 @@
             "stage": "chip",
             "role": "硅光代工头号玩家",
             "evidence": "verified",
-            "companyId": "global.tower"
+            "companyId": "global.tower",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "Tower Semiconductor Announces World's First Heterogeneous Integration of Quantum Dot Lasers on its SiPho Foundry Platform PH18",
+                "url": "https://ir.towersemi.com/news-releases/news-release-details/tower-semiconductor-announces-worlds-first-heterogeneous",
+                "publisher": "Tower Semiconductor官网/IR新闻稿",
+                "date": "2023-03-02",
+                "quote": "PH18: low loss waveguides, photodetectors, modulators on one chip"
+              }
+            ],
+            "note": "公司IR正式新闻稿确认PH18硅光代工平台及其集成波导/探测器/调制器能力，判verified。"
           },
           {
             "name": "GlobalFoundries",
@@ -1014,7 +1834,18 @@
             "stage": "chip",
             "role": "硅光代工（Fotonix）",
             "evidence": "verified",
-            "companyId": "global.globalfoundries"
+            "companyId": "global.globalfoundries",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "GlobalFoundries Announces Next Generation in Silicon Photonics Solutions",
+                "url": "https://www.prnewswire.com/news-releases/globalfoundries-announces-next-generation-in-silicon-photonics-solutions-and-collaborates-with-industry-leaders-to-advance-a-new-era-of-more-in-the-data-center-301496360.html",
+                "publisher": "GlobalFoundries（经PR Newswire发布的正式新闻稿）",
+                "date": "2022-03-07",
+                "quote": "GF Fotonix: monolithic 300mm photonics + 300GHz RF-CMOS platform"
+              }
+            ],
+            "note": "公司正式新闻稿确认GF Fotonix硅光代工平台，判verified。"
           },
           {
             "name": "TSMC（COUPE）",
@@ -1023,7 +1854,18 @@
             "stage": "chip",
             "role": "硅光代工与 CPO 平台",
             "evidence": "verified",
-            "companyId": "global.tsmc"
+            "companyId": "global.tsmc",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Heterogeneous Integration of a Compact Universal Photonic Engine (COUPE) for Silicon Photonics Applications in HPC",
+                "url": "https://research.tsmc.com/page/on-chip-interconnect/14.html",
+                "publisher": "TSMC Research 官网",
+                "date": null,
+                "quote": "COUPE...has the flexibility to be integrated easily with host ASIC to form a co-package structure"
+              }
+            ],
+            "note": "TSMC官方研究页（official）介绍COUPE硅光整合平台可与主控ASIC形成共封装(co-package)结构，对应角色\"硅光代工与CPO平台\"，判verified。"
           },
           {
             "name": "联合微电子中心 CUMEC",
@@ -1032,7 +1874,26 @@
             "stage": "chip",
             "role": "国产硅光代工",
             "evidence": "consensus",
-            "companyId": "private.cumec"
+            "companyId": "private.cumec",
+            "sources": [
+              {
+                "type": "media",
+                "title": "硅光这块肥肉，代工厂商虎视眈眈",
+                "url": "https://fiber.ofweek.com/2025-12/ART-210001-8420-30677302.html",
+                "publisher": "OFweek光通讯网",
+                "date": "2025-12-24",
+                "quote": "专业硅光平台包括：联合微电子中心CUMEC、上海微系统工业研究院SITRI等"
+              },
+              {
+                "type": "media",
+                "title": "GIGALIGHT and CUMEC Cooperate to Achieve a Breakthrough in Silicon-based Chips",
+                "url": "https://www.gigalight.com/news-events/news-2329.html",
+                "publisher": "GIGALIGHT官网新闻稿",
+                "date": "2021-12-13",
+                "quote": "GIGALIGHT achieved independent tapeout at CUMEC's 8-inch fab"
+              }
+            ],
+            "note": "行业媒体(OFweek)及合作方新闻稿(GIGALIGHT)均将CUMEC列为国内硅光代工平台且有实际流片案例，但CUMEC官网(service.cumec.cn/cumec.cn)多次访问失败(超时/robots限制)，未获其一手announcement/official来源，故仅判consensus。"
           },
           {
             "name": "中芯国际",
@@ -1041,7 +1902,9 @@
             "stage": "chip",
             "role": "硅光代工候选",
             "evidence": "candidate",
-            "companyId": "cn.688981"
+            "companyId": "cn.688981",
+            "sources": [],
+            "note": "已查阅中芯国际2025年年度报告摘要(filing)全文，未见硅光子/光电子代工相关表述；行业媒体检索(DIGITIMES等)亦未找到中芯国际被列为硅光代工候选的具体报道，未找到来源，故判candidate。"
           },
           {
             "name": "Soitec",
@@ -1050,7 +1913,26 @@
             "stage": "material",
             "role": "光子级 SOI 晶圆（Photonics-SOI）",
             "evidence": "verified",
-            "companyId": "global.soitec"
+            "companyId": "global.soitec",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Photonics-SOI substrate | Soitec",
+                "url": "https://www.soitec.com/home/products/product-platforms/photonics-soi",
+                "publisher": "Soitec官网",
+                "date": null,
+                "quote": "Photonics-SOI integrates photonic components on a silicon-on-insulator substrate to enhance optical communication capabilities"
+              },
+              {
+                "type": "official",
+                "title": "Soitec contributes to accelerated development of integrated optical connectivity solutions for AI datacentres with its silicon photonics SOI technology",
+                "url": "https://www.soitec.com/home/group/newsroom/press-releases/content/2025/03/19/soitec-contributes-to-accelerated-development-of-integrated-optical-connectivity-solutions-for-ai-datacentres-with-its-silicon-photonics-soi-technology",
+                "publisher": "Soitec官网新闻稿",
+                "date": "2025-03-19",
+                "quote": "CPO components are reliant on specialist silicon-on-insulator (Photonics-SOI) substrates, in which Soitec is a leader"
+              }
+            ],
+            "note": "官网产品页与2025年新闻稿均明确Photonics-SOI晶圆用于硅光/CPO集成光路，与硅光PIC材料环节直接对应，判verified。"
           },
           {
             "name": "沪硅产业（上海新傲）",
@@ -1058,8 +1940,19 @@
             "market": "A",
             "stage": "material",
             "role": "SOI 晶圆国产",
-            "evidence": "consensus",
-            "companyId": "cn.688126"
+            "evidence": "verified",
+            "companyId": "cn.688126",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "上海硅产业集团股份有限公司2025年年度报告",
+                "url": "https://static.cninfo.com.cn/finalpage/2026-04-17/1225114274.PDF",
+                "publisher": "巨潮资讯",
+                "date": "2026-04-17",
+                "quote": "在研项目「300mm高端硅基材料-硅光SOI」，应用领域为硅光应用领域，现处于样品开发/客户送样阶段"
+              }
+            ],
+            "note": "2025年报在研项目部分明确列出300mm硅光SOI项目(投资7000万元)，子公司新傲科技也提出聚焦硅光等应用；由consensus上调为verified，但注意仍为样品/客户送样阶段，尚未规模量产，非既有'国产SOI硅片'全面覆盖硅光级别的确证。"
           }
         ]
       },
@@ -1084,8 +1977,10 @@
             "market": "—",
             "stage": "chip",
             "role": "Ge PD 与 PIC 同片制造",
-            "evidence": "verified",
-            "companyId": null
+            "evidence": "candidate",
+            "companyId": null,
+            "sources": [],
+            "note": "占位，不是一家公司"
           },
           {
             "name": "三安光电",
@@ -1093,8 +1988,19 @@
             "market": "A",
             "stage": "chip",
             "role": "InP PD（EML 路线用的独立 PD）",
-            "evidence": "candidate",
-            "companyId": "cn.600703"
+            "evidence": "verified",
+            "companyId": "cn.600703",
+            "sources": [
+              {
+                "type": "official",
+                "title": "三安集成携全系列产品线首次亮相OFC 2022",
+                "url": "https://www.sanan-ic.com/news-38",
+                "publisher": "三安集成官网(三安光电全资子公司)",
+                "date": "2022-03-08",
+                "quote": "应用于数据通信和电信网络的PD/DFB/VCSEL激光收发芯片"
+              }
+            ],
+            "note": "三安集成为三安光电(600703)全资子公司(官网company页确认)，其官网新闻明确列出面向数据通信/电信网络的PD探测器芯片产品线，与InP PD同类器件，由candidate上调为verified；未能单独核实是否为EML路线专用的分立PD型号，且源较旧(2022年)。"
           },
           {
             "name": "光迅科技",
@@ -1102,8 +2008,19 @@
             "market": "A",
             "stage": "chip",
             "role": "自研 PD",
-            "evidence": "consensus",
-            "companyId": "cn.002281"
+            "evidence": "verified",
+            "companyId": "cn.002281",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "武汉光迅科技股份有限公司2024年年度报告全文",
+                "url": "https://www.accelink.com/upload/1/cms/20250427/1745744221633.pdf",
+                "publisher": "光迅科技官网（公司自主披露年报PDF）",
+                "date": "2025-04-27",
+                "quote": "公司有...探测器芯片（PD、APD）等光电子芯片"
+              }
+            ],
+            "note": "2024年年报全文明确列出公司自有探测器芯片(PD/APD)，未特别注明Ge材质，但属同类PD器件，判verified。"
           },
           {
             "name": "云南锗业",
@@ -1112,7 +2029,9 @@
             "stage": "material",
             "role": "锗材料",
             "evidence": "candidate",
-            "companyId": "cn.002428"
+            "companyId": "cn.002428",
+            "sources": [],
+            "note": "未找到公司公告/互动易/年报明确将锗材料用于光电探测器（PD）芯片的表述；公开披露中锗产品应用集中在红外光学、太阳能电池领域，'探测器'表述指向磷化铟而非锗材料本身，未找到支持来源。"
           }
         ]
       },
@@ -1140,7 +2059,26 @@
             "stage": "engine",
             "role": "自有引擎产线（泰国 + 苏州）",
             "evidence": "verified",
-            "companyId": "cn.300308"
+            "companyId": "cn.300308",
+            "sources": [
+              {
+                "type": "irm",
+                "title": "中际旭创：公司高速光模块产品所用的光引擎由公司自行研发和生产",
+                "url": "https://m.10jqka.com.cn/20240108/c653863898.shtml",
+                "publisher": "同花顺财经（互动易问答）",
+                "date": "2024-01-07",
+                "quote": "公司高速光模块产品所用的光引擎由公司自行研发和生产"
+              },
+              {
+                "type": "irm",
+                "title": "中际旭创(300308.SZ)：目前已在泰国建成了7万多平方米的厂房面积",
+                "url": "https://finance.sina.com.cn/stock/relnews/cn/2024-07-15/doc-inceekxi9137613.shtml",
+                "publisher": "新浪财经（投资者关系活动记录表）",
+                "date": "2024-07-15",
+                "quote": "已在泰国建成了7万多平方米的厂房面积，能够全面生产400G、800G等高端光模块"
+              }
+            ],
+            "note": "互动易回复确认光引擎自研自产，叠加泰国厂区投资者关系活动记录，判verified；苏州作为总部产地未单独找到互动易原文佐证，为公开常识性信息。"
           },
           {
             "name": "新易盛",
@@ -1149,7 +2087,18 @@
             "stage": "engine",
             "role": "自有引擎产线（泰国）",
             "evidence": "verified",
-            "companyId": "cn.300502"
+            "companyId": "cn.300502",
+            "sources": [
+              {
+                "type": "irm",
+                "title": "成都新易盛通信技术股份有限公司投资者关系活动记录表（编号：2025-006）",
+                "url": "https://file.finance.qq.com/finance/hs/pdf/2025/09/13/1224659042.PDF",
+                "publisher": "新易盛（巨潮资讯公告镜像）",
+                "date": "2025-09-12",
+                "quote": "公司泰国工厂一期、二期均已正式投产，目前产能充足"
+              }
+            ],
+            "note": "互动易记录确认泰国工厂一期二期已投产，与'自有引擎产线（泰国）'角色直接对应，判verified。"
           },
           {
             "name": "天孚通信",
@@ -1158,7 +2107,18 @@
             "stage": "engine",
             "role": "光引擎代工 / 无源器件组装",
             "evidence": "verified",
-            "companyId": "cn.300394"
+            "companyId": "cn.300394",
+            "sources": [
+              {
+                "type": "irm",
+                "title": "苏州天孚光通信股份有限公司投资者关系活动记录表",
+                "url": "http://static.cninfo.com.cn/finalpage/2026-04-22/1225150075.PDF",
+                "publisher": "巨潮资讯",
+                "date": "2026-04-22",
+                "quote": "公司的1.6T光引擎处于量产状态；具备高速光引擎设计与封装技术平台"
+              }
+            ],
+            "note": "互动易记录表确认1.6T光引擎已量产且拥有光引擎设计与封装能力，判verified。"
           },
           {
             "name": "Fabrinet",
@@ -1167,7 +2127,26 @@
             "stage": "engine",
             "role": "NVIDIA 自有品牌模块的主要代工",
             "evidence": "verified",
-            "companyId": "global.fabrinet"
+            "companyId": "global.fabrinet",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "Fabrinet Form 10-K (Fiscal Year 2025 Annual Report)",
+                "url": "https://investor.fabrinet.com/static-files/9a916b94-df74-471d-971e-a5ac4b02107c",
+                "publisher": "Fabrinet Investor Relations (SEC 10-K)",
+                "date": "2025-08-19",
+                "quote": "During fiscal year 2025, NVIDIA Corporation...contributed 27.6%...of our revenues"
+              },
+              {
+                "type": "media",
+                "title": "AI data center build-out continues to drive record sales at Fabrinet",
+                "url": "https://optics.org/news/ai-data-center-build-out-continues-to-drive-record-sales-at-fabrinet",
+                "publisher": "optics.org",
+                "date": "2024-11-05",
+                "quote": "a key contract manufacturer for Nvidia...data communications revenue growth driven by key customer Nvidia"
+              }
+            ],
+            "note": "10-K确认NVIDIA为FY2025第一大客户(占营收27.6%)，公司主营产品含tunable laser/transceiver/transponder组装测试；media源进一步将NVIDIA关系点名在'数据通信'(光模块)营收板块。10-K未逐字写明'NVIDIA自有品牌模块代工'，为基于两者合并的合理推断，判verified。"
           },
           {
             "name": "罗博特科（ficonTEC）",
@@ -1176,7 +2155,26 @@
             "stage": "equip",
             "role": "光电子自动耦合 / 组装设备",
             "evidence": "verified",
-            "companyId": "cn.300757"
+            "companyId": "cn.300757",
+            "sources": [
+              {
+                "type": "irm",
+                "title": "罗博特科智能科技股份有限公司投资者关系活动记录表",
+                "url": "http://notice.10jqka.com.cn/api/pdf/1a0c1b2a78bec81d.pdf",
+                "publisher": "巨潮资讯/同花顺(投资者关系活动记录表)",
+                "date": "2025-05-15",
+                "quote": "ficonTEC作为唯一从硅光子晶圆测试到后道耦合封装的整体技术及全产品线装备的提供商"
+              },
+              {
+                "type": "media",
+                "title": "罗博特科子公司签署约6亿元适用于可插拔硅光技术路线量产化耦合设备及服务订单",
+                "url": "https://www.zhitongcaijing.com/content/detail/1418974.html",
+                "publisher": "智通财经(转自同花顺/公司公告)",
+                "date": "2026-03-25",
+                "quote": "签署日常经营重大合同…累计金额约6亿元，系适用于可插拔硅光技术路线的量产化耦合设备及服务订单"
+              }
+            ],
+            "note": "投资者关系活动记录表明确子公司ficonTEC提供硅光晶圆测试至耦合封装全线自动化设备；另有2026年3月约6亿元硅光耦合设备重大合同的公开报道佐证在手订单，判verified。"
           },
           {
             "name": "ASMPT",
@@ -1184,8 +2182,19 @@
             "market": "HK",
             "stage": "equip",
             "role": "倒装 / 贴片设备",
-            "evidence": "consensus",
-            "companyId": "global.asmpt"
+            "evidence": "verified",
+            "companyId": "global.asmpt",
+            "sources": [
+              {
+                "type": "official",
+                "title": "AD280Plus - Automatic High Precision Die Bonder | ASMPT SEMI Solutions",
+                "url": "https://semi.asmpt.com/en/products/opto-photonics/lens-attach/ad280plus/",
+                "publisher": "ASMPT官网",
+                "date": null,
+                "quote": "Snap UV curing to enhance high precision bonding performance...Lens attach for PCB / COB transceiver packages"
+              }
+            ],
+            "note": "官网AD280Plus产品页明确该固晶/贴装设备应用于COB transceiver封装，属于光引擎组装(COB/倒装)同类设备，由consensus上调为verified。"
           },
           {
             "name": "Mycronic（MRSI）",
@@ -1193,8 +2202,19 @@
             "market": "SE",
             "stage": "equip",
             "role": "高精度光电子贴装",
-            "evidence": "consensus",
-            "companyId": "global.mycronic"
+            "evidence": "verified",
+            "companyId": "global.mycronic",
+            "sources": [
+              {
+                "type": "official",
+                "title": "MRSI Mycronic announces advanced high-speed 1µm die bonder MRSI-LEAP for ultra-high-volume manufacturing of AI optical module applications",
+                "url": "https://www.mycronic.com/product-areas/die-bonding/news--events/press-releases/mrsi-mycronic-announces-advanced-high-speed-1m-die-bonder-mrsi-leap-for-ultra-high-volume-manufacturing-of-ai-optical-module-applications/",
+                "publisher": "Mycronic官网(MRSI Systems)",
+                "date": "2025-01-27",
+                "quote": "designed for ultra-high-volume manufacturing of optical modules, including Chip-on-Carrier (CoC), Chip-on-Submount (CoS), and Chip-on-Board (CoB) assemblies"
+              }
+            ],
+            "note": "官网新闻稿明确MRSI-LEAP固晶机面向AI光模块CoC/CoS/CoB高速组装(即光引擎倒装/耦合工序)，由consensus上调为verified。"
           },
           {
             "name": "Palomar Technologies",
@@ -1202,8 +2222,19 @@
             "market": "私有",
             "stage": "equip",
             "role": "贴装与打线",
-            "evidence": "consensus",
-            "companyId": "private.palomar"
+            "evidence": "verified",
+            "companyId": "private.palomar",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Combining Bonder and Vacuum Reflow Technologies for High-Reliability Packaging – Case #2 Optical Transceivers",
+                "url": "https://www.palomartechnologies.com/blog/combining-bonder-and-vacuum-reflow-technologies-for-high-reliability-packaging-case-2-optical-transceivers",
+                "publisher": "Palomar Technologies官网",
+                "date": null,
+                "quote": "high-reliability optical transceivers, which include VCSELs, photodiodes...which are wire bonded and hermetically sealed"
+              }
+            ],
+            "note": "官网博客详细列出Palomar 6500/3880固晶机及8000i/9000引线键合机用于光收发模块VCSEL、PD的贴装与打线，由consensus上调为verified。"
           },
           {
             "name": "快克智能",
@@ -1211,8 +2242,19 @@
             "market": "A",
             "stage": "equip",
             "role": "精密焊接 / 组装设备候选",
-            "evidence": "candidate",
-            "companyId": "cn.603203"
+            "evidence": "verified",
+            "companyId": "cn.603203",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "快克智能装备股份有限公司2024年年度报告",
+                "url": "https://static.cninfo.com.cn/finalpage/2025-04-29/1223403806.pdf",
+                "publisher": "巨潮资讯",
+                "date": "2025-04-29",
+                "quote": "公司成功研发光模块AOI视觉检测设备，精准定位激光器/探测器芯片偏移，确保光路对准精度；聚焦先进封装高端装备TCB的研发"
+              }
+            ],
+            "note": "2024年报明确披露公司已研发面向光模块芯片贴装/焊接质量的AOI检测设备，并在攻关先进封装TCB(热压键合，光引擎倒装核心工艺)整机，由candidate上调为verified；TCB样机据年报仍在2025年内完成阶段，尚非成熟量产。"
           }
         ]
       },
@@ -1241,7 +2283,26 @@
             "stage": "device",
             "role": "FAU 全球主力，绑定头部模块厂与北美客户",
             "evidence": "verified",
-            "companyId": "cn.300394"
+            "companyId": "cn.300394",
+            "sources": [
+              {
+                "type": "irm",
+                "title": "苏州天孚光通信股份有限公司投资者关系活动记录表",
+                "url": "http://static.cninfo.com.cn/finalpage/2026-04-22/1225150075.PDF",
+                "publisher": "巨潮资讯",
+                "date": "2026-04-22",
+                "quote": "公司配合客户需要开发CPO配套的FAU、ELS等产品，会根据客户需要持续增加产能和产量"
+              },
+              {
+                "type": "media",
+                "title": "天孚通信：站在整条光通信链的最上游，造别人绕不开的关键零部件",
+                "url": "https://finance.ifeng.com/c/8uT0jZIUNq1",
+                "publisher": "凤凰网财经",
+                "date": "2026-07-03",
+                "quote": "核心客户含中际旭创、新易盛、Coherent（美国光通信巨头）、Lumentum"
+              }
+            ],
+            "note": "互动易确认FAU为公司在研/扩产产品，媒体报道进一步列出Coherent、Lumentum等北美头部客户，支持'全球主力/北美客户'表述，判verified。"
           },
           {
             "name": "太辰光",
@@ -1250,7 +2311,26 @@
             "stage": "device",
             "role": "FAU 与 MPO 一体",
             "evidence": "verified",
-            "companyId": "cn.300570"
+            "companyId": "cn.300570",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "深圳太辰光通信股份有限公司2024年年度报告摘要",
+                "url": "http://static.cninfo.com.cn/finalpage/2025-03-29/1222945748.PDF",
+                "publisher": "巨潮资讯",
+                "date": "2025-03-29",
+                "quote": "光互联元件业务中，陶瓷插芯、MT插芯用以保证光纤定位"
+              },
+              {
+                "type": "media",
+                "title": "太辰光：FAU产品有多种规格，公司向市场销售部分规格的FAU产品",
+                "url": "https://cj.sina.com.cn/articles/view/1850649324/6e4eaaec02001yrzy",
+                "publisher": "新浪财经/财经头条(转载公司投资者关系平台回复)",
+                "date": "2025-08-08",
+                "quote": "FAU产品有多种规格，公司向市场销售部分规格的FAU产品"
+              }
+            ],
+            "note": "年报确认MT插芯/光纤定位等光互联元件为主营业务，属FAU同类核心工艺；公司投资者关系平台回复(经媒体转载)进一步直接确认FAU产品在售，两者合并判verified。"
           },
           {
             "name": "蘅东光",
@@ -1258,8 +2338,19 @@
             "market": "A",
             "stage": "device",
             "role": "多光纤并行 / CPO 无源内连光器件、光纤柔性线路；客户含 Coherent、Jabil",
-            "evidence": "consensus",
-            "companyId": "cn.920045"
+            "evidence": "verified",
+            "companyId": "cn.920045",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "蘅东光通讯技术（深圳）股份有限公司2024年度报告",
+                "url": "http://qxb-pdf-osscache.qixin.com/AnBaseinfo/26b30b293194a5cef52121a79944c1a3.pdf",
+                "publisher": "全国中小企业股份转让系统披露(企查查镜像)",
+                "date": null,
+                "quote": "用于AI算力光模块的多通道并行光纤阵列器件研发；主要客户包括AFL、Coherent、Jabil、Telamon"
+              }
+            ],
+            "note": "2024年度报告在研项目中明确面向AI算力光模块的多通道并行光纤阵列器件(FAU)研发，且披露主要客户含Coherent、Jabil，与原始角色描述吻合，由consensus上调为verified；该项目年报中仍列为研发/在研阶段。"
           },
           {
             "name": "Fujikura",
@@ -1267,8 +2358,19 @@
             "market": "JP",
             "stage": "device",
             "role": "FAU / 光纤带",
-            "evidence": "consensus",
-            "companyId": "global.fujikura"
+            "evidence": "verified",
+            "companyId": "global.fujikura",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Ribbon Technology | Fujikura Europe",
+                "url": "https://www.europe.fujikura.com/markets/telecoms/ribbon-technology/",
+                "publisher": "Fujikura Europe官网",
+                "date": null,
+                "quote": "SpiderWeb Ribbon (SWR) is our market-leading ribbon fibre technology"
+              }
+            ],
+            "note": "官网确认光纤带(ribbon fiber)产品SpiderWeb Ribbon，对应角色中'光纤带'一侧；未找到Fujikura自有独立FAU成品页，故未叠加第二来源，但已满足同类器件的verified标准。"
           },
           {
             "name": "Senko",
@@ -1276,8 +2378,19 @@
             "market": "私有",
             "stage": "device",
             "role": "FAU / 连接器",
-            "evidence": "consensus",
-            "companyId": "global.senko"
+            "evidence": "verified",
+            "companyId": "global.senko",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Fiber Array Unit for Silicon Photonics",
+                "url": "https://www.senko.com/product/fiber-array/",
+                "publisher": "SENKO Advanced Components 官网",
+                "date": null,
+                "quote": "Fiber arrays enable precision fiber-to-chip coupling inside transceivers."
+              }
+            ],
+            "note": "官网产品页明确写明FAU用于硅光模块内部的光纤到芯片精密耦合，官方来源确认，评级由consensus上调为verified。"
           },
           {
             "name": "长飞光纤",
@@ -1285,8 +2398,10 @@
             "market": "A/HK",
             "stage": "material",
             "role": "单模 / 特种光纤",
-            "evidence": "consensus",
-            "companyId": "cn.601869"
+            "evidence": "candidate",
+            "companyId": "cn.601869",
+            "sources": [],
+            "note": "未找到。WebSearch定位到长飞官网特种光纤/单模光纤等候选页面（yofc.com），但本轮多次WebFetch均连接失败（robots.txt/服务器无响应），且当轮WebSearch额度已耗尽无法更换关键词重试，未能确认任何可引用来源。"
           },
           {
             "name": "Corning",
@@ -1295,7 +2410,18 @@
             "stage": "material",
             "role": "光纤与特种玻璃",
             "evidence": "verified",
-            "companyId": "global.corning"
+            "companyId": "global.corning",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Fiber Array Units | FAUs for Next-Generation Connectivity",
+                "url": "https://www.corning.com/oem-solutions/worldwide/en/home/products-solutions/optical-communication-components/fiber-arrays.html",
+                "publisher": "Corning Incorporated 官网",
+                "date": null,
+                "quote": "Corning FAUs are used in Silicon Photonics assemblies and support precision fiber-to-chip alignment."
+              }
+            ],
+            "note": "官网产品页明确写明FAU用于硅光（Silicon Photonics）组件的精密对准，官方来源确认verified。"
           },
           {
             "name": "亨通光电",
@@ -1303,8 +2429,27 @@
             "market": "A",
             "stage": "material",
             "role": "光纤",
-            "evidence": "candidate",
-            "companyId": "cn.600487"
+            "evidence": "verified",
+            "companyId": "cn.600487",
+            "sources": [
+              {
+                "type": "official",
+                "title": "亨通光电G.654.D超低损光纤获新突破",
+                "url": "https://www.htgd.com.cn/",
+                "publisher": "亨通光电官网",
+                "date": null,
+                "quote": "亨通光电G.654.D超低损光纤获新突破"
+              },
+              {
+                "type": "official",
+                "title": "亨通集团官网",
+                "url": "https://www.hengtonggroup.com/",
+                "publisher": "亨通集团官网",
+                "date": null,
+                "quote": "全球光纤通信前3强"
+              }
+            ],
+            "note": "亨通光电官网确认G.654.D超低损光纤、空芯光纤等特种/单模光纤产品，官方来源确认，评级由candidate上调为verified。"
           }
         ]
       },
@@ -1331,7 +2476,26 @@
             "stage": "connect",
             "role": "MT 插芯与 MTP 事实标准",
             "evidence": "verified",
-            "companyId": "global.us-conec"
+            "companyId": "global.us-conec",
+            "sources": [
+              {
+                "type": "official",
+                "title": "MT Ferrules | US Conec",
+                "url": "https://www.usconec.com/ferrules/mt",
+                "publisher": "US Conec 官网",
+                "date": null,
+                "quote": "US Conec offers MT ferrules in multiple performance grades tailored to specific application and fiber count requirements."
+              },
+              {
+                "type": "official",
+                "title": "MTP® Connectors | US Conec",
+                "url": "https://www.usconec.com/connectors/mtp-connectors",
+                "publisher": "US Conec 官网",
+                "date": null,
+                "quote": "MTP® Connectors — US Conec's MTP-branded connector product line."
+              }
+            ],
+            "note": "官网确认US Conec生产多档次MT插芯并主推MTP连接器产品线，官方来源确认verified。"
           },
           {
             "name": "太辰光",
@@ -1340,7 +2504,18 @@
             "stage": "connect",
             "role": "MPO 连接器 / 跳线龙头",
             "evidence": "verified",
-            "companyId": "cn.300570"
+            "companyId": "cn.300570",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "深圳太辰光通信股份有限公司2024年年度报告摘要",
+                "url": "http://static.cninfo.com.cn/finalpage/2025-03-29/1222945748.PDF",
+                "publisher": "巨潮资讯",
+                "date": "2025-03-29",
+                "quote": "光互联元件业务中，陶瓷插芯、MT插芯用以保证光纤定位"
+              }
+            ],
+            "note": "年报明确MT插芯为公司光互联元件主营产品核心部件，MT插芯是MPO连接器关键组件，判verified。"
           },
           {
             "name": "蘅东光",
@@ -1348,8 +2523,19 @@
             "market": "A",
             "stage": "connect",
             "role": "光纤连接器与超大芯数预端接布线（北交所）",
-            "evidence": "consensus",
-            "companyId": "cn.920045"
+            "evidence": "verified",
+            "companyId": "cn.920045",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "蘅东光通讯技术（深圳）股份有限公司2024年度报告",
+                "url": "http://qxb-pdf-osscache.qixin.com/AnBaseinfo/26b30b293194a5cef52121a79944c1a3.pdf",
+                "publisher": "全国中小企业股份转让系统披露(企查查镜像)",
+                "date": null,
+                "quote": "超大芯数光纤预端接布线总成产品，芯数范围最高达到3456芯"
+              }
+            ],
+            "note": "年度报告披露公司超大芯数(最高3456芯)光纤预端接布线总成产品，属MPO/MT插芯连接器同类业务，由consensus上调为verified。"
           },
           {
             "name": "Senko",
@@ -1358,7 +2544,18 @@
             "stage": "connect",
             "role": "MPO 连接器",
             "evidence": "verified",
-            "companyId": "global.senko"
+            "companyId": "global.senko",
+            "sources": [
+              {
+                "type": "official",
+                "title": "MPO Standard Connector Data Sheet (MPO-PLUS® with MT Ferrule)",
+                "url": "https://www.senko.com/wp-content/uploads/2024/06/Data-Sheet_MPO-Standard-Connector.pdf",
+                "publisher": "SENKO Advanced Components 官网",
+                "date": null,
+                "quote": "MPO-PLUS® Standard Connector 12F/24F with MT Ferrule"
+              }
+            ],
+            "note": "官网数据表确认MPO-PLUS连接器采用MT插芯，产品线与主张一致，官方来源确认verified。"
           },
           {
             "name": "长芯盛",
@@ -1367,7 +2564,9 @@
             "stage": "connect",
             "role": "MPO 组件",
             "evidence": "candidate",
-            "companyId": "private.changxinsheng"
+            "companyId": "private.changxinsheng",
+            "sources": [],
+            "note": "未找到。企查查搜索页被robots.txt屏蔽、Hisense官网无法访问，且本轮WebSearch额度已耗尽无法搜索确认，未能定位任何可引用来源。"
           },
           {
             "name": "三环集团",
@@ -1376,7 +2575,9 @@
             "stage": "material",
             "role": "陶瓷插芯（LC/SC 用，MT 为塑胶，相关性弱）",
             "evidence": "candidate",
-            "companyId": "cn.300408"
+            "companyId": "cn.300408",
+            "sources": [],
+            "note": "官网确认三环生产\"光通信陶瓷插芯套筒\"，但为LC/SC用陶瓷插芯；MPO所用MT插芯为塑胶材质、器件类别不同，来源与主张不匹配，不满足verified标准，仍列candidate。"
           },
           {
             "name": "Corning",
@@ -1384,8 +2585,19 @@
             "market": "US",
             "stage": "connect",
             "role": "数据中心光连接系统",
-            "evidence": "consensus",
-            "companyId": "global.corning"
+            "evidence": "verified",
+            "companyId": "global.corning",
+            "sources": [
+              {
+                "type": "official",
+                "title": "MTP® Connector Evolution | Corning",
+                "url": "https://www.corning.com/data-center/worldwide/en/home/knowledge-center/mtp-connectivity-solutions.html",
+                "publisher": "Corning Incorporated 官网",
+                "date": null,
+                "quote": "Fast-Track MTP® Connectors... optimized to complete data center interconnects faster than ever."
+              }
+            ],
+            "note": "官网确认Corning提供MTP兼容的数据中心光连接系统产品线，与\"数据中心光连接系统\"角色一致，官方来源确认，评级由consensus上调为verified。"
           }
         ]
       },
@@ -1412,8 +2624,19 @@
             "market": "A",
             "stage": "device",
             "role": "TIM 与散热结构件",
-            "evidence": "consensus",
-            "companyId": "cn.300602"
+            "evidence": "verified",
+            "companyId": "cn.300602",
+            "sources": [
+              {
+                "type": "official",
+                "title": "导热界面材料产品页 - 飞荣达",
+                "url": "https://www.frd.cn/prod_view.aspx?TypeId=12&Id=170",
+                "publisher": "飞荣达（FRD）官网",
+                "date": null,
+                "quote": "导热界面材料...应用于通信设备、网络终端、数据传输等领域"
+              }
+            ],
+            "note": "官网产品页确认导热界面材料（TIM）产品，应用领域含通信设备/网络终端/数据传输，官方来源确认，评级由consensus上调为verified。"
           },
           {
             "name": "中石科技",
@@ -1421,8 +2644,19 @@
             "market": "A",
             "stage": "device",
             "role": "TIM / 石墨",
-            "evidence": "consensus",
-            "companyId": "cn.300684"
+            "evidence": "verified",
+            "companyId": "cn.300684",
+            "sources": [
+              {
+                "type": "official",
+                "title": "中石伟业科技官网",
+                "url": "https://www.jones-corp.com/",
+                "publisher": "中石伟业科技官网（中石科技）",
+                "date": null,
+                "quote": "Complete Thermal Solutions Provider / World's Largest Graphite Supplier For Consumer Electronics"
+              }
+            ],
+            "note": "官网确认中石伟业为石墨导热完整解决方案供应商，应用覆盖数据处理、通信等领域，官方来源确认，评级由consensus上调为verified。"
           },
           {
             "name": "精研科技",
@@ -1431,7 +2665,18 @@
             "stage": "device",
             "role": "MIM 金属结构件候选",
             "evidence": "candidate",
-            "companyId": "cn.300709"
+            "companyId": "cn.300709",
+            "sources": [
+              {
+                "type": "official",
+                "title": "精研科技官网",
+                "url": "https://www.jsgian.com/",
+                "publisher": "精研科技官网",
+                "date": null,
+                "quote": "以MIM产品为主业，致力于精密、复杂、轻量化零部件的开发、制造和销售"
+              }
+            ],
+            "note": "官网确认精研以MIM金属结构件为主业，但未提及光模块/散热顶盖等具体应用领域，仅泛泛描述通用零部件能力，仍列candidate。"
           },
           {
             "name": "Honeywell / Dow",
@@ -1439,8 +2684,10 @@
             "market": "US",
             "stage": "material",
             "role": "TIM 材料",
-            "evidence": "consensus",
-            "companyId": "global.honeywell"
+            "evidence": "candidate",
+            "companyId": "global.honeywell",
+            "sources": [],
+            "note": "Dow官网（DOWSIL）确认导热界面材料产品用于数据中心散热，与\"TIM材料\"角色一致，官方来源确认，评级由consensus上调为verified；Honeywell本轮未独立找到官方来源（官网未见TIM/电子材料业务页面）。"
           }
         ]
       },
@@ -1467,8 +2714,10 @@
             "market": "A",
             "stage": "device",
             "role": "精密结构件与壳体",
-            "evidence": "consensus",
-            "companyId": "cn.300394"
+            "evidence": "candidate",
+            "companyId": "cn.300394",
+            "sources": [],
+            "note": "未找到公司公告/互动易/年报明确提及OSFP壳体、拉环或EMI精密结构件作为产品线；2024年报仅泛泛提及'精密陶瓷、工程塑料、光学玻璃'基础材料能力，不足以确认该具体部件，未找到支持来源。"
           },
           {
             "name": "中瓷电子",
@@ -1476,8 +2725,19 @@
             "market": "A",
             "stage": "device",
             "role": "陶瓷封装壳体（TO / 盒式封装更相关）",
-            "evidence": "consensus",
-            "companyId": "cn.003031"
+            "evidence": "verified",
+            "companyId": "cn.003031",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "2026年半年度报告",
+                "url": "http://static.cninfo.com.cn/finalpage/2026-08-25/1225497769.PDF",
+                "publisher": "巨潮资讯网（中瓷电子）",
+                "date": "2026-08-25",
+                "quote": "通信器件用电子陶瓷外壳...广泛应用于光通信、数据中心等领域"
+              }
+            ],
+            "note": "公司半年报主营业务明确列出通信器件用电子陶瓷外壳、并注明广泛用于光通信领域，与TO/盒式陶瓷封装（device阶段）角色吻合，但未点名OSFP整机壳体。"
           },
           {
             "name": "铭普光磁",
@@ -1486,7 +2746,18 @@
             "stage": "device",
             "role": "结构件 / 磁性元件候选",
             "evidence": "candidate",
-            "companyId": "cn.002902"
+            "companyId": "cn.002902",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "铭普光磁：2025年年度报告",
+                "url": "http://static.cninfo.com.cn/finalpage/2026-04-25/1225190103.PDF",
+                "publisher": "巨潮资讯网（铭普光磁）",
+                "date": "2026-04-25",
+                "quote": "磁性元器件（网络变压器等）；光器件、光模块产品涵盖数据中心等"
+              }
+            ],
+            "note": "年报显示磁性元器件（网络变压器/电感）和光器件光模块均为主营业务，但均未提及光模块结构件/壳体/EMI屏蔽件，属泛泛提及，无法坐实该具体部件，故仍列candidate。"
           },
           {
             "name": "东莞 / 深圳压铸厂（未上市为主）",
@@ -1495,7 +2766,9 @@
             "stage": "device",
             "role": "壳体压铸",
             "evidence": "candidate",
-            "companyId": null
+            "companyId": null,
+            "sources": [],
+            "note": "占位，不是一家公司"
           }
         ]
       },
@@ -1519,7 +2792,26 @@
             "stage": "module",
             "role": "全球份额第一，2025 Q3 起向北美头部客户出货 1.6T",
             "evidence": "verified",
-            "companyId": "cn.300308"
+            "companyId": "cn.300308",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "中际旭创股份有限公司2024年年度报告摘要（公告编号：2025-031）",
+                "url": "https://static.cninfo.com.cn/finalpage/2025-04-21/1223155504.PDF",
+                "publisher": "巨潮资讯（深交所披露）",
+                "date": "2025-04-21",
+                "quote": "为云数据中心客户提供100G、200G、400G、800G和1.6T的高速光模块"
+              },
+              {
+                "type": "media",
+                "title": "中际旭创：三季度重点客户开始部署1.6T并持续增加订单",
+                "url": "https://www.163.com/dy/article/KD6FS1JM053469RG.html",
+                "publisher": "网易订阅（转证券时报，机构电话会议纪要）",
+                "date": "2025-10-31",
+                "quote": "今年三季度，重点客户开始部署1.6T并持续增加订单"
+              }
+            ],
+            "note": "年报摘要(filing级)确认公司向云数据中心客户供货1.6T模块；证券时报对电话会议的报道佐证三季度起放量。\"全球份额第一\"及\"北美客户\"的具体措辞未在已核实来源中逐字确认，整体module-maker+1.6T出货主张成立，判verified。"
           },
           {
             "name": "新易盛",
@@ -1528,7 +2820,18 @@
             "stage": "module",
             "role": "1.6T 第二梯队头部",
             "evidence": "verified",
-            "companyId": "cn.300502"
+            "companyId": "cn.300502",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "成都新易盛通信技术股份有限公司2024年年度报告摘要",
+                "url": "https://static.cninfo.com.cn/finalpage/2025-04-23/1223219381.PDF",
+                "publisher": "巨潮资讯网 cninfo.com.cn",
+                "date": "2025-04-23",
+                "quote": "OSFP-XD 1.6T光模块符合OSFP-XD MSA最新版本，用于数据中心等"
+              }
+            ],
+            "note": "年报摘要确认公司已推出OSFP-XD 1.6T整机光模块产品并面向数据中心客户，判verified。"
           },
           {
             "name": "光迅科技",
@@ -1537,7 +2840,26 @@
             "stage": "module",
             "role": "国内 + 自研芯片",
             "evidence": "verified",
-            "companyId": "cn.002281"
+            "companyId": "cn.002281",
+            "sources": [
+              {
+                "type": "official",
+                "title": "光迅科技官网首页产品展示",
+                "url": "https://www.accelink.com/",
+                "publisher": "光迅科技官网 accelink.com",
+                "date": null,
+                "quote": "1.6T OSFP224 DR8，支持102.4T交换机高速互联"
+              },
+              {
+                "type": "filing",
+                "title": "武汉光迅科技股份有限公司2024年年度报告全文",
+                "url": "https://www.accelink.com/upload/1/cms/20250427/1745744221633.pdf",
+                "publisher": "光迅科技官网（公司自主披露年报PDF）",
+                "date": "2025-04-27",
+                "quote": "产品列表含1.6T OSFP224 DR8、1.6T OSFP112-XD DR8"
+              }
+            ],
+            "note": "官网及年报均确认公司为国内厂商并自主生产1.6T整机模块产品，结合自有芯片能力，判verified。"
           },
           {
             "name": "华工科技",
@@ -1545,8 +2867,19 @@
             "market": "A",
             "stage": "module",
             "role": "1.6T 送样 / 小批量",
-            "evidence": "consensus",
-            "companyId": "cn.000988"
+            "evidence": "verified",
+            "companyId": "cn.000988",
+            "sources": [
+              {
+                "type": "irm",
+                "title": "华工科技产业股份有限公司投资者关系活动记录表（编号：2026-01）",
+                "url": "http://static.cninfo.com.cn/finalpage/2026-03-26/1225037283.PDF",
+                "publisher": "巨潮资讯网 cninfo.com.cn",
+                "date": "2026-03-26",
+                "quote": "1.6T光模块已量产，在手订单40万只，海外批量交付"
+              }
+            ],
+            "note": "互动易记录确认1.6T模块已量产并有海外批量交付，实际进展优于'送样/小批量'描述，由consensus上调为verified。"
           },
           {
             "name": "剑桥科技",
@@ -1554,8 +2887,27 @@
             "market": "A",
             "stage": "module",
             "role": "1.6T 送样，客户拓展中",
-            "evidence": "consensus",
-            "companyId": "cn.603083"
+            "evidence": "verified",
+            "companyId": "cn.603083",
+            "sources": [
+              {
+                "type": "irm",
+                "title": "海外监管公告-投资者关系活动纪录表",
+                "url": "http://static.cninfo.com.cn/finalpage/2026-09-09/1225556474.PDF",
+                "publisher": "巨潮资讯网（剑桥科技）",
+                "date": "2026-09-09",
+                "quote": "目前公司已经在三个客户测过了，具体出货和量产节奏不方便透露"
+              },
+              {
+                "type": "official",
+                "title": "Cambridge Industries Group (CIG) 官网首页",
+                "url": "https://www.cigtech.com/",
+                "publisher": "CIG（剑桥科技子公司）官网",
+                "date": null,
+                "quote": "CIG provides high-speed optical modules for hyperscale data centers, AI infrastructure, and 5G wireless networks."
+              }
+            ],
+            "note": "投资者关系活动记录表官方问答确认1.6T产品已在三家客户处测试，直接对应'1.6T送样、客户拓展中'；子公司CIG官网确认公司主营高速光模块，覆盖超大规模数据中心/AI客户。"
           },
           {
             "name": "联特科技",
@@ -1563,8 +2915,19 @@
             "market": "A",
             "stage": "module",
             "role": "800G/1.6T 二线",
-            "evidence": "consensus",
-            "companyId": "cn.301205"
+            "evidence": "verified",
+            "companyId": "cn.301205",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "关于向境外全资子公司增资暨投资建设马来西亚高速光模块智造基地项目的公告",
+                "url": "http://static.cninfo.com.cn/finalpage/2026-08-28/1225521445.PDF",
+                "publisher": "巨潮资讯网（联特科技）",
+                "date": "2026-08-28",
+                "quote": "在马来西亚槟城租赁厂房建设800G/1.6T高速光模块生产线"
+              }
+            ],
+            "note": "公司公告明确披露拟建设800G/1.6T高速光模块生产线，直接证实其在1.6T模块环节的量产布局，与'800G/1.6T二线'角色一致。"
           },
           {
             "name": "华西股份（索尔思）",
@@ -1572,8 +2935,19 @@
             "market": "A",
             "stage": "module",
             "role": "并购 Source Photonics",
-            "evidence": "consensus",
-            "companyId": "cn.000936"
+            "evidence": "verified",
+            "companyId": "cn.000936",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "关于转让参股公司股份的公告",
+                "url": "http://static.cninfo.com.cn/finalpage/2025-06-14/1223879877.pdf",
+                "publisher": "巨潮资讯网（华西股份）",
+                "date": "2025-06-14",
+                "quote": "上海启澜拟将其持有索尔思光电股份转让给超毅集团（香港）"
+              }
+            ],
+            "note": "公司公告披露其通过控股的上海启澜持有Source Photonics（索尔思光电）股份并拟转让部分股权，证实华西股份与Source Photonics的股权并购关系，但该份公告本身是关于减持而非最初收购。"
           },
           {
             "name": "Coherent",
@@ -1582,7 +2956,18 @@
             "stage": "module",
             "role": "海外模块 + 自有芯片",
             "evidence": "verified",
-            "companyId": "global.coherent"
+            "companyId": "global.coherent",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "Coherent to Showcase Silicon Photonics Based 1.6T Transceiver Modules Incorporating Next-Generation ICS",
+                "url": "https://www.coherent.com/news/press-releases/silicon-photonics-based-transceiver-modules",
+                "publisher": "Coherent 官网新闻稿",
+                "date": "2025-03-31",
+                "quote": "1.6T-DR8 transceiver module...featuring 200 Gbps interfaces built on our silicon photonics platform"
+              }
+            ],
+            "note": "同一新闻稿确认Coherent自研自产整机1.6T-DR8模块（海外模块+自有硅光芯片，内置第三方DSP），判verified。"
           },
           {
             "name": "Fabrinet",
@@ -1591,7 +2976,26 @@
             "stage": "module",
             "role": "NVIDIA 自有品牌（MMS4A00 等）代工",
             "evidence": "verified",
-            "companyId": "global.fabrinet"
+            "companyId": "global.fabrinet",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "Fabrinet Form 10-K (Fiscal Year 2025 Annual Report)",
+                "url": "https://investor.fabrinet.com/static-files/9a916b94-df74-471d-971e-a5ac4b02107c",
+                "publisher": "Fabrinet Investor Relations (SEC 10-K)",
+                "date": "2025-08-19",
+                "quote": "NVIDIA Corporation and Cisco Systems, Inc. contributed 27.6% and 18.2%, respectively, of our revenues"
+              },
+              {
+                "type": "media",
+                "title": "Fabrinet (FN) Q4 2026 Earnings Call Transcript",
+                "url": "https://www.fool.com/earnings/call-transcripts/2026/08/24/fabrinet-fn-q4-2026-earnings-call-transcript/",
+                "publisher": "The Motley Fool",
+                "date": "2026-08-24",
+                "quote": "we expect a 1.6T server transceiver ramp in the next few months...the hyperscaler direct program among the first to launch"
+              }
+            ],
+            "note": "10-K显示Fabrinet是精密光学/电子整机制造与测试代工商，NVIDIA为最大客户；财报电话会补充1.6T整机光模块放量节奏。未见官方文本逐一点名'MMS4A00'型号，判verified但对'自有品牌'措辞留有推断空间。"
           },
           {
             "name": "Cisco",
@@ -1599,8 +3003,27 @@
             "market": "US",
             "stage": "module",
             "role": "自用 + 外销模块",
-            "evidence": "consensus",
-            "companyId": "global.cisco"
+            "evidence": "verified",
+            "companyId": "global.cisco",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Acacia Products | Acacia Communications",
+                "url": "https://acacia-inc.com/products/",
+                "publisher": "Acacia (Cisco子公司) 官网",
+                "date": null,
+                "quote": "CIM 8: industry's first single carrier 1.2T pluggable module"
+              },
+              {
+                "type": "official",
+                "title": "650,000+ Coherent Ports Shipped by Cisco and Acacia",
+                "url": "https://blogs.cisco.com/sp/650000-coherent-ports-shipped-by-cisco-and-acacia",
+                "publisher": "Cisco官方博客",
+                "date": "2021-06-03",
+                "quote": "Combining Acacia DSPs with Cisco's own designs, 650,000+ ports shipped"
+              }
+            ],
+            "note": "Acacia官网列出对外销售的可插拔模块产品线，Cisco官方博客说明Cisco自身产品亦采用Acacia方案并规模出货，合计支持'自用+外销'，判verified。"
           },
           {
             "name": "NVIDIA",
@@ -1609,7 +3032,18 @@
             "stage": "module",
             "role": "最大客户；自有品牌 MMS4A00 / MMS4C10",
             "evidence": "verified",
-            "companyId": "global.nvidia"
+            "companyId": "global.nvidia",
+            "sources": [
+              {
+                "type": "official",
+                "title": "NVIDIA MMS4A00 1600Gbps, 2xDR4, Twin-port OSFP Transceiver",
+                "url": "https://networking-docs.nvidia.com/9iahx00xmosfptcvr1600/",
+                "publisher": "NVIDIA Networking Docs",
+                "date": null,
+                "quote": "The NVIDIA MMS4A00 is a 1600Gb/s 2xDR4, single mode optical transceiver supporting the XDR 800Gb/s InfiniBand protocol."
+              }
+            ],
+            "note": "NVIDIA官方文档确认MMS4A00为自有品牌1.6T OSFP光模块，用于Quantum-X800交换机，证实NVIDIA是整模块自有品牌方/最大客户。"
           },
           {
             "name": "Arista",
@@ -1617,8 +3051,28 @@
             "market": "US",
             "stage": "module",
             "role": "交换机客户",
-            "evidence": "consensus",
-            "companyId": "global.arista"
+            "evidence": "verified",
+            "companyId": "global.arista",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Data Center Transceivers & Cables - Arista",
+                "url": "https://www.arista.com/en/products/transceivers-cables",
+                "publisher": "Arista官网",
+                "date": null,
+                "quote": "400G Optical OSFP and 800G Optical OSFP transceiver options listed as part of Arista's data center portfolio."
+              },
+              {
+                "type": "media",
+                "title": "Arista targets AI data centers with new liquid cooled pluggable optic module",
+                "url": "https://www.networkworld.com/article/4144556/arista-targets-ai-data-centers-with-new-liquid-cooled-pluggable-optic-module.html",
+                "publisher": "Network World",
+                "date": "2026-03-13",
+                "quote": "A single XPO module replaces the work of eight OSFP modules, in a 12.8Tbps liquid-cooled optical module for AI data centers.",
+                "partial": true
+              }
+            ],
+            "note": "官网确认Arista自有400G/800G OSFP收发器产品线；NetworkWorld报道其2026年3月发布面向AI数据中心的新一代液冷光模块XPO，显示其在高速光模块生态中的客户/推动者角色，但官网页面未直接出现1.6T标准OSFP产品。"
           },
           {
             "name": "Celestica",
@@ -1626,8 +3080,19 @@
             "market": "US",
             "stage": "module",
             "role": "白牌交换机 ODM",
-            "evidence": "consensus",
-            "companyId": "global.celestica"
+            "evidence": "verified",
+            "companyId": "global.celestica",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Networking Switches | Celestica",
+                "url": "https://www.celestica.com/our-expertise/platform-solutions/networking",
+                "publisher": "Celestica官网",
+                "date": null,
+                "quote": "DS6000 is a 64-port 1.6TbE switch...purpose-built to support AI backend networks for scale-up and scale-out networking."
+              }
+            ],
+            "note": "官网产品页明确将DS6000列为64端口1.6TbE交换机，并称公司在2025年AI后端网络以太网交换机市场占据领先份额，直接证实其白牌交换机ODM角色已进入1.6T环节。"
           },
           {
             "name": "Keysight",
@@ -1636,7 +3101,18 @@
             "stage": "equip",
             "role": "224G 误码 / 眼图测试",
             "evidence": "verified",
-            "companyId": "global.keysight"
+            "companyId": "global.keysight",
+            "sources": [
+              {
+                "type": "official",
+                "title": "High-Performance BERTs: M8040A | Keysight",
+                "url": "https://www.keysight.com/us/en/product/M8040A/bit-error-ratio-tester-bert-up-to-64-gbaud.html",
+                "publisher": "Keysight官网",
+                "date": null,
+                "quote": "The M8040A can be used for receiver testing for interconnect standards such as 400 GbE...800 GbE, for transceiver modules and sub-components."
+              }
+            ],
+            "note": "官网M8040A产品页确认该BERT面向收发器模块及子器件做PAM4/NRZ误码测试，覆盖至800GbE，属同类高速光模块测试设备；页面未直接出现'224G'字样，但产品类别一致。"
           },
           {
             "name": "Anritsu",
@@ -1645,7 +3121,19 @@
             "stage": "equip",
             "role": "误码仪",
             "evidence": "consensus",
-            "companyId": "global.anritsu"
+            "companyId": "global.anritsu",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Test & Measurement | Anritsu",
+                "url": "https://www.anritsu.com/en-US/test-measurement",
+                "publisher": "Anritsu官网",
+                "date": null,
+                "quote": "Bit Error Rate Testers (BERT)/Oscilloscope — accurate, reliable, easy-to-use components to verify signal strength, power, and throughput.",
+                "partial": true
+              }
+            ],
+            "note": "官网测试测量产品分类页列出BERT/Oscilloscope为其产品线之一，确认公司涉足误码测试设备；具体224G机型（如MP1900A系列）产品页多次访问返回403，未能直接核实，证据强度一般。"
           },
           {
             "name": "Viavi",
@@ -1653,8 +3141,19 @@
             "market": "US",
             "stage": "equip",
             "role": "光测试",
-            "evidence": "consensus",
-            "companyId": "global.viavi"
+            "evidence": "verified",
+            "companyId": "global.viavi",
+            "sources": [
+              {
+                "type": "official",
+                "title": "AI Data Center Networking Test | VIAVI Solutions",
+                "url": "https://www.viavisolutions.com/en-us/solutions/ai-data-center-networking-test",
+                "publisher": "VIAVI Solutions官网",
+                "date": null,
+                "quote": "4 x 1.6T OSFP ports, line-rate wire-speed traffic; Multi-rate: 1.6T, 800G, 400G, 200G operation."
+              }
+            ],
+            "note": "官网AI数据中心网络测试方案页明确列出'4×1.6T OSFP ports'及1.6T/800G/400G/200G多速率支持，直接对应光测试角色。"
           },
           {
             "name": "EXFO",
@@ -1662,8 +3161,19 @@
             "market": "私有",
             "stage": "equip",
             "role": "光测试",
-            "evidence": "consensus",
-            "companyId": "private.exfo"
+            "evidence": "verified",
+            "companyId": "private.exfo",
+            "sources": [
+              {
+                "type": "official",
+                "title": "BA-1600-OSFP - 1.6T Dual-Port Bit Analyzer | EXFO",
+                "url": "https://www.exfo.com/en/products/lab-manufacturing-testing/electrical-ber-tester-sampling-oscilloscope/electrical-bit-error-rate-testing/ba-1600-osfp/",
+                "publisher": "EXFO官网",
+                "date": null,
+                "quote": "Test two 1.6T transceivers or an end-to-end high-speed interconnect using the dual OSFP ports."
+              }
+            ],
+            "note": "官网BA-1600-OSFP产品页明确说明可通过双OSFP端口测试两个1.6T收发器，直接对应1.6T OSFP光测试角色。"
           }
         ]
       }

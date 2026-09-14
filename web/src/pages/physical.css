@@ -67,3 +67,9 @@
 
 :focus-visible { outline: 1px solid var(--accent); outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) { .ph-stage, .ph-drawing, .ph-fade, .ph-drawing g { transition: none !important; } }
+
+/* evidence label as link */
+.ev-link { color: var(--ink-2); text-decoration: none; white-space: nowrap; }
+.ev-link:hover { color: var(--accent); }
+.ev-src { margin-left: 6px; color: var(--muted); font-size: 10.5px; }
+.ph-co-row { grid-template-columns: 150px 96px 40px minmax(0, 1fr) 116px; }
