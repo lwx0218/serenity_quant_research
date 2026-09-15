@@ -318,6 +318,24 @@ export interface Inbox {
 
 export interface LinkSuggestion { label: string; kind: string; id: string; meta: string }
 
+/* ---------- ingest（数据接入）---------- */
+export type CandidateStatus = "pending" | "confirmed" | "rejected";
+export interface Candidate {
+  id: string; date: string | null; title: string; url: string; summary: string | null;
+  source: string; source_type: "rss" | "cninfo_announcement" | "cninfo_irm" | "upload"; source_label: string; tier: number; evidence: PhysEvidence;
+  category: string | null; category_label: string | null; company: CompanyBrief | null; companies: { companyId: string; name: string }[];
+  parts: { id: string; name: string }[]; part: EventPart | null; also_reported_by: string[];
+  status: CandidateStatus; event_id: string | null; decided_at: string | null; decided_note: string | null; fetched_at: string;
+}
+export interface CandidatesResponse { counts: Partial<Record<CandidateStatus, number>>; items: Candidate[] }
+export interface IngestRun { id: number; job: string; started_at: string; finished_at: string | null; ok: 0 | 1 | null; summary: Record<string, unknown> | null; error: string | null }
+export interface IngestStatus {
+  as_of: string | null; sample: boolean; companies: number; quotable: number; with_bars: number; last_bar_date: string | null;
+  with_margin: number; with_valuation: number; events: { real: number; sample: number }; candidates: Partial<Record<CandidateStatus, number>>;
+  last_news_fetch: string | null; todo_open: number; runs: IngestRun[];
+}
+export const CATEGORY_OPTIONS: [string, string][] = [["capex", "扩产"], ["order", "订单合同"], ["qualification", "认证导入"], ["supply", "供需"], ["price", "涨价"], ["roadmap", "技术路线"]];
+
 async function send<T>(method: string, path: string, body?: unknown): Promise<T> {
   const r = await fetch(BASE + path, { method, headers: { Accept: "application/json", "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
   if (!r.ok) throw new Error(`${r.status} ${r.statusText} — ${path}`);
@@ -348,6 +366,13 @@ export const mkt = {
   inbox: (days = 7) => get<Inbox>(`/api/research/inbox?days=${days}`),
   verify: (body: { action: string; event_id?: string | null; exposure_id?: number | null }) => send<{ ok: boolean }>("POST", `/api/verifications`, body),
   suggest: (q: string) => get<LinkSuggestion[]>(`/api/links/suggest?q=${encodeURIComponent(q)}`),
+  candidates: (status: CandidateStatus | "all" = "pending", limit = 100) => get<CandidatesResponse>(`/api/candidates?status=${status}&limit=${limit}`),
+  confirmCandidate: (id: string, body: { company_id?: string | null; category?: string | null; date?: string | null; note?: string | null } = {}) =>
+    send<{ ok: boolean; event_id: string }>("POST", `/api/candidates/${encodeURIComponent(id)}/confirm`, body),
+  rejectCandidate: (id: string, note?: string) => send<{ ok: boolean }>("POST", `/api/candidates/${encodeURIComponent(id)}/reject`, { note: note ?? null }),
+  reopenCandidate: (id: string) => send<{ ok: boolean }>("POST", `/api/candidates/${encodeURIComponent(id)}/reopen`),
+  ingestStatus: () => get<IngestStatus>(`/api/ingest/status`),
+  runIngest: (job: "daily" | "news" | "quotes" | "recompute" | "probe") => send<{ ok: boolean; job: string }>("POST", `/api/ingest/run/${job}`, {}),
 };
 
 /* ---------- formatting ---------- */

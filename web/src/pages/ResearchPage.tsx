@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
+import { CandidateRows, candidateNote } from "../components/Candidates";
 import { EventsWide } from "../components/Research";
 import { Footer, Shell, invalidatePending } from "../components/Shell";
 import { AsOf, Conclusion, Dir, Head, Sig } from "../components/Signal";
-import { md, mkt, type Decision, type EventsResponse, type Inbox } from "../lib/api";
+import { md, mkt, type CandidatesResponse, type Decision, type EventsResponse, type Inbox, type IngestStatus } from "../lib/api";
 import { Link, useRouter } from "../lib/router";
 import "./research.css";
 
@@ -54,11 +55,15 @@ function CompanyEvents({ company }: { company: string }) {
 
 function InboxPage({ navigate }: { navigate: (to: string) => void }) {
   const [ib, setIb] = useState<Inbox | null>(null);
+  const [cands, setCands] = useState<CandidatesResponse | null>(null);
+  const [ingest, setIngest] = useState<IngestStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
   const load = useCallback(() => {
     mkt.inbox(WINDOW_DAYS).then(setIb).catch((e) => setError(String(e)));
+    mkt.candidates("pending").then(setCands).catch(() => setCands({ counts: {}, items: [] }));
+    mkt.ingestStatus().then(setIngest).catch(() => setIngest(null));
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -86,6 +91,15 @@ function InboxPage({ navigate }: { navigate: (to: string) => void }) {
                 <h1 className="h1">研究</h1>
                 <Conclusion c={ib.conclusion} lead />
                 <AsOf date={ib.as_of} horizon="本周" extra="每日收盘后重算" />
+                {ingest && (
+                  <p className="data-line">
+                    <span>行情截至 <b>{ingest.last_bar_date ? md(ingest.last_bar_date) : "—"}</b></span>
+                    <span>有行情 <b>{ingest.with_bars}</b> / 可取 {ingest.quotable} / 公司 {ingest.companies}</span>
+                    <span>事件 <b>{ingest.events.real}</b> 真 · {ingest.events.sample} 示例</span>
+                    <span>候选待确认 <b>{ingest.candidates.pending ?? 0}</b>{ingest.last_news_fetch ? ` · 上次抓取 ${ingest.last_news_fetch.slice(5, 16).replace("T", " ")}` : ""}</span>
+                    {ingest.todo_open > 0 && <span>交给 AI 补 <b>{ingest.todo_open}</b></span>}
+                  </p>
+                )}
               </header>
 
               <section className="rows">
@@ -106,6 +120,14 @@ function InboxPage({ navigate }: { navigate: (to: string) => void }) {
                     </span>
                   </div>
                 ))}
+              </section>
+
+              <section className="rows">
+                <div className="rows-head">
+                  <span className="eyebrow">候选 · {cands?.items.length ?? 0}</span>
+                  <span className="small muted">自动抓取 · 确认后才是事件，来源随事件走{cands ? ` · ${candidateNote(cands.counts)}` : ""}</span>
+                </div>
+                {cands && <CandidateRows items={cands.items} onChange={() => { invalidatePending(); load(); }} />}
               </section>
 
               <section className="block">

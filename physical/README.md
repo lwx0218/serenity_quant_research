@@ -12,6 +12,8 @@
 physical/
   data/module-1.6t-dr8-siph.json     唯一的数据源：模块 → 部件 → 信号顺序 → 公司（产业阶段、证据级、来源、备注）
   seam.py                            物理 → 投研的接缝：写 companyId，补 data/seeds/physical/companies.json
+  merge_scan.py                      把「从全集往里收」的反向扫描结果并进 JSON，全集判定记到 data/coverage-1.6t-dr8-siph.json
+  data/coverage-1.6t-dr8-siph.json   反向扫描的全集：每家公司 on / off / pending 与理由——「不在这只模块上」是决定，不是遗漏
   design/gen_physical.py             方向稿画板（Claude Design 画布用 .dc.html，浅深两版）；等距揭盖图的几何在这里
   design/build_prototype.py          可交互原型 → dist/teardown-1.6t-prototype.html；同时导出 web/public/physical/*.svg|json
   design/reference-intel-1.6t-opened.png  部件摆位参考（Intel 1.6T 拆解图）
@@ -46,16 +48,16 @@ API：`GET /api/physical`、`/api/physical/{id}`、`/api/companies/{id}/physical
 | `companies[].market` | `A` / `US` / `JP` / `TW` / `HK` / `私有` … |
 
 **证据级规则**：至少一条公告 / 互动易 / 年报·招股书 / 官网来源直接支持「这家公司在这个部件上」→ `verified`；只有媒体 / 研报 → `consensus`；没有来源 → `candidate`。来源必须打得开且原文确实支持该映射（审计时打不开或答非所问的不算）。
-当前：17 个部件、128 条映射（88 家有 companyId，3 条占位）、142 条来源；verified 109 · consensus 4 · candidate 15。
+当前：17 个部件、211 条映射（158 家有 companyId，3 条占位）、244 条来源；verified 158 · consensus 38 · candidate 15。
+反向扫描（2026-09-15）：从 A 股概念板块 / 北交所与在审 IPO / 海外·台·日 全集出发扫了 200 家，on 75 · off 60 · pending 65；新增来源 30 条抽样审计：21 支持、8 部分、1 不支持（已剔除）。
 
 ## 新闻源（证据往前走的那条管道）
 
 `data/sources/news_sources.json` 列信息源（tier 0 公告/互动易 → verified；1 行业垂直媒体 → consensus；2 综合财经、3 泛科技 → candidate），`scripts/news_fetch.py` 拉取、按 physical/ 里的公司与部件词表命中、分类（扩产 / 订单 / 认证 / 供需 / 涨价 / 技术路线）、去重，写 `data/events/candidates.json`。
-RSS 地址未在本机验证过：先 `python3 scripts/news_fetch.py --probe`，打不开的换地址或删；`--only rss|cninfo_announcement|cninfo_irm` 只跑一类源，`--dry-run` 不写文件。候选进收件箱的 UI 还没做。
+逻辑已搬进 `api/app/ingest/news.py`，候选写库表 `candidates`，研究页「候选」块里确认 / 驳回。RSS 地址未在本机验证过：先 `--probe`。部署见 `ops/README.md`。
 
 ## 下一步（尚未做）
 
-- 候选事件（candidates.json）进收件箱：人工确认后才成为事件，来源随事件带进公司页与部件页。
 - 判断的骨架加「证伪信号 / 检查点 / 可靠性 1–5」；再往后是 mandate（先出方向稿）。
 - 追加第二、第三只实物：存储（HBM / SSD）、PCB（GB300 compute tray）、电源……都围绕一台真实的英伟达机柜展开，`module` 变成 `objects[]`，几何搬进 JSON。
-- 15 条 candidate 逐条补来源（沪电 / 深南 / 中芯 / 长飞 / 三环 / 长芯盛 / 天孚 / 铭普 / 精研 / 旭创自研驱动 / Honeywell·Dow / 云南锗业 PD 侧）。
+- 15 条 candidate 逐条补来源；coverage 里 65 条 pending 里最值得追的：永鼎鼎芯 CW 公告原件、长盈通保偏光纤、沃格光电、舜宇 FAU、OpenLight。

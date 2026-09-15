@@ -1,0 +1,2245 @@
+{
+  "$comment": "反向扫描的全集：每家公司对这只模块的判定。verdict: on 站在某个部件上（已并进 module.parts）· off 明确不在（why 说明）· pending 方向对但没有可打开的来源。扫描来源：概念板块成分、招股书竞争对手/客户/供应商、互动易按部件词检索、海外官网产品页。",
+  "objectId": "om.1p6t.osfp.dr8.siph",
+  "entries": [
+    {
+      "name": "东山精密",
+      "fullName": "苏州东山精密制造股份有限公司",
+      "ticker": "002384.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.module-maker"
+      ],
+      "why": ""
+    },
+    {
+      "name": "中天科技",
+      "fullName": "江苏中天科技股份有限公司",
+      "ticker": "600522.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.module-maker"
+      ],
+      "why": ""
+    },
+    {
+      "name": "德科立",
+      "fullName": "无锡市德科立光电子技术股份有限公司",
+      "ticker": "688205.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.module-maker"
+      ],
+      "why": ""
+    },
+    {
+      "name": "汇绿生态（钧恒科技）",
+      "fullName": "汇绿生态科技集团股份有限公司",
+      "ticker": "001267.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.module-maker"
+      ],
+      "why": ""
+    },
+    {
+      "name": "协创数据（光为科技）",
+      "fullName": "协创数据技术股份有限公司",
+      "ticker": "300857.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.module-maker"
+      ],
+      "why": ""
+    },
+    {
+      "name": "环旭电子",
+      "fullName": "环旭电子股份有限公司",
+      "ticker": "601231.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.module-maker"
+      ],
+      "why": ""
+    },
+    {
+      "name": "永鼎股份（鼎芯光电）",
+      "fullName": "江苏永鼎股份有限公司",
+      "ticker": "600105.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.cw-laser"
+      ],
+      "why": ""
+    },
+    {
+      "name": "杰普特（矩阵光电）",
+      "fullName": "深圳市杰普特光电股份有限公司",
+      "ticker": "688025.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.fau",
+        "part.mpo"
+      ],
+      "why": ""
+    },
+    {
+      "name": "致尚科技",
+      "fullName": "深圳市致尚科技股份有限公司",
+      "ticker": "301486.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.mpo"
+      ],
+      "why": ""
+    },
+    {
+      "name": "唯科科技（久腾通讯）",
+      "fullName": "厦门唯科模塑科技股份有限公司",
+      "ticker": "301196.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.mpo"
+      ],
+      "why": ""
+    },
+    {
+      "name": "炬光科技",
+      "fullName": "西安炬光科技股份有限公司",
+      "ticker": "688167.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.laser-coupling",
+        "part.cw-laser",
+        "part.fau"
+      ],
+      "why": ""
+    },
+    {
+      "name": "蓝特光学",
+      "fullName": "浙江蓝特光学股份有限公司",
+      "ticker": "688127.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.laser-coupling"
+      ],
+      "why": ""
+    },
+    {
+      "name": "优迅股份",
+      "fullName": "厦门优迅芯片股份有限公司",
+      "ticker": "688807.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.driver"
+      ],
+      "why": ""
+    },
+    {
+      "name": "兆易创新",
+      "fullName": "北京兆易创新科技股份有限公司",
+      "ticker": "603986.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.power-mgmt"
+      ],
+      "why": ""
+    },
+    {
+      "name": "普冉股份",
+      "fullName": "普冉半导体（上海）股份有限公司",
+      "ticker": "688766.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.power-mgmt"
+      ],
+      "why": ""
+    },
+    {
+      "name": "景旺电子",
+      "fullName": "深圳市景旺电子股份有限公司",
+      "ticker": "603228.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.pcb"
+      ],
+      "why": ""
+    },
+    {
+      "name": "方正科技",
+      "fullName": "方正科技集团股份有限公司",
+      "ticker": "600601.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.pcb"
+      ],
+      "why": ""
+    },
+    {
+      "name": "兴森科技（北京兴斐）",
+      "fullName": "深圳市兴森快捷电路科技股份有限公司",
+      "ticker": "002436.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.pcb"
+      ],
+      "why": ""
+    },
+    {
+      "name": "生益电子",
+      "fullName": "生益电子股份有限公司",
+      "ticker": "688183.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.pcb"
+      ],
+      "why": ""
+    },
+    {
+      "name": "崇达技术",
+      "fullName": "崇达技术股份有限公司",
+      "ticker": "002815.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.pcb"
+      ],
+      "why": ""
+    },
+    {
+      "name": "红板科技",
+      "fullName": "江西红板科技股份有限公司",
+      "ticker": "603459.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.pcb"
+      ],
+      "why": ""
+    },
+    {
+      "name": "鼎通科技",
+      "fullName": "东莞市鼎通精密科技股份有限公司",
+      "ticker": "688668.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.host-cage"
+      ],
+      "why": ""
+    },
+    {
+      "name": "长盈精密",
+      "fullName": "深圳市长盈精密技术股份有限公司",
+      "ticker": "300115.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.shell"
+      ],
+      "why": ""
+    },
+    {
+      "name": "联讯仪器",
+      "fullName": "苏州联讯仪器股份有限公司",
+      "ticker": "688808.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.module-maker"
+      ],
+      "why": ""
+    },
+    {
+      "name": "科瑞技术",
+      "fullName": "深圳科瑞技术股份有限公司",
+      "ticker": "002957.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.engine-assembly"
+      ],
+      "why": ""
+    },
+    {
+      "name": "博众精工",
+      "fullName": "博众精工科技股份有限公司",
+      "ticker": "688097.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.engine-assembly"
+      ],
+      "why": ""
+    },
+    {
+      "name": "智立方",
+      "fullName": "深圳市智立方自动化设备股份有限公司",
+      "ticker": "301312.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.engine-assembly"
+      ],
+      "why": ""
+    },
+    {
+      "name": "华兴源创（普赛斯）",
+      "fullName": "苏州华兴源创科技股份有限公司",
+      "ticker": "688001.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.cw-laser"
+      ],
+      "why": ""
+    },
+    {
+      "name": "华盛昌（伽蓝特）",
+      "fullName": "深圳市华盛昌科技实业股份有限公司",
+      "ticker": "002980.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.module-maker"
+      ],
+      "why": ""
+    },
+    {
+      "name": "燕麦科技",
+      "fullName": "深圳市燕麦科技股份有限公司",
+      "ticker": "688312.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.pic"
+      ],
+      "why": ""
+    },
+    {
+      "name": "长盈通",
+      "fullName": "武汉长盈通光电技术股份有限公司",
+      "ticker": "688143.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.laser-coupling"
+      ],
+      "why": "方向沾边（保偏光纤→激光器耦合），但公司口径未把它挂到光模块/CPO，且本可插拔模块内基本不用保偏光纤。"
+    },
+    {
+      "name": "沃格光电",
+      "fullName": "江西沃格光电股份有限公司",
+      "ticker": "603773.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.pcb"
+      ],
+      "why": "玻璃基板不在这只可插拔模块的 BOM 里，只是 CPO/未来路线送样。"
+    },
+    {
+      "name": "长电科技",
+      "fullName": "江苏长电科技股份有限公司",
+      "ticker": "600584.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.engine-assembly"
+      ],
+      "why": "硅光引擎能力是 CPO 方向的样品，未见给可插拔模块厂做引擎代工。"
+    },
+    {
+      "name": "阿莱德",
+      "fullName": "上海阿莱德实业集团股份有限公司",
+      "ticker": "301419.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.shell"
+      ],
+      "why": "只有'可应用'表态，没有进入光模块 EMI 衬垫/散热件供应链的来源。"
+    },
+    {
+      "name": "长芯博创（原博创科技）",
+      "fullName": "长芯博创科技股份有限公司",
+      "ticker": "300548.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [
+        "part.module-maker"
+      ],
+      "why": "800G 走多模 SR8/AOC/AEC，不做 1.6T 单模硅光 DR8。"
+    },
+    {
+      "name": "通富微电",
+      "fullName": "通富微电子股份有限公司",
+      "ticker": "002156.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "公司 2026-06-22 明确回复'暂无光模块相关业务'（https://www.stcn.com/article/detail/3971537.html，证券时报，'对此，通富微电6月22日回复称，暂无相关业务'）。"
+    },
+    {
+      "name": "中兴通讯",
+      "fullName": "中兴通讯股份有限公司",
+      "ticker": "000063.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "自研 800G/1.6T 模块以自用于自家交换机/传输设备为主（官方技术刊物 https://www.zte.com.cn/content/zte-site/www-zte-com-cn/china/about/magazine/zte-technologies/2026/3/3/10.html 只谈行业趋势），既不是 NVIDIA X800 生态的模块供应商也不是其客户。"
+    },
+    {
+      "name": "紫光股份（新华三）",
+      "fullName": "紫光股份有限公司",
+      "ticker": "000938.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "国内交换机整机厂，采购的是国内模块厂的 800G/1.6T，不是这只面向 NVIDIA Quantum/Spectrum-X800 的模块的客户；CPO 交换机方案属另一路线。"
+    },
+    {
+      "name": "锐捷网络",
+      "fullName": "锐捷网络股份有限公司",
+      "ticker": "301165.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "同紫光股份：国内白牌/品牌交换机厂，是国内模块厂的客户而非本模块（NVIDIA 平台）的客户。"
+    },
+    {
+      "name": "盛科通信",
+      "fullName": "苏州盛科通信股份有限公司",
+      "ticker": "688702.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "国产交换芯片（≤25.6T 级），是主机侧 ASIC 且不在 NVIDIA/Broadcom 102.4T 平台上，与模块内部件无关。"
+    },
+    {
+      "name": "烽火通信",
+      "fullName": "烽火通信科技股份有限公司",
+      "ticker": "600498.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "电信侧传输/光缆为主，数通模块产能自用于自家设备，未见对北美/NVIDIA 生态出货。"
+    },
+    {
+      "name": "通宇通讯",
+      "fullName": "广东通宇通讯股份有限公司",
+      "ticker": "002792.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "基站天线主业，光模块子公司做的是电信/接入侧中低速模块，无 800G/1.6T 数通证据。"
+    },
+    {
+      "name": "工业富联",
+      "fullName": "富士康工业互联网股份有限公司",
+      "ticker": "601138.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "AI 服务器/交换机整机代工与 CPO 整机，是主机系统侧；模块层面的光模块业务在鸿海体系其他主体，未见工业富联自身供本模块任何部件。"
+    },
+    {
+      "name": "鹏鼎控股",
+      "fullName": "鹏鼎控股（深圳）股份有限公司",
+      "ticker": "002938.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "FPC/SLP/封装基板为主，本模块主板是刚性高速多层板，未见光模块 PCB 出货表述。"
+    },
+    {
+      "name": "金信诺",
+      "fullName": "深圳金信诺高新技术股份有限公司",
+      "ticker": "300252.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "射频线缆与通信设备 PCB，无光模块 PCB/连接器表述。"
+    },
+    {
+      "name": "瑞可达",
+      "fullName": "苏州瑞可达连接系统股份有限公司",
+      "ticker": "688800.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "新能源车/储能连接器为主，通信连接器是基站射频类，无 OSFP 笼子/高速 I/O 证据。"
+    },
+    {
+      "name": "电连技术",
+      "fullName": "电连技术股份有限公司",
+      "ticker": "300679.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "RF 同轴/BTB 微型连接器（手机、车载），不做 OSFP/高速 I/O。"
+    },
+    {
+      "name": "意华股份",
+      "fullName": "温州意华接插件股份有限公司",
+      "ticker": "002897.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "有高速连接器/光电连接器产品线（曾对讯石称做全系列光电连接器），方向对准 host-cage，但来源页（讯石）无法打开，未拿到 OSFP/1.6T 原文。"
+    },
+    {
+      "name": "赛微电子",
+      "fullName": "北京赛微电子股份有限公司",
+      "ticker": "300456.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "MEMS 代工，与硅光 PIC 代工/模块部件无关。"
+    },
+    {
+      "name": "赛腾股份",
+      "fullName": "苏州赛腾精密电子股份有限公司",
+      "ticker": "603283.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "消费电子组装/半导体晶圆检测设备，未见光模块耦合/贴装/测试设备表述。"
+    },
+    {
+      "name": "联赢激光",
+      "fullName": "深圳市联赢激光股份有限公司",
+      "ticker": "688518.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "动力电池激光焊接为主，媒体提到其光通讯激光焊接/自动化，但未找到公司口径把设备挂到光模块壳体焊接。"
+    },
+    {
+      "name": "大族激光",
+      "fullName": "大族激光科技产业集团股份有限公司",
+      "ticker": "002008.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "有 PCB 钻孔/激光焊接与半导体封装设备平台，可能供光模块壳体焊接或 PCB 加工，但没找到公司自己的光模块/硅光设备表述。"
+    },
+    {
+      "name": "精智达",
+      "fullName": "深圳精智达技术股份有限公司",
+      "ticker": "688627.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "显示与存储芯片测试设备，无光模块/光芯片测试业务。"
+    },
+    {
+      "name": "华天科技",
+      "fullName": "天水华天科技股份有限公司",
+      "ticker": "002185.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "传统封测厂，无硅光/光模块封装公开表述；本模块的 Driver/TIA 倒装在模块厂内完成。"
+    },
+    {
+      "name": "甬矽电子",
+      "fullName": "甬矽电子（宁波）股份有限公司",
+      "ticker": "688362.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "先进封装厂，未见硅光/光电合封业务表述。"
+    },
+    {
+      "name": "晶方科技",
+      "fullName": "苏州晶方半导体科技股份有限公司",
+      "ticker": "603005.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "CIS 晶圆级封装，与光模块无关。"
+    },
+    {
+      "name": "颀中科技",
+      "fullName": "合肥颀中科技股份有限公司",
+      "ticker": "688352.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "显示驱动芯片凸块/封测，与光模块无关。"
+    },
+    {
+      "name": "汇顶科技",
+      "fullName": "深圳市汇顶科技股份有限公司",
+      "ticker": "603160.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "指纹/触控/低功耗蓝牙芯片，无光通信芯片。"
+    },
+    {
+      "name": "裕太微",
+      "fullName": "裕太微电子股份有限公司",
+      "ticker": "688515.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "以太网 PHY（≤10G）与车载，不做 PAM4 DSP/CDR。"
+    },
+    {
+      "name": "龙迅股份",
+      "fullName": "龙迅半导体（合肥）股份有限公司",
+      "ticker": "688486.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "视频桥接/高清接口芯片，非光模块 DSP/驱动。"
+    },
+    {
+      "name": "慧智微",
+      "fullName": "广州慧智微电子股份有限公司",
+      "ticker": "688512.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "手机射频前端 PA，与光模块无关。"
+    },
+    {
+      "name": "灿芯股份",
+      "fullName": "灿芯半导体（上海）股份有限公司",
+      "ticker": "688691.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "ASIC 定制设计服务（中芯国际工艺），无 1.6T DSP 产品或公开的光模块客户。"
+    },
+    {
+      "name": "国芯科技",
+      "fullName": "苏州国芯科技股份有限公司",
+      "ticker": "688262.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "国产 CPU/安全芯片/车规 MCU，无光模块 MCU/DSP 表述。"
+    },
+    {
+      "name": "纳芯微",
+      "fullName": "苏州纳芯微电子股份有限公司",
+      "ticker": "688052.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "有电源管理/隔离/驱动产品线，方向可对 part.power-mgmt，但未找到公司口径提及光模块或数通客户。"
+    },
+    {
+      "name": "思瑞浦",
+      "fullName": "思瑞浦微电子科技（苏州）股份有限公司",
+      "ticker": "688536.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "信号链+电源管理，通信设备（基站）为主要客户，未见光模块电源芯片表述。"
+    },
+    {
+      "name": "杰华特",
+      "fullName": "杰华特微电子股份有限公司",
+      "ticker": "688141.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "DC-DC/PMIC 产品线覆盖通信与数据中心，市场把它对到光模块电源，但检索只见渠道/展会稿，没有公司口径的光模块客户来源。"
+    },
+    {
+      "name": "南芯科技",
+      "fullName": "上海南芯半导体科技股份有限公司",
+      "ticker": "688484.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "电荷泵/电源管理以手机与车载为主，未找到光模块相关表述。"
+    },
+    {
+      "name": "必易微",
+      "fullName": "深圳市必易微电子股份有限公司",
+      "ticker": "688045.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "LED 驱动与 AC-DC 电源芯片，非模块内 PMIC。"
+    },
+    {
+      "name": "峰岹科技",
+      "fullName": "峰岹科技（深圳）股份有限公司",
+      "ticker": "688279.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "BLDC 电机驱动芯片，与光模块无关。"
+    },
+    {
+      "name": "中颖电子",
+      "fullName": "中颖电子股份有限公司",
+      "ticker": "300327.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "家电/锂电 MCU 为主，被概念股名单列入但未找到公司口径提及光模块 MCU。"
+    },
+    {
+      "name": "飞凯材料",
+      "fullName": "上海飞凯材料科技股份有限公司",
+      "ticker": "300398.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "紫外固化光纤涂覆材料卖给光纤光缆厂（长飞/亨通等），站在光纤拉丝环节，不是模块内部件；模块用胶（UV 固化胶）以 Dymax/Norland/EpoTek 等为主。"
+    },
+    {
+      "name": "光华科技",
+      "fullName": "广东光华科技股份有限公司",
+      "ticker": "002741.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "PCB 化学品/锂电材料，不是 PCB 本身。"
+    },
+    {
+      "name": "康强电子",
+      "fullName": "宁波康强电子股份有限公司",
+      "ticker": "002119.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "引线框架与键合丝，硅光模块 Driver/TIA 为倒装，无框架封装需求。"
+    },
+    {
+      "name": "华正新材",
+      "fullName": "浙江华正新材料股份有限公司",
+      "ticker": "603186.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "覆铜板以常规 FR-4/高频为主，未见 M7/M8 级超低损耗板材进入光模块 PCB 的表述。"
+    },
+    {
+      "name": "金安国纪",
+      "fullName": "金安国纪科技股份有限公司",
+      "ticker": "002636.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "中低端覆铜板，无高速板材产品。"
+    },
+    {
+      "name": "中英科技",
+      "fullName": "常州中英科技股份有限公司",
+      "ticker": "300936.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "高频（PTFE/碳氢）覆铜板面向基站天线，不是数通高速多层板材料。"
+    },
+    {
+      "name": "宏昌电子",
+      "fullName": "宏昌电子材料股份有限公司",
+      "ticker": "603002.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "环氧树脂供应商，站在 CCL 上游，与本模块无直接映射。"
+    },
+    {
+      "name": "南亚新材",
+      "fullName": "南亚新材料科技股份有限公司",
+      "ticker": "688519.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "媒体称其 M8/M9 级材料送样 1.6T 交换机，是 part.pcb 材料层的候选，但没找到公司口径把板材挂到光模块 PCB。"
+    },
+    {
+      "name": "宏和科技",
+      "fullName": "宏和电子材料科技股份有限公司",
+      "ticker": "603256.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "低介电电子玻纤布进入 AI 服务器 CCL，是与中材科技同层的 Low-Dk 布候选，但没有光模块 PCB 层面的来源。"
+    },
+    {
+      "name": "世运电路",
+      "fullName": "广东世运电路科技股份有限公司",
+      "ticker": "603920.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "财联社互动易汇总称其批量供货 800G 光模块 PCB，但该页无法打开，没有拿到原文。"
+    },
+    {
+      "name": "中京电子",
+      "fullName": "惠州中京电子科技股份有限公司",
+      "ticker": "002579.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "2023 年称 800G 光模块 PCB 样品通过客户测试，此后无新进展，1.6T 未提。"
+    },
+    {
+      "name": "四会富仕",
+      "fullName": "四会富仕电子科技股份有限公司",
+      "ticker": "300852.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "财富号称有 800G/1.6T 光模块 PCB 口径，但只找到自媒体，未打开公司来源。"
+    },
+    {
+      "name": "有研新材",
+      "fullName": "有研新材料股份有限公司",
+      "ticker": "600206.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "有 InP/锗等光电材料方向（有研光电），被 InP 概念名单列入，但没找到其 InP 衬底供光通信激光器的公司口径。"
+    },
+    {
+      "name": "博威合金",
+      "fullName": "宁波博威合金材料股份有限公司",
+      "ticker": "601137.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "连接器用铜合金带材，是 Amphenol/TE 等的上游材料，离本模块两层以上。"
+    },
+    {
+      "name": "汇成真空",
+      "fullName": "广东汇成真空科技股份有限公司",
+      "ticker": "301392.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "真空镀膜设备（装饰/功能镀），无光学薄膜/光模块设备表述。"
+    },
+    {
+      "name": "石英股份",
+      "fullName": "江苏太平洋石英股份有限公司",
+      "ticker": "603688.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "高纯石英砂/石英管，是光纤预制棒与石英玻璃器件的上游，与 FAU V 槽玻璃/低介电石英布是两层以上的间接关系，未找到直接来源。"
+    },
+    {
+      "name": "光峰科技",
+      "fullName": "深圳光峰科技股份有限公司",
+      "ticker": "688007.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "激光显示/投影，与光通信无关。"
+    },
+    {
+      "name": "苏州天脉",
+      "fullName": "苏州天脉导热科技股份有限公司",
+      "ticker": "301626.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "TIM/均热板面向手机与服务器，市场把它对到光模块散热，但未找到公司口径提到光模块客户。"
+    },
+    {
+      "name": "思泉新材",
+      "fullName": "广东思泉新材料股份有限公司",
+      "ticker": "301489.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "石墨/导热垫片可用于服务器（公司 2025-02 表态），未提光模块。"
+    },
+    {
+      "name": "信维通信",
+      "fullName": "深圳市信维通信股份有限公司",
+      "ticker": "300136.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "参股铌酸锂材料企业，本模块走硅光 MZM 而非 TFLN，且信维主业是天线/无线充电。"
+    },
+    {
+      "name": "博杰股份",
+      "fullName": "珠海博杰电子股份有限公司",
+      "ticker": "002975.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "参股珠海鼎泰（InP 衬底），是 part.cw-laser 材料层的间接候选，参股比例与鼎泰量产状态未核实。"
+    },
+    {
+      "name": "凯格精机",
+      "fullName": "东莞市凯格精机股份有限公司",
+      "ticker": "301338.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "媒体称其 800G 光模块自动化组装线获客户认可并推 1.6T 产线，方向对 part.engine-assembly 设备层，未打开公司来源。"
+    },
+    {
+      "name": "奥特维",
+      "fullName": "无锡奥特维科技股份有限公司",
+      "ticker": "688516.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "媒体称铝线键合机与 AOI 获光模块批量订单（年订单破亿），未打开公司来源。"
+    },
+    {
+      "name": "奥普特",
+      "fullName": "广东奥普特科技股份有限公司",
+      "ticker": "688686.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "机器视觉部件，媒体称与光模块设备厂联合开发固晶/对准工艺设备；年报 PDF 打不开（405）。"
+    },
+    {
+      "name": "凌云光",
+      "fullName": "凌云光技术股份有限公司",
+      "ticker": "688400.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "机器视觉，光模块 AOI 是可能的下游，未找到公司口径。"
+    },
+    {
+      "name": "天准科技",
+      "fullName": "苏州天准科技股份有限公司",
+      "ticker": "688003.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "被列入光模块封装测试设备名单，未找到公司自己的光模块设备表述。"
+    },
+    {
+      "name": "优利德",
+      "fullName": "优利德科技（中国）股份有限公司",
+      "ticker": "688628.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "收购信测通信进入光功率计等光通信仪表，属低端光测试，与 224G 误码/眼图测试差距大。"
+    },
+    {
+      "name": "普源精电",
+      "fullName": "普源精电科技股份有限公司",
+      "ticker": "688337.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "示波器/信号源厂商，媒体称积累光模块头部客户，但其带宽（≤13 GHz 主力）尚不覆盖 224G 眼图，未找到公司口径。"
+    },
+    {
+      "name": "鼎阳科技",
+      "fullName": "深圳市鼎阳科技股份有限公司",
+      "ticker": "688112.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "媒体称光通信客户电源产品收入增 166%，属产线配套电源/仪表，非核心测试设备，未打开公司来源。"
+    },
+    {
+      "name": "日联科技",
+      "fullName": "日联科技股份有限公司",
+      "ticker": "688531.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "X 射线检测设备，收购上海菲莱后有芯片可靠性测试方向，光模块用途未核实。"
+    },
+    {
+      "name": "迈信林",
+      "fullName": "江苏迈信林航空科技股份有限公司",
+      "ticker": "688685.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "航空零部件为主，被列入封装测试设备名单原因未核实。"
+    },
+    {
+      "name": "绿通科技",
+      "fullName": "广东绿通新能源电动车科技股份有限公司",
+      "ticker": "301322.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "场地电动车主业，媒体名单列入光模块设备（跨界收购传闻），未核实。"
+    },
+    {
+      "name": "德龙激光",
+      "fullName": "苏州德龙激光股份有限公司",
+      "ticker": "688170.SH",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [],
+      "why": "激光微加工设备，可能涉及玻璃/晶圆切割，光模块环节未核实。"
+    },
+    {
+      "name": "华西股份",
+      "fullName": "江苏华西村股份有限公司",
+      "ticker": "000936.SZ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "曾为索尔思光电（Source Photonics）少数股东；2025-06 起索尔思 100% 归东山精密，华西不再有这只模块的敞口"
+    },
+    {
+      "name": "万源通",
+      "fullName": "昆山万源通电子科技股份有限公司",
+      "ticker": "920060.BJ",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.pcb"
+      ],
+      "why": ""
+    },
+    {
+      "name": "则成电子",
+      "fullName": "深圳市则成电子股份有限公司",
+      "ticker": "837821.BJ",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.pcb"
+      ],
+      "why": ""
+    },
+    {
+      "name": "凯德石英",
+      "fullName": "北京凯德石英股份有限公司",
+      "ticker": "920179.BJ",
+      "market": "A",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.cw-laser"
+      ],
+      "why": ""
+    },
+    {
+      "name": "鑫宇科技",
+      "fullName": "河南鑫宇光科技股份有限公司",
+      "ticker": null,
+      "market": "私有",
+      "status": "新三板，北交所辅导中",
+      "verdict": "on",
+      "parts": [
+        "part.laser-coupling"
+      ],
+      "why": ""
+    },
+    {
+      "name": "宇特光电",
+      "fullName": "江苏宇特光电科技股份有限公司",
+      "ticker": null,
+      "market": "私有",
+      "status": "北交所 IPO，2026-07 注册稿",
+      "verdict": "on",
+      "parts": [
+        "part.fau",
+        "part.mpo"
+      ],
+      "why": ""
+    },
+    {
+      "name": "云岭光电",
+      "fullName": "武汉云岭光电股份有限公司",
+      "ticker": null,
+      "market": "私有",
+      "status": "新三板，北交所 IPO 2026-06-30 受理",
+      "verdict": "on",
+      "parts": [
+        "part.pd"
+      ],
+      "why": ""
+    },
+    {
+      "name": "强达电路",
+      "fullName": "深圳市强达电路股份有限公司",
+      "ticker": "301628.SZ",
+      "market": "A",
+      "status": "2024-11 创业板上市",
+      "verdict": "on",
+      "parts": [
+        "part.pcb"
+      ],
+      "why": ""
+    },
+    {
+      "name": "维度科技",
+      "fullName": "深圳市维度科技股份有限公司",
+      "ticker": null,
+      "market": "私有",
+      "status": "创业板 IPO，2026-06-05 受理",
+      "verdict": "on",
+      "parts": [
+        "part.fau",
+        "part.module-maker"
+      ],
+      "why": ""
+    },
+    {
+      "name": "猎奇智能",
+      "fullName": "苏州猎奇智能设备股份有限公司",
+      "ticker": null,
+      "market": "私有",
+      "status": "创业板 IPO，2026-07-31 上会",
+      "verdict": "on",
+      "parts": [
+        "part.engine-assembly",
+        "part.module-maker"
+      ],
+      "why": ""
+    },
+    {
+      "name": "粤芯半导体",
+      "fullName": "粤芯半导体技术股份有限公司",
+      "ticker": null,
+      "market": "私有",
+      "status": "创业板 IPO，2026-09-24 申购",
+      "verdict": "on",
+      "parts": [
+        "part.pic"
+      ],
+      "why": ""
+    },
+    {
+      "name": "纳真科技（原海信宽带）",
+      "fullName": "纳真科技公司 Ligent Technologies, Inc.",
+      "ticker": null,
+      "market": "私有",
+      "status": "港交所 IPO，2026-08-30 通过聆讯",
+      "verdict": "on",
+      "parts": [
+        "part.module-maker",
+        "part.cw-laser"
+      ],
+      "why": ""
+    },
+    {
+      "name": "海光芯正",
+      "fullName": "北京海光芯正科技股份有限公司 Crealights Technology Co., Ltd.",
+      "ticker": "1191.HK",
+      "market": "HK",
+      "status": "2026-06 全球发售",
+      "verdict": "on",
+      "parts": [
+        "part.module-maker",
+        "part.pic"
+      ],
+      "why": ""
+    },
+    {
+      "name": "长进光子",
+      "fullName": "武汉长进光子技术股份有限公司",
+      "ticker": "688635.SH",
+      "market": "A",
+      "status": "2026-05 科创板上市",
+      "verdict": "pending",
+      "parts": [
+        "part.laser-coupling"
+      ],
+      "why": "方向对（保偏光纤是 Fujikura 在本模块的位置），但公司文件没把产品对到光模块/硅光"
+    },
+    {
+      "name": "矽电股份",
+      "fullName": "矽电半导体设备（深圳）股份有限公司",
+      "ticker": "301629.SZ",
+      "market": "A",
+      "status": "2025 创业板上市",
+      "verdict": "pending",
+      "parts": [
+        "part.pd"
+      ],
+      "why": "设备能力对到 InP 光芯片测试，与硅光 DR8 的 Ge PD 无直接对应"
+    },
+    {
+      "name": "卓兆点胶",
+      "fullName": "苏州卓兆点胶股份有限公司",
+      "ticker": "920026.BJ",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.engine-assembly"
+      ],
+      "why": "点胶是光引擎组装的必经工序，但公司自身没有任何光模块披露"
+    },
+    {
+      "name": "晶赛科技",
+      "fullName": "安徽晶赛科技股份有限公司",
+      "ticker": "920981.BJ",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.power-mgmt"
+      ],
+      "why": "只有概念名单与研报点名，无公司口径的光模块披露"
+    },
+    {
+      "name": "中科光芯",
+      "fullName": "福建中科光芯光电科技有限公司",
+      "ticker": null,
+      "market": "私有",
+      "status": "Pre-IPO，拟科创板；跃岭股份参股",
+      "verdict": "pending",
+      "parts": [
+        "part.cw-laser"
+      ],
+      "why": "方向对但只有自媒体来源，且尚无申报材料；关注其 IPO 受理后招股书"
+    },
+    {
+      "name": "天马新材",
+      "fullName": "河南天马新材料股份有限公司",
+      "ticker": "838971.BJ",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.lid-thermal"
+      ],
+      "why": "只是 TIM 填料的二级上游，没有可打开的公司来源"
+    },
+    {
+      "name": "戈碧迦",
+      "fullName": null,
+      "ticker": "835438.BJ",
+      "market": "A",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.laser-coupling"
+      ],
+      "why": "没有可打开的来源把它对到光模块"
+    },
+    {
+      "name": "金戈新材",
+      "fullName": "广东金戈新材料股份有限公司",
+      "ticker": "920083.BJ",
+      "market": "A",
+      "status": "2026-06 北交所上市",
+      "verdict": "off",
+      "parts": [
+        "part.lid-thermal"
+      ],
+      "why": "招股书未提光模块，且是 TIM 填料的二级上游，价值量与本模块无直接对应"
+    },
+    {
+      "name": "格利尔",
+      "fullName": "格利尔数码科技股份有限公司",
+      "ticker": "831641.BJ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [
+        "part.module-maker"
+      ],
+      "why": "LED 照明+磁性器件，可见光通信概念，不在光模块产业链"
+    },
+    {
+      "name": "新芯股份",
+      "fullName": "武汉新芯集成电路股份有限公司",
+      "ticker": null,
+      "market": "私有",
+      "status": "科创板 IPO 在审",
+      "verdict": "off",
+      "parts": [
+        "part.pic"
+      ],
+      "why": "招股书无硅光平台，不是硅光代工候选"
+    },
+    {
+      "name": "芯迈半导体",
+      "fullName": "芯迈半导体技术（杭州）股份有限公司",
+      "ticker": null,
+      "market": "私有",
+      "status": "2026-07 第三次递表",
+      "verdict": "off",
+      "parts": [
+        "part.power-mgmt"
+      ],
+      "why": "无光模块相关披露；模块内 PMIC 仍是 MPS/TI 的位置"
+    },
+    {
+      "name": "曦智科技",
+      "fullName": "上海曦智科技股份有限公司",
+      "ticker": "1879.HK",
+      "market": "HK",
+      "status": "2026-04-29 上市",
+      "verdict": "off",
+      "parts": [
+        "part.pic"
+      ],
+      "why": "光计算/超节点路线，不供本模块任何部件"
+    },
+    {
+      "name": "江南新材",
+      "fullName": "江西江南新材料科技股份有限公司",
+      "ticker": "603124.SH",
+      "market": "A",
+      "status": "2025 沪主板上市",
+      "verdict": "off",
+      "parts": [],
+      "why": "PCB 电镀用铜球/氧化铜粉，是 PCB 厂的耗材级二级上游，不对应模块任何部件；rev_A 未覆盖故记一笔"
+    },
+    {
+      "name": "富士达",
+      "fullName": "西安富士达科技股份有限公司",
+      "ticker": "835640.BJ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "射频同轴连接器/电缆组件（军工、5G），不做 OSFP 高速连接器或光连接"
+    },
+    {
+      "name": "曙光数创",
+      "fullName": "曙光数据基础设施创新技术股份有限公司",
+      "ticker": "872808.BJ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "浸没/冷板液冷基础设施，在交换机/机柜层面，不在模块内部散热件"
+    },
+    {
+      "name": "华岭股份",
+      "fullName": "上海华岭集成电路技术股份有限公司",
+      "ticker": "430139.BJ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "集成电路晶圆/成品测试服务，未见光芯片或 DSP 测试业务披露"
+    },
+    {
+      "name": "凯华材料",
+      "fullName": "江苏凯华材料股份有限公司",
+      "ticker": "831526.BJ",
+      "market": "A",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "环氧塑封料，本模块 DSP/Driver/TIA 为 BGA/倒装裸片路线，不用其塑封料；东财把它列入北证半导体概念"
+    },
+    {
+      "name": "宸芯科技",
+      "fullName": "宸芯科技股份有限公司",
+      "ticker": null,
+      "market": "私有",
+      "status": "创业板 IPO 辅导验收",
+      "verdict": "off",
+      "parts": [],
+      "why": "无线通信 SoC/模组，2026-05 报道被冠以“千亿芯片小巨人 IPO”，与光通信无关"
+    },
+    {
+      "name": "芯视界",
+      "fullName": "南京芯视界微电子科技有限公司",
+      "ticker": null,
+      "market": "私有",
+      "status": "2026-07 A 股辅导备案",
+      "verdict": "off",
+      "parts": [],
+      "why": "SPAD 单光子 dToF 传感芯片（激光雷达/测距），与“光芯片 IPO”新闻同列但不属光通信"
+    },
+    {
+      "name": "MaxLinear",
+      "fullName": "MaxLinear, Inc.",
+      "ticker": "MXL",
+      "market": "US",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.dsp",
+        "part.tia"
+      ],
+      "why": ""
+    },
+    {
+      "name": "Jabil",
+      "fullName": "Jabil Inc.",
+      "ticker": "JBL",
+      "market": "US",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.module-maker",
+        "part.pic"
+      ],
+      "why": ""
+    },
+    {
+      "name": "Intel",
+      "fullName": "Intel Corporation",
+      "ticker": "INTC",
+      "market": "US",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "硅光可插拔模块产品线 2023 年已整体转给 Jabil（见 Jabil 官网 2023-10-30 新闻稿），Intel 不再以模块厂身份站在这只模块上；其硅光引擎/PIC 通过 Jabil 模块体现，见 Jabil 条目。"
+    },
+    {
+      "name": "Sicoya",
+      "fullName": "Sicoya GmbH",
+      "ticker": null,
+      "market": "私有",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.pic"
+      ],
+      "why": ""
+    },
+    {
+      "name": "TeraSignal",
+      "fullName": "TeraSignal, Inc.",
+      "ticker": null,
+      "market": "私有",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.tia"
+      ],
+      "why": ""
+    },
+    {
+      "name": "Sitrus",
+      "fullName": "Sitrus Technology",
+      "ticker": null,
+      "market": "私有",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.driver"
+      ],
+      "why": "找不到可打开的官网或新闻稿证实其 200G/lane Driver/TIA 产品。"
+    },
+    {
+      "name": "Renesas",
+      "fullName": "Renesas Electronics Corporation",
+      "ticker": "6723.T",
+      "market": "JP",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.tia"
+      ],
+      "why": "有 datacom TIA 产品线但没有 200G/lane / 1.6T 的公开证据。"
+    },
+    {
+      "name": "DustPhotonics（Credo 收购）",
+      "fullName": "DustPhotonics Ltd.",
+      "ticker": "CRDO",
+      "market": "IL",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.pic"
+      ],
+      "why": ""
+    },
+    {
+      "name": "STMicroelectronics",
+      "fullName": "STMicroelectronics N.V.",
+      "ticker": "STM",
+      "market": "US",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.pic"
+      ],
+      "why": ""
+    },
+    {
+      "name": "Sivers Semiconductors（Sivers Photonics）",
+      "fullName": "Sivers Semiconductors AB",
+      "ticker": "SIVE.ST",
+      "market": "SE",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.cw-laser"
+      ],
+      "why": ""
+    },
+    {
+      "name": "上詮 FOCI",
+      "fullName": "Fiber Optic Communications, Inc.",
+      "ticker": "3363.TWO",
+      "market": "TW",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.fau"
+      ],
+      "why": ""
+    },
+    {
+      "name": "波若威 Browave",
+      "fullName": "Browave Corporation",
+      "ticker": "3163.TWO",
+      "market": "TW",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.fau",
+        "part.laser-coupling"
+      ],
+      "why": ""
+    },
+    {
+      "name": "光聖 Light Saint",
+      "fullName": "光聖科技股份有限公司",
+      "ticker": "6442.TW",
+      "market": "TW",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "主力是高芯数光纤跳线/预端接光缆（机柜间外部连接层）与 RF 连接器，不在模块内部；来源：DA Labs 2026-05-11「光聖的主力高芯數光纖跳線，屬於外部連接層，負責機櫃間、伺服器間的光訊號橋接」(https://dalabs.org/guide/tw-stock-guide/what-is-6442-doing/)。"
+    },
+    {
+      "name": "聯鈞 UPI",
+      "fullName": "聯鈞光電股份有限公司",
+      "ticker": "3450.TW",
+      "market": "TW",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.engine-assembly"
+      ],
+      "why": "方向是光引擎/激光封装代工，但 1.6T 硅光相关证据缺失。"
+    },
+    {
+      "name": "聯亞 LandMark",
+      "fullName": "LandMark Optoelectronics Corporation",
+      "ticker": "3081.TWO",
+      "market": "TW",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.cw-laser"
+      ],
+      "why": ""
+    },
+    {
+      "name": "光環 TrueLight",
+      "fullName": "光環科技股份有限公司",
+      "ticker": "3234.TWO",
+      "market": "TW",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.cw-laser"
+      ],
+      "why": ""
+    },
+    {
+      "name": "華星光 LuxNet",
+      "fullName": "LuxNet Corporation",
+      "ticker": "4979.TWO",
+      "market": "TW",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.engine-assembly"
+      ],
+      "why": ""
+    },
+    {
+      "name": "全新光電 VPEC",
+      "fullName": "Visual Photonics Epitaxy Co., Ltd.",
+      "ticker": "2455.TW",
+      "market": "TW",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.cw-laser"
+      ],
+      "why": ""
+    },
+    {
+      "name": "英特磊 IntelliEPI",
+      "fullName": "IntelliEPI Inc. (Cayman)",
+      "ticker": "4971.TWO",
+      "market": "TW",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.cw-laser"
+      ],
+      "why": ""
+    },
+    {
+      "name": "IQE",
+      "fullName": "IQE plc",
+      "ticker": "IQE.L",
+      "market": "UK",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.pic"
+      ],
+      "why": ""
+    },
+    {
+      "name": "Hamamatsu",
+      "fullName": "Hamamatsu Photonics K.K.",
+      "ticker": "6965.T",
+      "market": "JP",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "DR8 硅光方案的 PD 是 PIC 上外延的 Ge PD，不用分立 InGaAs PD；且 Hamamatsu 官网高速 InGaAs PIN PD 只到 64 Gbps（https://www.hamamatsu.com/eu/en/news/featured-products_and_technologies/2024/meeting-optical-communication-demands.html：\"demonstrates reliable performance in transmission bands up to 64 Gbps\"）。"
+    },
+    {
+      "name": "Kyoto Semiconductor",
+      "fullName": "京都セミコンダクター株式会社",
+      "ticker": null,
+      "market": "私有",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "分立 InGaAs PD 厂，公开产品到 25/56 Gbaud（Semtech 官网 2021-08-05 新闻稿：\"Semtech's GN1089 is a high performance transimpedance amplifier enabling both 25Gbaud and 56Gbaud applications\"），硅光 DR8 用片上 Ge PD，不需要。"
+    },
+    {
+      "name": "Albis Optoelectronics",
+      "fullName": "Albis Optoelectronics AG",
+      "ticker": null,
+      "market": "私有",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "官网技术页 InGaAs pin PD 只到 40 Gb/s（https://www.albisopto.com/technology/：\"1 Gb/s to 40 Gb/s\"），且硅光 DR8 用片上 Ge PD。"
+    },
+    {
+      "name": "NTT Innovative Devices",
+      "fullName": "NTT Innovative Devices Corporation",
+      "ticker": null,
+      "market": "私有",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "官网产品页（https://www.ntt-innovative-devices.com/en/optical_communications/optical_electrical.html）主打高功率 EML 与 APD、PON TIA，EML \"10GBaud, 25GBaud* and 50GBaud* (*planning)\"，没有 200G/lane 或硅光用 CW/驱动产品。"
+    },
+    {
+      "name": "Kyocera",
+      "fullName": "京セラ株式会社",
+      "ticker": "6971.T",
+      "market": "JP",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.laser-coupling"
+      ],
+      "why": ""
+    },
+    {
+      "name": "Shinko Electric",
+      "fullName": "新光電気工業株式会社",
+      "ticker": "6967.T",
+      "market": "JP",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "官网光芯粒/CPO 封装页标注 \"(under development)\"，且面向 xPU 共封装，无可插拔模块业务（https://www.shinko.co.jp/english/product/package/assembly/cpo1.php）。"
+    },
+    {
+      "name": "日月光 ASE",
+      "fullName": "ASE Technology Holding Co., Ltd.",
+      "ticker": "3711.TW",
+      "market": "TW",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.engine-assembly"
+      ],
+      "why": ""
+    },
+    {
+      "name": "Furukawa Electric",
+      "fullName": "古河電気工業株式会社",
+      "ticker": "5801.T",
+      "market": "JP",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.cw-laser"
+      ],
+      "why": ""
+    },
+    {
+      "name": "santec",
+      "fullName": "santec Holdings Corporation",
+      "ticker": "6777.T",
+      "market": "JP",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.pic"
+      ],
+      "why": ""
+    },
+    {
+      "name": "Yokogawa",
+      "fullName": "横河電機株式会社",
+      "ticker": "6841.T",
+      "market": "JP",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.module-maker"
+      ],
+      "why": "通用光测试仪器，没有 1.6T / 光模块产线的直接来源。"
+    },
+    {
+      "name": "Shin-Etsu Chemical",
+      "fullName": "信越化学工業株式会社",
+      "ticker": "4063.T",
+      "market": "JP",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.pic"
+      ],
+      "why": "有 SOI 但没有硅光用 SOI 的公开证据。"
+    },
+    {
+      "name": "SUMCO",
+      "fullName": "株式会社SUMCO",
+      "ticker": "3436.T",
+      "market": "JP",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.pic"
+      ],
+      "why": "无可打开的官方来源证明其供硅光 SOI。"
+    },
+    {
+      "name": "Kulicke & Soffa",
+      "fullName": "Kulicke and Soffa Industries, Inc.",
+      "ticker": "KLIC",
+      "market": "US",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.engine-assembly"
+      ],
+      "why": ""
+    },
+    {
+      "name": "Besi",
+      "fullName": "BE Semiconductor Industries N.V.",
+      "ticker": "BESI.AS",
+      "market": "NL",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.engine-assembly"
+      ],
+      "why": "有方向但官网无 photonics 字样，演讲材料打不开。"
+    },
+    {
+      "name": "Disco",
+      "fullName": "株式会社ディスコ",
+      "ticker": "6146.T",
+      "market": "JP",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.pic"
+      ],
+      "why": "通用后道设备，无硅光专属来源。"
+    },
+    {
+      "name": "Laird（DuPont）",
+      "fullName": "Laird Performance Materials（DuPont de Nemours 旗下）",
+      "ticker": "DD",
+      "market": "US",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.lid-thermal"
+      ],
+      "why": ""
+    },
+    {
+      "name": "Parker Chomerics",
+      "fullName": "Parker-Hannifin Corporation (Chomerics Division)",
+      "ticker": "PH",
+      "market": "US",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.lid-thermal"
+      ],
+      "why": ""
+    },
+    {
+      "name": "華通 Compeq",
+      "fullName": "Compeq Manufacturing Co., Ltd.",
+      "ticker": "2313.TW",
+      "market": "TW",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.pcb"
+      ],
+      "why": ""
+    },
+    {
+      "name": "欣興 Unimicron",
+      "fullName": "Unimicron Technology Corp.",
+      "ticker": "3037.TW",
+      "market": "TW",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.pcb"
+      ],
+      "why": "只有媒体「可望受惠」级别的表述，无量产证据。"
+    },
+    {
+      "name": "臻鼎-KY ZDT",
+      "fullName": "Zhen Ding Technology Holding Limited",
+      "ticker": "4958.TW",
+      "market": "TW",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.pcb"
+      ],
+      "why": "只有媒体受益名单，无量产/客户证据。"
+    },
+    {
+      "name": "健鼎 Tripod",
+      "fullName": "Tripod Technology Corporation",
+      "ticker": "3044.TW",
+      "market": "TW",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.pcb"
+      ],
+      "why": "找不到光模块 PCB 的来源。"
+    },
+    {
+      "name": "台燿 TUC",
+      "fullName": "Taiwan Union Technology Corporation",
+      "ticker": "6274.TW",
+      "market": "TW",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.pcb"
+      ],
+      "why": ""
+    },
+    {
+      "name": "聯茂 ITEQ",
+      "fullName": "ITEQ Corporation",
+      "ticker": "6213.TW",
+      "market": "TW",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.pcb"
+      ],
+      "why": "只有交换器 CCL 的来源，光模块 PCB 材料无证据。"
+    },
+    {
+      "name": "前鼎 Prime World",
+      "fullName": "前鼎光電股份有限公司",
+      "ticker": "4908.TWO",
+      "market": "TW",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.module-maker"
+      ],
+      "why": "模块厂但停留在 400G/800G，1.6T 硅光无证据。"
+    },
+    {
+      "name": "眾達-KY",
+      "fullName": "眾達-KY（Cayman）",
+      "ticker": "4977.TW",
+      "market": "TW",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.module-maker"
+      ],
+      "why": "800G 模块厂，1.6T 硅光证据缺失。"
+    },
+    {
+      "name": "智邦 Accton",
+      "fullName": "Accton Technology Corporation",
+      "ticker": "2345.TW",
+      "market": "TW",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.host-cage"
+      ],
+      "why": "官网抓取被拒，未拿到来源。"
+    },
+    {
+      "name": "Seikoh Giken",
+      "fullName": "株式会社精工技研",
+      "ticker": "6834.T",
+      "market": "JP",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.mpo"
+      ],
+      "why": ""
+    },
+    {
+      "name": "Hakusan",
+      "fullName": "白山工業株式会社",
+      "ticker": null,
+      "market": "私有",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.mpo"
+      ],
+      "why": ""
+    },
+    {
+      "name": "Sumitomo Electric（FAU）",
+      "fullName": "住友電気工業株式会社",
+      "ticker": "5802.T",
+      "market": "JP",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.fau"
+      ],
+      "why": ""
+    },
+    {
+      "name": "Orbray（原 Adamant Namiki）",
+      "fullName": "Orbray Co., Ltd.",
+      "ticker": null,
+      "market": "私有",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.fau"
+      ],
+      "why": ""
+    },
+    {
+      "name": "Teramount",
+      "fullName": "Teramount Ltd.",
+      "ticker": null,
+      "market": "IL",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.fau"
+      ],
+      "why": "产品是 FAU 的替代路线且以 CPO 为主，未见用于可插拔 DR8 模块。"
+    },
+    {
+      "name": "OpenLight",
+      "fullName": "OpenLight Photonics, Inc.",
+      "ticker": null,
+      "market": "私有",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.pic"
+      ],
+      "why": "是 1.6T DR8 PIC 但采用片上集成激光的替代架构，非本模块的 CW+PIC 路线。"
+    },
+    {
+      "name": "Ciena（含 Nubis）",
+      "fullName": "Ciena Corporation",
+      "ticker": "CIEN",
+      "market": "US",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "收购 Nubis 后推出的是 Vesta 200 6.4T CPO 引擎（线性驱动、无重定时），面向共封装而非 DSP 可插拔模块（https://www.ciena.com/about/newsroom/press-releases/ciena-unveils-the-industrys-highest-density-lowest-power-pluggable-optical-engine-to-meet-data-center-ai-demands，2026-02-25：\"Features retimer-free linear-drive operation\"）。"
+    },
+    {
+      "name": "POET Technologies",
+      "fullName": "POET Technologies Inc.",
+      "ticker": "POET",
+      "market": "US",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "Teralight 1.6T 引擎基于光学中介层 + EML 发射（官网：\"Highly integrated optical system-on-chip solutions that can enable a 1.6T pluggable transceiver with just two chips (Tx and Rx)\"，https://www.poet-technologies.com/products/poet-teralight），是 EML 路线的竞争方案，不在硅光 DR8 上。"
+    },
+    {
+      "name": "FormFactor",
+      "fullName": "FormFactor, Inc.",
+      "ticker": "FORM",
+      "market": "US",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.pic"
+      ],
+      "why": ""
+    },
+    {
+      "name": "Qualcomm（Alphawave）",
+      "fullName": "Qualcomm Incorporated",
+      "ticker": "QCOM",
+      "market": "US",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.dsp"
+      ],
+      "why": ""
+    },
+    {
+      "name": "Wooriro",
+      "fullName": "Wooriro Co., Ltd.",
+      "ticker": "046970.KQ",
+      "market": "KR",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.pd"
+      ],
+      "why": "来源打不开，且分立 InP PD 与硅光 DR8 关联弱。"
+    },
+    {
+      "name": "Lightron",
+      "fullName": "Lightron Inc.",
+      "ticker": "069540.KQ",
+      "market": "KR",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.module-maker"
+      ],
+      "why": "无 1.6T 相关来源。"
+    },
+    {
+      "name": "舜宇光學 Sunny Optical",
+      "fullName": "Sunny Optical Technology (Group) Co., Ltd.",
+      "ticker": "2382.HK",
+      "market": "HK",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.fau"
+      ],
+      "why": "FAU/微透镜仍在送样，规模供货要到 2027。"
+    },
+    {
+      "name": "鴻騰精密 FIT",
+      "fullName": "Foxconn Interconnect Technology Limited",
+      "ticker": "6088.HK",
+      "market": "HK",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.host-cage"
+      ],
+      "why": ""
+    },
+    {
+      "name": "Yamaichi Electronics",
+      "fullName": "山一電機株式会社",
+      "ticker": "6941.T",
+      "market": "JP",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.host-cage"
+      ],
+      "why": ""
+    },
+    {
+      "name": "Nokia（Infinera）",
+      "fullName": "Nokia Oyj",
+      "ticker": "NOK",
+      "market": "US",
+      "status": null,
+      "verdict": "off",
+      "parts": [],
+      "why": "ICE-D 数据中心内光模块基于单片 InP PIC（官网：\"Based on monolithic indium phosphide (InP) photonic integrated circuit (PIC) technology\"，https://www.nokia.com/optical-networks/ice-d-intra-datacenter/），是 InP 路线的竞争模块，不在这只硅光模块的任何部件上。"
+    },
+    {
+      "name": "MultiLane",
+      "fullName": "MultiLane Inc.",
+      "ticker": null,
+      "market": "私有",
+      "status": null,
+      "verdict": "on",
+      "parts": [
+        "part.module-maker"
+      ],
+      "why": ""
+    },
+    {
+      "name": "Amkor",
+      "fullName": "Amkor Technology, Inc.",
+      "ticker": "AMKR",
+      "market": "US",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.engine-assembly"
+      ],
+      "why": "无可插拔硅光引擎封装的来源。"
+    },
+    {
+      "name": "華虹 Hua Hong",
+      "fullName": "Hua Hong Semiconductor Limited",
+      "ticker": "1347.HK",
+      "market": "HK",
+      "status": null,
+      "verdict": "pending",
+      "parts": [
+        "part.pic"
+      ],
+      "why": "找不到华虹硅光代工的任何来源。"
+    }
+  ]
+}

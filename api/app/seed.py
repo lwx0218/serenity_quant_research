@@ -174,15 +174,52 @@ def import_seed(conn: sqlite3.Connection, seed_dir: Path = SEED_DIR, include_sam
     return counts
 
 
+INGEST_TABLES = ("bars", "margin", "holders", "valuation_daily", "candidates", "ingest_runs", "ingest_todo")
+
+
 def rebuild(db_path: Path = DB_PATH, seed_dir: Path = SEED_DIR, include_sample: bool = True) -> dict[str, int]:
+    """Drop and recreate from the seeds. Ingested facts (bars, candidates, …) are
+    carried over: they are not seeds, they are what was fetched."""
+    from .ingest.schema import ensure_schema as ensure_ingest_schema
     db_path = Path(db_path)
+    keep = db_path.with_name(db_path.stem + ".ingest-keep.sqlite")
+    kept = False
     if db_path.exists():
+        conn = connect(db_path)
+        try:
+            ensure_ingest_schema(conn)
+            if keep.exists():
+                keep.unlink()
+            conn.execute("ATTACH DATABASE ? AS keep", (str(keep),))
+            for t in INGEST_TABLES:
+                conn.execute(f"CREATE TABLE keep.{t} AS SELECT * FROM {t}")
+            conn.commit()
+            conn.execute("DETACH DATABASE keep")
+            kept = True
+        finally:
+            conn.close()
         db_path.unlink()
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = connect(db_path)
     try:
         init_schema(conn)
-        return import_seed(conn, seed_dir, include_sample=include_sample)
+        ensure_ingest_schema(conn)
+        counts = import_seed(conn, seed_dir, include_sample=include_sample)
+        if kept:
+            conn.execute("ATTACH DATABASE ? AS keep", (str(keep),))
+            for t in INGEST_TABLES:
+                conn.execute(f"INSERT OR IGNORE INTO {t} SELECT * FROM keep.{t}")
+            conn.commit()
+            conn.execute("DETACH DATABASE keep")
+            keep.unlink()
+            n_bars = conn.execute("SELECT COUNT(*) FROM bars").fetchone()[0]
+            counts["ingest_restored_bars"] = n_bars
+            if n_bars:
+                from .ingest import crowding as CR
+                from .ingest import recompute
+                counts.update(recompute.recompute_all(conn))
+                counts.update(CR.rebuild_crowding(conn))
+        return counts
     finally:
         conn.close()
 

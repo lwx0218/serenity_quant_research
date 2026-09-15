@@ -2,10 +2,10 @@
   "$comment": "physical/ 里出现、而 data/seeds/cpo 还没有主数据的公司。coveragePriority=physical 表示来自实物拆解映射;ticker 为交易所本地代码(与 cpo seed 一致),未上市为 null。",
   "companies": [
     {
-      "id": "cn.000936",
-      "name": "江苏华西村股份有限公司",
-      "shortName": "华西股份",
-      "ticker": "000936",
+      "id": "cn.001267",
+      "name": "汇绿生态科技集团股份有限公司",
+      "shortName": "汇绿生态",
+      "ticker": "001267",
       "exchange": "SZSE",
       "countryRegion": "中国",
       "universeLayer": "a_share_focus",
@@ -42,10 +42,30 @@
       "coveragePriority": "physical"
     },
     {
+      "id": "cn.002436",
+      "name": "深圳市兴森快捷电路科技股份有限公司",
+      "shortName": "兴森科技",
+      "ticker": "002436",
+      "exchange": "SZSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
       "id": "cn.002475",
       "name": "立讯精密工业股份有限公司",
       "shortName": "立讯精密",
       "ticker": "002475",
+      "exchange": "SZSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.002815",
+      "name": "崇达技术股份有限公司",
+      "shortName": "崇达技术",
+      "ticker": "002815",
       "exchange": "SZSE",
       "countryRegion": "中国",
       "universeLayer": "a_share_focus",
@@ -62,10 +82,40 @@
       "coveragePriority": "physical"
     },
     {
+      "id": "cn.002957",
+      "name": "深圳科瑞技术股份有限公司",
+      "shortName": "科瑞技术",
+      "ticker": "002957",
+      "exchange": "SZSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.002980",
+      "name": "深圳市华盛昌科技实业股份有限公司",
+      "shortName": "华盛昌",
+      "ticker": "002980",
+      "exchange": "SZSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
       "id": "cn.003031",
       "name": "河北中瓷电子科技股份有限公司",
       "shortName": "中瓷电子",
       "ticker": "003031",
+      "exchange": "SZSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.300115",
+      "name": "深圳市长盈精密技术股份有限公司",
+      "shortName": "长盈精密",
+      "ticker": "300115",
       "exchange": "SZSE",
       "countryRegion": "中国",
       "universeLayer": "a_share_focus",
@@ -132,11 +182,71 @@
       "coveragePriority": "physical"
     },
     {
+      "id": "cn.300857",
+      "name": "协创数据技术股份有限公司",
+      "shortName": "协创数据",
+      "ticker": "300857",
+      "exchange": "SZSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.301196",
+      "name": "厦门唯科模塑科技股份有限公司",
+      "shortName": "唯科科技",
+      "ticker": "301196",
+      "exchange": "SZSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
       "id": "cn.301205",
       "name": "武汉联特科技股份有限公司",
       "shortName": "联特科技",
       "ticker": "301205",
       "exchange": "SZSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.301312",
+      "name": "深圳市智立方自动化设备股份有限公司",
+      "shortName": "智立方",
+      "ticker": "301312",
+      "exchange": "SZSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.301486",
+      "name": "深圳市致尚科技股份有限公司",
+      "shortName": "致尚科技",
+      "ticker": "301486",
+      "exchange": "SZSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.301628",
+      "name": "深圳市强达电路股份有限公司",
+      "shortName": "强达电路",
+      "ticker": "301628",
+      "exchange": "SZSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.600105",
+      "name": "江苏永鼎股份有限公司",
+      "shortName": "永鼎股份",
+      "ticker": "600105",
+      "exchange": "SSE",
       "countryRegion": "中国",
       "universeLayer": "a_share_focus",
       "coveragePriority": "physical"
@@ -162,10 +272,40 @@
       "coveragePriority": "physical"
     },
     {
+      "id": "cn.600522",
+      "name": "江苏中天科技股份有限公司",
+      "shortName": "中天科技",
+      "ticker": "600522",
+      "exchange": "SSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.600601",
+      "name": "方正科技集团股份有限公司",
+      "shortName": "方正科技",
+      "ticker": "600601",
+      "exchange": "SSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
       "id": "cn.600703",
       "name": "三安光电股份有限公司",
       "shortName": "三安光电",
       "ticker": "600703",
+      "exchange": "SSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.601231",
+      "name": "环旭电子股份有限公司",
+      "shortName": "环旭电子",
+      "ticker": "601231",
       "exchange": "SSE",
       "countryRegion": "中国",
       "universeLayer": "a_share_focus",
@@ -192,10 +332,100 @@
       "coveragePriority": "physical"
     },
     {
+      "id": "cn.603228",
+      "name": "深圳市景旺电子股份有限公司",
+      "shortName": "景旺电子",
+      "ticker": "603228",
+      "exchange": "SSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.603459",
+      "name": "江西红板科技股份有限公司",
+      "shortName": "红板科技",
+      "ticker": "603459",
+      "exchange": "SSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.603986",
+      "name": "北京兆易创新科技股份有限公司",
+      "shortName": "兆易创新",
+      "ticker": "603986",
+      "exchange": "SSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.688001",
+      "name": "苏州华兴源创科技股份有限公司",
+      "shortName": "华兴源创",
+      "ticker": "688001",
+      "exchange": "SSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.688025",
+      "name": "深圳市杰普特光电股份有限公司",
+      "shortName": "杰普特",
+      "ticker": "688025",
+      "exchange": "SSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.688097",
+      "name": "博众精工科技股份有限公司",
+      "shortName": "博众精工",
+      "ticker": "688097",
+      "exchange": "SSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
       "id": "cn.688126",
       "name": "上海硅产业集团股份有限公司",
       "shortName": "沪硅产业",
       "ticker": "688126",
+      "exchange": "SSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.688127",
+      "name": "浙江蓝特光学股份有限公司",
+      "shortName": "蓝特光学",
+      "ticker": "688127",
+      "exchange": "SSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.688167",
+      "name": "西安炬光科技股份有限公司",
+      "shortName": "炬光科技",
+      "ticker": "688167",
+      "exchange": "SSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.688183",
+      "name": "生益电子股份有限公司",
+      "shortName": "生益电子",
+      "ticker": "688183",
       "exchange": "SSE",
       "countryRegion": "中国",
       "universeLayer": "a_share_focus",
@@ -212,10 +442,70 @@
       "coveragePriority": "physical"
     },
     {
+      "id": "cn.688205",
+      "name": "无锡市德科立光电子技术股份有限公司",
+      "shortName": "德科立",
+      "ticker": "688205",
+      "exchange": "SSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.688312",
+      "name": "深圳市燕麦科技股份有限公司",
+      "shortName": "燕麦科技",
+      "ticker": "688312",
+      "exchange": "SSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
       "id": "cn.688629",
       "name": "四川华丰科技股份有限公司",
       "shortName": "华丰科技",
       "ticker": "688629",
+      "exchange": "SSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.688668",
+      "name": "东莞市鼎通精密科技股份有限公司",
+      "shortName": "鼎通科技",
+      "ticker": "688668",
+      "exchange": "SSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.688766",
+      "name": "普冉半导体（上海）股份有限公司",
+      "shortName": "普冉股份",
+      "ticker": "688766",
+      "exchange": "SSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.688807",
+      "name": "优迅股份",
+      "shortName": "优迅股份",
+      "ticker": "688807",
+      "exchange": "SSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.688808",
+      "name": "苏州联讯仪器股份有限公司",
+      "shortName": "联讯仪器",
+      "ticker": "688808",
       "exchange": "SSE",
       "countryRegion": "中国",
       "universeLayer": "a_share_focus",
@@ -232,10 +522,40 @@
       "coveragePriority": "physical"
     },
     {
+      "id": "cn.837821",
+      "name": "深圳市则成电子股份有限公司",
+      "shortName": "则成电子",
+      "ticker": "837821",
+      "exchange": "BSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
       "id": "cn.920045",
       "name": "蘅东光通讯技术(深圳)股份有限公司",
       "shortName": "蘅东光",
       "ticker": "920045",
+      "exchange": "BSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.920060",
+      "name": "昆山万源通电子科技股份有限公司",
+      "shortName": "万源通",
+      "ticker": "920060",
+      "exchange": "BSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.920179",
+      "name": "北京凯德石英股份有限公司",
+      "shortName": "凯德石英",
+      "ticker": "920179",
       "exchange": "BSE",
       "countryRegion": "中国",
       "universeLayer": "a_share_focus",
@@ -282,6 +602,16 @@
       "coveragePriority": "physical"
     },
     {
+      "id": "global.ase",
+      "name": "ASE Technology Holding Co., Ltd.",
+      "shortName": "日月光 ASE",
+      "ticker": "3711",
+      "exchange": "TWSE",
+      "countryRegion": "中国台湾",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
       "id": "global.asmpt",
       "name": "ASMPT Limited",
       "shortName": "ASMPT",
@@ -302,6 +632,16 @@
       "coveragePriority": "physical"
     },
     {
+      "id": "global.browave",
+      "name": "Browave Corporation",
+      "shortName": "波若威 Browave",
+      "ticker": "3163",
+      "exchange": "TPEx",
+      "countryRegion": "中国台湾",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
       "id": "global.celestica",
       "name": "Celestica Inc.",
       "shortName": "Celestica",
@@ -312,12 +652,32 @@
       "coveragePriority": "physical"
     },
     {
+      "id": "global.compeq",
+      "name": "Compeq Manufacturing Co., Ltd.",
+      "shortName": "華通 Compeq",
+      "ticker": "2313",
+      "exchange": "TWSE",
+      "countryRegion": "中国台湾",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
       "id": "global.corning",
       "name": "Corning Incorporated",
       "shortName": "Corning",
       "ticker": "GLW",
       "exchange": "NYSE",
       "countryRegion": "美国",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "global.crealights-technology",
+      "name": "北京海光芯正科技股份有限公司 Crealights Technology Co., Ltd.",
+      "shortName": "海光芯正",
+      "ticker": "1191",
+      "exchange": "HKEX",
+      "countryRegion": "中国香港",
       "universeLayer": "global_anchor",
       "coveragePriority": "physical"
     },
@@ -342,10 +702,50 @@
       "coveragePriority": "physical"
     },
     {
+      "id": "global.fit",
+      "name": "Foxconn Interconnect Technology Limited",
+      "shortName": "鴻騰精密 FIT",
+      "ticker": "6088",
+      "exchange": "HKEX",
+      "countryRegion": "中国香港",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "global.foci",
+      "name": "Fiber Optic Communications, Inc.",
+      "shortName": "上詮 FOCI",
+      "ticker": "3363",
+      "exchange": "TPEx",
+      "countryRegion": "中国台湾",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "global.formfactor",
+      "name": "FormFactor, Inc.",
+      "shortName": "FormFactor",
+      "ticker": "FORM",
+      "exchange": "NASDAQ",
+      "countryRegion": "美国",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
       "id": "global.fujikura",
       "name": "Fujikura Ltd.",
       "shortName": "Fujikura",
       "ticker": "5803",
+      "exchange": "TSE",
+      "countryRegion": "日本",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "global.furukawa-electric",
+      "name": "古河電気工業株式会社",
+      "shortName": "Furukawa Electric",
+      "ticker": "5801",
       "exchange": "TSE",
       "countryRegion": "日本",
       "universeLayer": "global_anchor",
@@ -372,6 +772,26 @@
       "coveragePriority": "physical"
     },
     {
+      "id": "global.intelliepi",
+      "name": "IntelliEPI Inc. (Cayman)",
+      "shortName": "英特磊 IntelliEPI",
+      "ticker": "4971",
+      "exchange": "TPEx",
+      "countryRegion": "中国台湾",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "global.iqe",
+      "name": "IQE plc",
+      "shortName": "IQE",
+      "ticker": "IQE",
+      "exchange": "LSE",
+      "countryRegion": "英国",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
       "id": "global.jx-metals",
       "name": "JX Advanced Metals Corporation",
       "shortName": "JX Advanced Metals",
@@ -382,10 +802,70 @@
       "coveragePriority": "physical"
     },
     {
+      "id": "global.kulicke-soffa",
+      "name": "Kulicke and Soffa Industries, Inc.",
+      "shortName": "Kulicke & Soffa",
+      "ticker": "KLIC",
+      "exchange": "NASDAQ",
+      "countryRegion": "美国",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "global.kyocera",
+      "name": "京セラ株式会社",
+      "shortName": "Kyocera",
+      "ticker": "6971",
+      "exchange": "TSE",
+      "countryRegion": "日本",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "global.laird",
+      "name": "Laird Performance Materials（DuPont de Nemours 旗下）",
+      "shortName": "Laird",
+      "ticker": "DD",
+      "exchange": "NYSE",
+      "countryRegion": "美国",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "global.landmark",
+      "name": "LandMark Optoelectronics Corporation",
+      "shortName": "聯亞 LandMark",
+      "ticker": "3081",
+      "exchange": "TPEx",
+      "countryRegion": "中国台湾",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "global.luxnet",
+      "name": "LuxNet Corporation",
+      "shortName": "華星光 LuxNet",
+      "ticker": "4979",
+      "exchange": "TPEx",
+      "countryRegion": "中国台湾",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
       "id": "global.macom",
       "name": "MACOM Technology Solutions Holdings, Inc.",
       "shortName": "MACOM",
       "ticker": "MTSI",
+      "exchange": "NASDAQ",
+      "countryRegion": "美国",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "global.maxlinear",
+      "name": "MaxLinear, Inc.",
+      "shortName": "MaxLinear",
+      "ticker": "MXL",
       "exchange": "NASDAQ",
       "countryRegion": "美国",
       "universeLayer": "global_anchor",
@@ -442,12 +922,52 @@
       "coveragePriority": "physical"
     },
     {
+      "id": "global.parker-chomerics",
+      "name": "Parker-Hannifin Corporation (Chomerics Division)",
+      "shortName": "Parker Chomerics",
+      "ticker": "PH",
+      "exchange": "NYSE",
+      "countryRegion": "美国",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "global.qualcomm",
+      "name": "Qualcomm Incorporated",
+      "shortName": "Qualcomm",
+      "ticker": "QCOM",
+      "exchange": "NASDAQ",
+      "countryRegion": "美国",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
       "id": "global.rogers",
       "name": "Rogers Corporation",
       "shortName": "Rogers",
       "ticker": "ROG",
       "exchange": "NYSE",
       "countryRegion": "美国",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "global.santec",
+      "name": "santec Holdings Corporation",
+      "shortName": "santec",
+      "ticker": "6777",
+      "exchange": "TSE",
+      "countryRegion": "日本",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "global.seikoh-giken",
+      "name": "株式会社精工技研",
+      "shortName": "Seikoh Giken",
+      "ticker": "6834",
+      "exchange": "TSE",
+      "countryRegion": "日本",
       "universeLayer": "global_anchor",
       "coveragePriority": "physical"
     },
@@ -462,12 +982,32 @@
       "coveragePriority": "physical"
     },
     {
+      "id": "global.sivers-semiconductors",
+      "name": "Sivers Semiconductors AB",
+      "shortName": "Sivers Semiconductors",
+      "ticker": "SIVE",
+      "exchange": "Nasdaq Stockholm",
+      "countryRegion": "瑞典",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
       "id": "global.soitec",
       "name": "Soitec S.A.",
       "shortName": "Soitec",
       "ticker": "SOI",
       "exchange": "Euronext Paris",
       "countryRegion": "法国",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "global.stmicroelectronics",
+      "name": "STMicroelectronics N.V.",
+      "shortName": "STMicroelectronics",
+      "ticker": "STM",
+      "exchange": "NYSE",
+      "countryRegion": "美国",
       "universeLayer": "global_anchor",
       "coveragePriority": "physical"
     },
@@ -512,6 +1052,16 @@
       "coveragePriority": "physical"
     },
     {
+      "id": "global.truelight",
+      "name": "光環科技股份有限公司",
+      "shortName": "光環 TrueLight",
+      "ticker": "3234",
+      "exchange": "TPEx",
+      "countryRegion": "中国台湾",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
       "id": "global.tsmc",
       "name": "Taiwan Semiconductor Manufacturing Company",
       "shortName": "TSMC",
@@ -532,12 +1082,42 @@
       "coveragePriority": "physical"
     },
     {
+      "id": "global.tuc",
+      "name": "Taiwan Union Technology Corporation",
+      "shortName": "台燿 TUC",
+      "ticker": "6274",
+      "exchange": "TWSE",
+      "countryRegion": "中国台湾",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
       "id": "global.veeco",
       "name": "Veeco Instruments Inc.",
       "shortName": "Veeco",
       "ticker": "VECO",
       "exchange": "NASDAQ",
       "countryRegion": "美国",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "global.vpec",
+      "name": "Visual Photonics Epitaxy Co., Ltd.",
+      "shortName": "全新光電 VPEC",
+      "ticker": "2455",
+      "exchange": "TWSE",
+      "countryRegion": "中国台湾",
+      "universeLayer": "global_anchor",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "global.yamaichi-electronics",
+      "name": "山一電機株式会社",
+      "shortName": "Yamaichi Electronics",
+      "ticker": "6941",
+      "exchange": "TSE",
+      "countryRegion": "日本",
       "universeLayer": "global_anchor",
       "coveragePriority": "physical"
     },
@@ -572,12 +1152,62 @@
       "coveragePriority": "physical"
     },
     {
+      "id": "private.hakusan",
+      "name": "白山工業株式会社",
+      "shortName": "Hakusan",
+      "ticker": null,
+      "exchange": null,
+      "countryRegion": "日本",
+      "universeLayer": "private",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "private.lieqi",
+      "name": "苏州猎奇智能设备股份有限公司",
+      "shortName": "猎奇智能",
+      "ticker": null,
+      "exchange": null,
+      "countryRegion": "中国",
+      "universeLayer": "private",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "private.ligent",
+      "name": "纳真科技公司 Ligent Technologies, Inc.（原海信宽带）",
+      "shortName": "纳真科技",
+      "ticker": null,
+      "exchange": null,
+      "countryRegion": "中国",
+      "universeLayer": "private",
+      "coveragePriority": "physical"
+    },
+    {
       "id": "private.minxin",
       "name": "武汉敏芯半导体股份有限公司",
       "shortName": "武汉敏芯",
       "ticker": null,
       "exchange": null,
       "countryRegion": "中国",
+      "universeLayer": "private",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "private.multilane",
+      "name": "MultiLane Inc.",
+      "shortName": "MultiLane",
+      "ticker": null,
+      "exchange": null,
+      "countryRegion": "美国",
+      "universeLayer": "private",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "private.orbray",
+      "name": "Orbray Co., Ltd.",
+      "shortName": "Orbray",
+      "ticker": null,
+      "exchange": null,
+      "countryRegion": "日本",
       "universeLayer": "private",
       "coveragePriority": "physical"
     },
@@ -592,9 +1222,49 @@
       "coveragePriority": "physical"
     },
     {
-      "id": "private.yourui",
-      "name": "厦门优迅芯片股份有限公司",
-      "shortName": "厦门优迅",
+      "id": "private.sicoya",
+      "name": "Sicoya GmbH",
+      "shortName": "Sicoya",
+      "ticker": null,
+      "exchange": null,
+      "countryRegion": "德国",
+      "universeLayer": "private",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "private.terasignal",
+      "name": "TeraSignal, Inc.",
+      "shortName": "TeraSignal",
+      "ticker": null,
+      "exchange": null,
+      "countryRegion": "美国",
+      "universeLayer": "private",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "private.weidu",
+      "name": "深圳市维度科技股份有限公司",
+      "shortName": "维度科技",
+      "ticker": null,
+      "exchange": null,
+      "countryRegion": "中国",
+      "universeLayer": "private",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "private.xinyu",
+      "name": "河南鑫宇光科技股份有限公司",
+      "shortName": "鑫宇科技",
+      "ticker": null,
+      "exchange": null,
+      "countryRegion": "中国",
+      "universeLayer": "private",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "private.yuexin",
+      "name": "粤芯半导体技术股份有限公司",
+      "shortName": "粤芯半导体",
       "ticker": null,
       "exchange": null,
       "countryRegion": "中国",
@@ -605,6 +1275,16 @@
       "id": "private.yunling",
       "name": "武汉云岭光电股份有限公司",
       "shortName": "云岭光电",
+      "ticker": null,
+      "exchange": null,
+      "countryRegion": "中国",
+      "universeLayer": "private",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "private.yute",
+      "name": "江苏宇特光电科技股份有限公司",
+      "shortName": "宇特光电",
       "ticker": null,
       "exchange": null,
       "countryRegion": "中国",

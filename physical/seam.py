@@ -88,8 +88,50 @@ CN_NAMES = {
 }
 
 
+# 反向扫描新增的未上市中国公司（没有代码，只能手工给 slug）
+PRIVATE_CN.update({
+    "鑫宇科技": ("private.xinyu", "河南鑫宇光科技股份有限公司"),
+    "宇特光电": ("private.yute", "江苏宇特光电科技股份有限公司"),
+    "维度科技": ("private.weidu", "深圳市维度科技股份有限公司"),
+    "猎奇智能": ("private.lieqi", "苏州猎奇智能设备股份有限公司"),
+    "粤芯半导体": ("private.yuexin", "粤芯半导体技术股份有限公司"),
+    "纳真科技": ("private.ligent", "纳真科技公司 Ligent Technologies, Inc.（原海信宽带）"),
+})
+EXCHANGE_BY_SUFFIX = {".T": "TSE", ".TW": "TWSE", ".TWO": "TPEx", ".HK": "HKEX", ".L": "LSE", ".ST": "Nasdaq Stockholm",
+                      ".DE": "XETRA", ".PA": "Euronext Paris", ".KS": "KRX", ".KQ": "KOSDAQ", ".AS": "Euronext Amsterdam"}
+US_EXCHANGE = {"MXL": "NASDAQ", "JBL": "NYSE", "STM": "NYSE", "KLIC": "NASDAQ", "DD": "NYSE", "PH": "NYSE", "FORM": "NASDAQ",
+               "QCOM": "NASDAQ", "CRDO": "NASDAQ", "AAOI": "NASDAQ", "IPGP": "NASDAQ", "LSCC": "NASDAQ", "GLW": "NYSE"}
+REGION = {"US": "美国", "JP": "日本", "TW": "中国台湾", "HK": "中国香港", "DE": "德国", "KR": "韩国", "IL": "以色列", "SE": "瑞典",
+          "UK": "英国", "NL": "荷兰", "FR": "法国", "CH": "瑞士"}
+PRIVATE_REGION = {"MultiLane": "美国", "Orbray": "日本", "Sicoya": "德国", "TeraSignal": "美国", "Hakusan": "日本"}
+STOP = {"inc", "ltd", "co", "corp", "corporation", "gmbh", "ab", "plc", "kk", "holdings", "the", "limited", "company"}
+
+
+def slug(n: str) -> str:
+    """英文名 → id 片段：取 ASCII 词，小写连字符；没有 ASCII 词就退回 Unicode 名（少见）。"""
+    words = [w.lower() for w in re.findall(r"[A-Za-z0-9]+", n) if w.lower() not in STOP]
+    return "-".join(words) if words else re.sub(r"\s+", "-", n.strip()).lower()
+
+
 def base_name(n: str) -> str:
     return re.split(r"[（(]", n)[0].strip()
+
+
+def resolve_new_global(c: dict, b: str) -> tuple[str, dict]:
+    """反向扫描新增的海外 / 港台日公司：没有手工表，用英文名生成 slug。"""
+    tk = c.get("ticker") or None
+    market = c["market"]
+    full = c.get("fullName") or b
+    sl = slug(b) if re.search(r"[A-Za-z]", b) else slug(full)
+    if market == "私有" or not tk:
+        cid = f"private.{sl}"
+        return cid, {"id": cid, "name": full, "shortName": b, "ticker": None, "exchange": None,
+                     "countryRegion": REGION.get(market) or PRIVATE_REGION.get(b), "universeLayer": "private", "coveragePriority": "physical"}
+    cid = f"global.{sl}"
+    exch = next((v for k, v in EXCHANGE_BY_SUFFIX.items() if tk.endswith(k)), None) or US_EXCHANGE.get(tk) or market
+    local = tk.rsplit(".", 1)[0] if any(tk.endswith(k) for k in EXCHANGE_BY_SUFFIX) else tk
+    return cid, {"id": cid, "name": full, "shortName": b, "ticker": local, "exchange": exch, "countryRegion": REGION.get(market, market),
+                 "universeLayer": "global_anchor", "coveragePriority": "physical"}
 
 
 def resolve(c: dict) -> tuple[str | None, dict | None]:
@@ -104,7 +146,7 @@ def resolve(c: dict) -> tuple[str | None, dict | None]:
         code = re.match(r"(\d{6})", c["ticker"]).group(1)
         cid = f"cn.{code}"
         exch = "BSE" if code.startswith(("8", "9", "4")) else ("SSE" if code.startswith("6") else "SZSE")
-        return cid, {"id": cid, "name": CN_NAMES.get(code, b), "shortName": b, "ticker": code, "exchange": exch,
+        return cid, {"id": cid, "name": CN_NAMES.get(code) or c.get("fullName") or b, "shortName": b, "ticker": code, "exchange": exch,
                      "countryRegion": "中国", "universeLayer": "a_share_focus", "coveragePriority": "physical"}
     if b in GLOBAL:
         cid, name, tk, ex, region = GLOBAL[b]
@@ -114,7 +156,9 @@ def resolve(c: dict) -> tuple[str | None, dict | None]:
         cid, name = PRIVATE_CN[b]
         return cid, {"id": cid, "name": name, "shortName": b, "ticker": None, "exchange": None, "countryRegion": "中国",
                      "universeLayer": "private", "coveragePriority": "physical"}
-    raise SystemExit(f"没有 id 规则:{n}")
+    if c["market"] == "私有" and re.search(r"[\u4e00-\u9fff]", b):
+        raise SystemExit(f"未上市中国公司要在 PRIVATE_CN 里给 slug:{n}")
+    return resolve_new_global(c, b)
 
 
 def main(check_only: bool) -> int:

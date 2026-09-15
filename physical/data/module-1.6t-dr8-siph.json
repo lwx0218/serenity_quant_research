@@ -1,6 +1,6 @@
 {
   "$comment": "物理优先的数据模型：一个真实在用的模块 → 横截面分层 → 部件 → 信号经过的顺序 → 每个部件背后的公司（按产业阶段）。公司条目的 evidence：verified=公开披露/官方资料可查；consensus=多家券商或行业媒体一致；candidate=方向正确但具体供货关系待核验。每条公司映射带 sources[]（type: announcement/irm/filing/official/media/report；均为实际打开核对过的页面）；evidence 由来源类型推出：有 announcement/irm/filing/official 且内容支持 → verified；只有 media/report → consensus；无来源 → candidate。示例数据不含任何行情。",
-  "schemaVersion": "0.3",
+  "schemaVersion": "0.2",
   "asOf": "2026-09-14",
   "module": {
     "id": "om.1p6t.osfp.dr8.siph",
@@ -374,6 +374,69 @@
               }
             ],
             "note": "官方投资者新闻稿确认Tomahawk 6为102.4T交换ASIC，是1.6T OSFP模块对接的主机交换芯片。"
+          },
+          {
+            "name": "鼎通科技",
+            "fullName": "东莞市鼎通精密科技股份有限公司",
+            "ticker": "688668.SH",
+            "market": "A",
+            "stage": "connect",
+            "role": "高速 I/O 连接器组件与光模块液冷 Cage（集成冷板），设越南子公司出海",
+            "evidence": "consensus",
+            "companyId": "cn.688668",
+            "sources": [
+              {
+                "type": "media",
+                "title": "推动光模块液冷散热器等业务出海 鼎通科技拟1.07亿设越南全资子公司",
+                "url": "https://finance.sina.com.cn/jjxw/2025-09-15/doc-infqqunh1468352.shtml",
+                "publisher": "新浪财经（转述公告）",
+                "date": "2025-09-15",
+                "quote": "鼎通科技高速通讯连接器及其组件主要包括高速背板连接器组件、I/O连接器组件、高速铜缆连接器、液冷散热器等……液冷Cage（含冷板、进出口阀等）可直接集成到光模块与交换机的接口处"
+              }
+            ],
+            "note": "主要给 Amphenol/TE/Molex 做 cage 组件与结构件，是系统侧而非模块内。"
+          },
+          {
+            "name": "鴻騰精密 FIT",
+            "fullName": "Foxconn Interconnect Technology Limited",
+            "ticker": "6088.HK",
+            "market": "HK",
+            "stage": "connect",
+            "role": "OSFP1600 / QSFP-DD 端口（笼子+连接器）与 224G 互连方案",
+            "evidence": "verified",
+            "companyId": "global.fit",
+            "sources": [
+              {
+                "type": "official",
+                "title": "FIT Hon Teng Showcases AI Data Center Connectivity and Immersion-Cooled Signal Integrity Solutions at OCP Global Summit 2024",
+                "url": "https://www.honhai.com/en-us/press-center/events/csr-events/1443",
+                "publisher": "Hon Hai Technology Group",
+                "date": "2024-10-17",
+                "quote": "OSFP1600 and QSFP-DD port configurations"
+              }
+            ],
+            "note": "Amphenol/TE/Molex 之外的 OSFP 笼子候选，属系统侧。FIT 官网 OFC 2026 稿（1.6T 量产）抓取超时。"
+          },
+          {
+            "name": "Yamaichi Electronics",
+            "fullName": "山一電機株式会社",
+            "ticker": "6941.T",
+            "market": "JP",
+            "stage": "connect",
+            "role": "224G/lane OSFP 连接器与笼子（1.6T 以太网）",
+            "evidence": "verified",
+            "companyId": "global.yamaichi-electronics",
+            "sources": [
+              {
+                "type": "official",
+                "title": "224G Capable OSFP Connectors and Accessories – Yamaichi Electronics",
+                "url": "https://yeu.com/product/224g-capable-osfp-connector-and-accessories-2/",
+                "publisher": "Yamaichi Electronics",
+                "date": null,
+                "quote": "Supports 224Gbps/Lane for 1.6TGbe Technology & 800 LR, ZR"
+              }
+            ],
+            "note": "日系 OSFP 连接器供应商，系统侧。"
           }
         ]
       },
@@ -658,6 +721,246 @@
               }
             ],
             "note": "公司半年报（filing）明确披露超薄石英电子布为高频高速覆铜板优选材料，但目前仍处于客户端小批量测试及认证阶段（报告期收入仅1310万元），尚未大规模放量，判verified但需关注量产进度。"
+          },
+          {
+            "name": "景旺电子",
+            "fullName": "深圳市景旺电子股份有限公司",
+            "ticker": "603228.SH",
+            "market": "A",
+            "stage": "device",
+            "role": "10G–800G 光模块 PCB 批量，1.6T 光模块 PCB 已开始出货",
+            "evidence": "consensus",
+            "companyId": "cn.603228",
+            "sources": [
+              {
+                "type": "media",
+                "title": "景旺电子：1.6T光模块PCB已开始出货",
+                "url": "https://finance.sina.com.cn/roll/2026-03-30/doc-inhsukns3916490.shtml",
+                "publisher": "新浪财经（转述投资者关系活动记录表）",
+                "date": "2026-03-30",
+                "quote": "已批量生产10G/25G/100G/200G/400G/800G光模块PCB产品，1.6T光模块PCB已开始出货"
+              }
+            ],
+            "note": "沪电/深南/胜宏之外最明确的 1.6T 光模块 PCB 第二梯队；差一条 cninfo 原件。"
+          },
+          {
+            "name": "方正科技",
+            "fullName": "方正科技集团股份有限公司",
+            "ticker": "600601.SH",
+            "market": "A",
+            "stage": "device",
+            "role": "已生产应用于 1.6T 光模块的 PCB",
+            "evidence": "consensus",
+            "companyId": "cn.600601",
+            "sources": [
+              {
+                "type": "media",
+                "title": "方正科技(600601.SH)：已生产应用于1.6T光模块的PCB产品",
+                "url": "https://m.jrj.com.cn/madapter/finance/2026/07/06161957714113.shtml",
+                "publisher": "金融界（转述互动平台）",
+                "date": "2026-07-06",
+                "quote": "公司PCB产品应用于光模块领域，公司已生产应用于1.6T光模块的PCB产品。"
+              }
+            ],
+            "note": "口径为'已生产'，量级未知。"
+          },
+          {
+            "name": "兴森科技（北京兴斐）",
+            "fullName": "深圳市兴森快捷电路科技股份有限公司",
+            "ticker": "002436.SZ",
+            "market": "A",
+            "stage": "device",
+            "role": "北京兴斐 1.6T 光模块产品板量产爬坡，多客户验证导入中（mSAP/SAP 工艺）",
+            "evidence": "consensus",
+            "companyId": "cn.002436",
+            "sources": [
+              {
+                "type": "media",
+                "title": "兴森科技：1.6T 光模块目前处于量产爬坡阶段",
+                "url": "https://www.ab-sm.com/a/74267",
+                "publisher": "艾邦半导体网（转述投资者互动记录）",
+                "date": "2026-05-08",
+                "quote": "北京兴斐1.6T光模块产品板目前正处于量产爬坡阶段，并在同步开展多家客户的验证导入工作。"
+              }
+            ],
+            "note": ""
+          },
+          {
+            "name": "生益电子",
+            "fullName": "生益电子股份有限公司",
+            "ticker": "688183.SH",
+            "market": "A",
+            "stage": "device",
+            "role": "800G 光模块 PCB 批量出货，1.6T 光模块 PCB 打样测试",
+            "evidence": "consensus",
+            "companyId": "cn.688183",
+            "sources": [
+              {
+                "type": "media",
+                "title": "AI订单“喂饱”东莞PCB大厂：生益电子净利翻倍狂揽11亿",
+                "url": "https://m.21jingji.com/article/20260820/herald/d624a2eb626fe1e4222c491546d752ea_zaker.html",
+                "publisher": "21世纪经济报道（引 2026 半年报）",
+                "date": "2026-08-20",
+                "quote": "800G光模块PCB已批量出货、规模逐季提升，1.6T高端交换机配套产品进入小批量量产，1.6T光模块PCB进入打样测试。"
+              }
+            ],
+            "note": "1.6T 模块板仍在打样，主力在 800G。"
+          },
+          {
+            "name": "崇达技术",
+            "fullName": "崇达技术股份有限公司",
+            "ticker": "002815.SZ",
+            "market": "A",
+            "stage": "device",
+            "role": "800G 光模块 PCB 小批量交付；1.6T 仅技术储备",
+            "evidence": "consensus",
+            "companyId": "cn.002815",
+            "sources": [
+              {
+                "type": "media",
+                "title": "崇达技术：公司800G光模块PCB目前正处于小批量交付阶段",
+                "url": "https://finance.sina.com.cn/stock/relnews/cn/2025-09-17/doc-infquwai9752673.shtml",
+                "publisher": "新浪财经（转述互动平台）",
+                "date": "2025-09-17",
+                "quote": "公司800G光模块PCB目前正处于小批量交付阶段。基于商业保密协议，具体合作客户名称不便披露。",
+                "partial": true
+              }
+            ],
+            "note": "对 1.6T 模块尚无进展，只是同一条产线的候选。"
+          },
+          {
+            "name": "红板科技",
+            "fullName": "江西红板科技股份有限公司",
+            "ticker": "603459.SH",
+            "market": "A",
+            "stage": "device",
+            "role": "光模块 PCB 完成 800G/1.6T 技术验证，小批量生产中",
+            "evidence": "consensus",
+            "companyId": "cn.603459",
+            "sources": [
+              {
+                "type": "media",
+                "title": "【淘金互动易】PCB行业景气度持续攀升，这家A股公司表示光模块PCB产品正常小批量生产中",
+                "url": "https://www.stcn.com/article/detail/3964914.html",
+                "publisher": "证券时报（转述互动易）",
+                "date": "2026-06-16",
+                "quote": "公司光模块PCB相关产品已顺利完成800G、1.6T规格的技术验证...目前光模块PCB产品正常小批量生产中"
+              }
+            ],
+            "note": "2025 年新上市，之前扫描不在名单里。"
+          },
+          {
+            "name": "万源通",
+            "fullName": "昆山万源通电子科技股份有限公司",
+            "ticker": "920060.BJ",
+            "market": "A",
+            "stage": "device",
+            "role": "北交所 PCB 厂，光模块 PCB 已小批量量产，目标覆盖 400G/800G/1.6T",
+            "evidence": "verified",
+            "companyId": "cn.920060",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "万源通：2025年年度报告",
+                "url": "http://notice.10jqka.com.cn/api/pdf/6dd377276ea2247a.pdf",
+                "publisher": "北交所/同花顺公告",
+                "date": null,
+                "quote": "公司已具备了400G以下光通信产品的生产流程和交付经验，并将借助H股融资的外力支持，加速布局800G及以上的光通信产品……“光模块产品生产技术研发”已进入小批量量产阶段，目标为满足400G、800G至1.6T不同速率光模块PCB的量产要求"
+              }
+            ],
+            "note": "年报明确以光通信为第二增长曲线；客户用代称披露，1.6T 仍是研发目标而非批量"
+          },
+          {
+            "name": "则成电子",
+            "fullName": "深圳市则成电子股份有限公司",
+            "ticker": "837821.BJ",
+            "market": "A",
+            "stage": "device",
+            "role": "HDI/细间距 PCB，向全球头部光模块厂送样 1.6T 规格 PCB，主攻 400G 批量与 800G/1.6T 招标",
+            "evidence": "verified",
+            "companyId": "cn.837821",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "则成电子：投资者关系活动记录表（2024-067）",
+                "url": "http://file.finance.sina.com.cn/211.154.219.97:9494/MRGG/CNSEBJ_STOCK/2024/2024-11/2024-11-21/10605255.PDF",
+                "publisher": "北交所/新浪财经公告",
+                "date": "2024-11-21",
+                "quote": "公司从去年四季度开始，持续向全球头部光模块厂商推广对应的PCB产品……已完成送样的主要为1.6T光模块规格研发产品……明年上半年目标锁定为400G光模块用PCB的大批量交付"
+              }
+            ],
+            "note": "公告级来源，明确 1.6T 送样；缺 2025-2026 年批量证据"
+          },
+          {
+            "name": "强达电路",
+            "fullName": "深圳市强达电路股份有限公司",
+            "ticker": "301628.SZ",
+            "market": "A",
+            "stage": "device",
+            "role": "400G/800G 光模块 PCB 量产，1.6T 打样中",
+            "evidence": "verified",
+            "companyId": "cn.301628",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "强达电路：投资者关系活动记录表（2026-001）",
+                "url": "https://pdf.dfcfw.com/pdf/H2_AN202604161821267679_1.pdf",
+                "publisher": "深交所/东方财富公告",
+                "date": "2026-04-16",
+                "quote": "主要是400G以下（含400G）、800G产品，1.6T产品处于打样阶段，目前还没有3.2T计划……800G高速光模块电路板关键技术研发及产业化"
+              }
+            ],
+            "note": "[2024-11 创业板上市] 对英伟达/旭创/新易盛认证问题公司未正面回应"
+          },
+          {
+            "name": "華通 Compeq",
+            "fullName": "Compeq Manufacturing Co., Ltd.",
+            "ticker": "2313.TW",
+            "market": "TW",
+            "stage": "device",
+            "role": "800G/1.6T 光模块 mSAP 板已量产，台湾+重庆扩光模块专用 mSAP 产能",
+            "evidence": "consensus",
+            "companyId": "global.compeq",
+            "sources": [
+              {
+                "type": "media",
+                "title": "華通Q1淨利15.04億元EPS達1.26元 1.6T光模塊的mSAP板已量產出貨",
+                "url": "https://news.cnyes.com/news/id/6447082",
+                "publisher": "鉅亨網",
+                "date": "2026-05-07",
+                "quote": "近期 1.6T 光模塊的 mSAP 板也已量產出貨"
+              },
+              {
+                "type": "media",
+                "title": "華通擴mSAP產能，800G/1.6T光模組放量",
+                "url": "https://www.moneydj.com/kmdj/news/newsviewer.aspx?a=17062a0c-ae43-4148-9d70-4e3de1b94cae",
+                "publisher": "MoneyDJ",
+                "date": "2026-08-31",
+                "quote": "800G、1.6T光模組用mSAP板與高階交換器主板已量產，同步在台灣與重慶擴充光模組專用mSAP產能"
+              }
+            ],
+            "note": "两条媒体均转述公司法说/财报口径，未找到 MOPS 公告原文，记 consensus。台系光模块 PCB 最直接标的，coverage_brief 只有沪电/深南/胜宏/TTM。"
+          },
+          {
+            "name": "台燿 TUC",
+            "fullName": "Taiwan Union Technology Corporation",
+            "ticker": "6274.TW",
+            "market": "TW",
+            "stage": "material",
+            "role": "M7/M8 级高速 CCL，已取得 800G 基础设施认证、接近满载",
+            "evidence": "consensus",
+            "companyId": "global.tuc",
+            "sources": [
+              {
+                "type": "media",
+                "title": "800G 趨勢下，高階 CCL 技術門檻如何變化？",
+                "url": "https://cdn.technews.tw/ai-agent/ccl-supply-and-demand/15734/",
+                "publisher": "TechNews",
+                "date": null,
+                "quote": "目前台廠如台光電、台燿與聯茂已率先取得認證，產能利用率逼近滿載。"
+              }
+            ],
+            "note": "来源是交换器/AI 基础设施口径，未单独点名光模块主板 CCL；与已在的台光电同级。"
           }
         ]
       },
@@ -776,6 +1079,48 @@
             "companyId": null,
             "sources": [],
             "note": "占位，不是一家公司"
+          },
+          {
+            "name": "MaxLinear",
+            "fullName": "MaxLinear, Inc.",
+            "ticker": "MXL",
+            "market": "US",
+            "stage": "chip",
+            "role": "Rushmore 1.6T PAM4 DSP（200G/lane，Samsung 先进 CMOS），Broadcom/Marvell 之外的第三家 1.6T DSP",
+            "evidence": "verified",
+            "companyId": "global.maxlinear",
+            "sources": [
+              {
+                "type": "official",
+                "title": "MaxLinear Unveils Rushmore: Low-Power 1.6T PAM4 DSP for AI/ML and Data Center Networks",
+                "url": "https://www.maxlinear.com/news/press-releases/2025/maxlinear-unveils-rushmore%E2%84%A2-low-power-1-6t-pam4-dsp-for-ai-ml-and-data-center-networks",
+                "publisher": "MaxLinear",
+                "date": "2025-03-31",
+                "quote": "Rushmore was specifically optimized to address the next generation of 1.6T interconnects, featuring low power consumption, excellent link performance, and enhanced features to accelerate deployments and monitor link health"
+              }
+            ],
+            "note": "官网新闻稿明确 1.6T / 200G per lane；工艺是 Samsung 而非 TSMC 3nm，与 NVIDIA 现用方案的匹配度待确认。"
+          },
+          {
+            "name": "Qualcomm（Alphawave）",
+            "fullName": "Qualcomm Incorporated",
+            "ticker": "QCOM",
+            "market": "US",
+            "stage": "chip",
+            "role": "Dragonfly O200 3nm 200G/lane PAM4 光 DSP（收购 Alphawave 后），面向 1.6T/800G 模块",
+            "evidence": "verified",
+            "companyId": "global.qualcomm",
+            "sources": [
+              {
+                "type": "official",
+                "title": "PAM4 Optical DSP Retimer 200G/Lane | O200 | Dragonfly",
+                "url": "https://www.qualcomm.com/data-center/products/qualcomm-dragonfly-o200",
+                "publisher": "Qualcomm",
+                "date": null,
+                "quote": "200G/lane device delivering high performance, high reliability interconnect for 1.6T and 800G Optical Transceivers"
+              }
+            ],
+            "note": "官网写 \"3nm CMOS single-chip\"；量产份额未知，是 3nm 1.6T DSP 的新进入者。"
           }
         ]
       },
@@ -881,6 +1226,48 @@
               }
             ],
             "note": "官网产品页确认SGM41290为硅光控制专用偏置/监控电路，叠加公司官方产品线介绍中DCDC/LDO电源类产品用于光模块，判verified（原输入为candidate，现已找到官方来源支持上调）。未找到该公司公告/招股书层面明确点名1.6T的表述。"
+          },
+          {
+            "name": "兆易创新",
+            "fullName": "北京兆易创新科技股份有限公司",
+            "ticker": "603986.SH",
+            "market": "A",
+            "stage": "chip",
+            "role": "GD32 MCU + NOR Flash 面向光模块管理/固件存储（官方案例到 400G OSFP）",
+            "evidence": "verified",
+            "companyId": "cn.603986",
+            "sources": [
+              {
+                "type": "official",
+                "title": "兆易创新亮相光博会，GD32 MCU全面赋能高、低速光模块应用",
+                "url": "https://www.gigadevice.com.cn/about/news-and-event/news/gigadevice-showcases-cioe",
+                "publisher": "兆易创新官网",
+                "date": "2024-09-10",
+                "quote": "采用GD32E501系列MCU的400G OSFP SR8 850nm 100m MPO光模块应用案例"
+              }
+            ],
+            "note": "官方案例止于 400G；1.6T 模块 MCU 通常仍是 Renesas/ST/兆易 竞争，能否进入本模块 BOM 无来源。"
+          },
+          {
+            "name": "普冉股份",
+            "fullName": "普冉半导体（上海）股份有限公司",
+            "ticker": "688766.SH",
+            "market": "A",
+            "stage": "chip",
+            "role": "NOR Flash / EEPROM 用于光模块固件与校准数据存储",
+            "evidence": "consensus",
+            "companyId": "cn.688766",
+            "sources": [
+              {
+                "type": "media",
+                "title": "公司问答丨普冉股份：公司NOR Flash、EEPROM均可用于光模块固件存储、参数配置、校准数据存储",
+                "url": "https://finance.sina.com.cn/stock/bxjj/2026-05-25/doc-inhzcatk3536916.shtml",
+                "publisher": "新浪财经（转述互动平台）",
+                "date": "2026-05-25",
+                "quote": "公司NOR Flash、EEPROM均可用于光模块固件存储、参数配置、校准数据存储，适配光模块应用需求"
+              }
+            ],
+            "note": "'可用于'口径，未披露客户与占比。"
           }
         ]
       },
@@ -988,14 +1375,23 @@
             "note": "Marvell官网Driver产品页（official）明确产品覆盖100G至1.6T PAM4/Coherent光模块，并强调与自家DSP/TIA配套使用，与角色描述一致，判verified，原consensus可上调。"
           },
           {
-            "name": "厦门优迅",
-            "ticker": "",
-            "market": "私有",
+            "name": "优迅股份",
+            "ticker": "688807.SH",
+            "market": "A",
             "stage": "chip",
-            "role": "国产 Driver/TIA（含拟上市）",
+            "role": "国产 Driver/TIA",
             "evidence": "verified",
-            "companyId": "private.yourui",
+            "companyId": "cn.688807",
             "sources": [
+              {
+                "type": "filing",
+                "title": "优迅股份 2025 年年度报告摘要",
+                "url": "http://dataclouds.cninfo.com.cn/shgonggao/hsomarket/2026/20260409/ad2db6af1bb84ada99585a4898a38d45.PDF",
+                "publisher": "巨潮资讯",
+                "date": "2026-04-09",
+                "quote": "公司成功搭建了单波100G PAM4高速芯片研发与测试技术平台，相关芯片已完成回片并向主流模块厂商送样……公司已启动面向下一代1.6T光互联的单波200G速率芯片研发。",
+                "partial": true
+              },
               {
                 "type": "filing",
                 "title": "厦门优迅芯片股份有限公司首次公开发行股票并在科创板上市申请文件",
@@ -1005,7 +1401,7 @@
                 "quote": "高带宽、高驱动能力激光驱动器（LDD）设计技术"
               }
             ],
-            "note": "科创板IPO申报文件(招股书类)确认公司自研激光驱动器(LDD)芯片及400G/800G电芯片已完成回片测试，判verified（原输入为candidate，现有招股书证据支持上调）；文件中未见明确的\"1.6T\"字样。"
+            "note": "[2026 科创板上市，原厦门优迅] 科创板IPO申报文件(招股书类)确认公司自研激光驱动器(LDD)芯片及400G/800G电芯片已完成回片测试，判verified（原输入为candidate，现有招股书证据支持上调）；文件中未见明确的\"1.6T\"字样。 2025 年报：单波 100G PAM4 芯片回片送样，单波 200G（1.6T）在研。"
           },
           {
             "name": "中际旭创（自研）",
@@ -1116,13 +1512,13 @@
             "note": "Marvell官网TIA产品页（official）明确产品线覆盖100G至1.6T及以上速率的云端AI连接与长距光链路，与角色描述一致，判verified，原consensus可上调。"
           },
           {
-            "name": "厦门优迅",
-            "ticker": "",
-            "market": "私有",
+            "name": "优迅股份",
+            "ticker": "688807.SH",
+            "market": "A",
             "stage": "chip",
             "role": "国产 TIA 候选",
             "evidence": "verified",
-            "companyId": "private.yourui",
+            "companyId": "cn.688807",
             "sources": [
               {
                 "type": "filing",
@@ -1133,7 +1529,49 @@
                 "quote": "攻克高速率低噪声跨阻放大器技术，25Gbps TIA灵敏度指标达到国外主流厂商同等水平"
               }
             ],
-            "note": "同一份IPO申报文件确认公司TIA设计技术及性能对标海外厂商，判verified（原输入为candidate，现有招股书证据支持上调）。"
+            "note": "[2026 科创板上市，原厦门优迅] 同一份IPO申报文件确认公司TIA设计技术及性能对标海外厂商，判verified（原输入为candidate，现有招股书证据支持上调）。"
+          },
+          {
+            "name": "MaxLinear",
+            "fullName": "MaxLinear, Inc.",
+            "ticker": "MXL",
+            "market": "US",
+            "stage": "chip",
+            "role": "Washington 4 通道 200G/lane TIA，配套 1.6T 全重定时模块",
+            "evidence": "verified",
+            "companyId": "global.maxlinear",
+            "sources": [
+              {
+                "type": "official",
+                "title": "MaxLinear Announces Availability of Washington 200G TIA for Next-Generation AI Data Center Connectivity",
+                "url": "https://www.maxlinear.com/news/press-releases/2026/maxlinear-announces-availability-of-washington-200g-tia-for-next-generation-ai-data-center-connectiv",
+                "publisher": "MaxLinear",
+                "date": "2026-04-30",
+                "quote": "Four-channel, 200G/lane high-speed transimpedance amplifier enables cost-effective, power-efficient, fully retimed PAM4 optical signaling for next-generation 1.6T optical interconnects"
+              }
+            ],
+            "note": "官网新闻稿直接支持。"
+          },
+          {
+            "name": "TeraSignal",
+            "fullName": "TeraSignal, Inc.",
+            "ticker": "",
+            "market": "私有",
+            "stage": "chip",
+            "role": "TS9802 4×200G 智能 TIA（内置眼图监测与自适应均衡），面向 1.6T 光互连",
+            "evidence": "verified",
+            "companyId": "private.terasignal",
+            "sources": [
+              {
+                "type": "official",
+                "title": "TeraSignal Unveils World's First 4x200G Intelligent TIA with TSLink Digital Eye Monitor and Adaptive Equalizer for 1.6T Optical Interconnects",
+                "url": "https://terasignal.com/terasignal-unveils-worlds-first-4x200g-intelligent-tia-with-tslink-digital-eye-monitor-and-adaptive-equalizer-for-1-6t-optical-interconnects/",
+                "publisher": "TeraSignal",
+                "date": "2025-03-31",
+                "quote": "The TS9802 represents a major leap forward in AI infrastructure optical connectivity by delivering real-time link diagnostics directly into the TIA."
+              }
+            ],
+            "note": "美国 Irvine 初创；MACOM/Semtech 之外的 200G/lane TIA 候选，量产导入未见来源。"
           }
         ]
       },
@@ -1490,6 +1928,273 @@
               }
             ],
             "note": "公司官方新闻稿确认LUMINA+ MOCVD设备被客户选用于制造InP激光器服务datacom市场，判verified（高于原consensus评估）。"
+          },
+          {
+            "name": "永鼎股份（鼎芯光电）",
+            "fullName": "江苏永鼎股份有限公司",
+            "ticker": "600105.SH",
+            "market": "A",
+            "stage": "chip",
+            "role": "控股子公司鼎芯光电量产 100mW CW 激光器芯片（面向 400G–1.6T 硅光模块）及 100G EML；2026-07 获 11.33 亿元大功率激光器芯片订单",
+            "evidence": "consensus",
+            "companyId": "cn.600105",
+            "sources": [
+              {
+                "type": "media",
+                "title": "永鼎股份旗下鼎芯光电实现光芯片量产",
+                "url": "http://js.news.cn/20250919/4d4fbe78ad9f4361a6ea496283dbd5f7/c.html",
+                "publisher": "新华网江苏",
+                "date": "2025-09-19",
+                "quote": "最新100mW CW Laser产品以高稳定性、长寿命、高效率特性，支持400G至1.6T硅光模块发展……适配800G/1.6T的100G EML芯片完成多家客户验证"
+              },
+              {
+                "type": "media",
+                "title": "永鼎股份：控股子公司签订约11.33亿元大功率激光器芯片订单",
+                "url": "https://finance.sina.com.cn/jjxw/2026-07-29/doc-iniknrri2518537.shtml",
+                "publisher": "新浪财经（转述公告）",
+                "date": "2026-07-29",
+                "quote": "公司控股子公司苏州鼎芯光电科技有限公司近一个月收到A客户、B客户关于大功率激光器芯片产品的采购订单，相关订单合计金额分别为5.42亿元人民币（含税）、0.87亿美元（含税）",
+                "partial": true
+              }
+            ],
+            "note": "订单公告原件未打开（cninfo 检索未命中临时公告），且公告未写明用途；CW-for-硅光 说法来自新华网。差一条公告/年报原文即可升 verified。"
+          },
+          {
+            "name": "炬光科技",
+            "fullName": "西安炬光科技股份有限公司",
+            "ticker": "688167.SH",
+            "market": "A",
+            "stage": "material",
+            "role": "硅光模块 CW 光源 / CPO 外置光源用激光器氮化铝衬底（热沉）材料",
+            "evidence": "verified",
+            "companyId": "cn.688167",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "炬光科技 2026 年半年度报告",
+                "url": "http://file.finance.sina.com.cn/211.154.219.97:9494/MRGG/CNSESH_STOCK/2026/2026-8/2026-08-08/12483585.PDF",
+                "publisher": "上交所（新浪镜像）",
+                "date": "2026-08-08",
+                "quote": "硅光模块 CW 光源、CPO 外置激光器光源的应用场景中，公司就激光器氮化铝衬底材料与多家行业头部客户开展合作"
+              }
+            ],
+            "note": "是 CW 激光器封装的 AlN 载体，不是 InP 外延。"
+          },
+          {
+            "name": "华兴源创（普赛斯）",
+            "fullName": "苏州华兴源创科技股份有限公司",
+            "ticker": "688001.SH",
+            "market": "A",
+            "stage": "equip",
+            "role": "控股武汉普赛斯（51%），光电半导体测试仪器与可靠性/自动化测试系统，用于光通信激光器芯片",
+            "evidence": "consensus",
+            "companyId": "cn.688001",
+            "sources": [
+              {
+                "type": "media",
+                "title": "华兴源创拟2.06亿元控股武汉光电测试“小巨人”",
+                "url": "https://m.sensorexpert.com.cn/article/481313.html",
+                "publisher": "传感器专家网（转述公告）",
+                "date": "2026-04-27",
+                "quote": "专注于光电半导体与功率半导体测试仪器及系统装备的研发与生产……广泛应用于光通信、激光雷达、激光医疗等领域"
+              }
+            ],
+            "note": "站在激光器芯片测试（源杰/长光华芯的设备端），不是模块测试。"
+          },
+          {
+            "name": "凯德石英",
+            "fullName": "北京凯德石英股份有限公司",
+            "ticker": "920179.BJ",
+            "market": "A",
+            "stage": "material",
+            "role": "为通美晶体 InP/GaAs 衬底产线供应石英舟、石英管等耗材——CW/EML 激光器芯片衬底的二级上游",
+            "evidence": "verified",
+            "companyId": "cn.920179",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "凯德石英：投资者关系活动记录表（2026-010）",
+                "url": "http://static.cninfo.com.cn/finalpage/2026-03-17/1225014650.PDF",
+                "publisher": "巨潮资讯/北交所",
+                "date": "2026-03-17",
+                "quote": "公司化合物半导体客户主要是通美晶体，公司产品主要供应通美晶体的磷化铟、砷化镓等产线使用。通美晶体磷化铟衬底产品主要用于生产光模块中的激光器、探测器芯片"
+              }
+            ],
+            "note": "二级上游（衬底厂耗材），价值量小；已被江丰电子收购控股权"
+          },
+          {
+            "name": "纳真科技（原海信宽带）",
+            "fullName": "纳真科技公司 Ligent Technologies, Inc.",
+            "ticker": "",
+            "market": "私有",
+            "stage": "chip",
+            "role": "自研 DFB 激光器芯片已批量，含 75mW 大功率 CW-DFB；在研 100mW+ CW-DFB 与 100G/200G EML",
+            "evidence": "verified",
+            "companyId": "private.ligent",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "纳真科技：港交所申请版本招股书",
+                "url": "https://www1.hkexnews.hk/app/sehk/2026/108264/documents/sehk26030502134_c.pdf",
+                "publisher": "HKEXnews",
+                "date": "2026-03-05",
+                "quote": "我们已成功开发并批量生产DFB激光器芯片，包括75mW大功率CW-DFB……我们正在开发100G/200G EML激光器芯片及100mW及以上大功率CW-DFB"
+              }
+            ],
+            "note": "[港交所 IPO，2026-08-30 通过聆讯] 光芯片收入占比极小（媒体称 2026H1 约 1.6%），主要自用"
+          },
+          {
+            "name": "Sivers Semiconductors（Sivers Photonics）",
+            "fullName": "Sivers Semiconductors AB",
+            "ticker": "SIVE.ST",
+            "market": "SE",
+            "stage": "chip",
+            "role": "InP100 平台 DR8 1310 nm 70 mW CW DFB 激光器，面向 800G 及以上硅光收发器（倒装到硅光）",
+            "evidence": "verified",
+            "companyId": "global.sivers-semiconductors",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Photonics – Sivers Semiconductors",
+                "url": "https://www.sivers-semiconductors.com/photonics/",
+                "publisher": "Sivers Semiconductors",
+                "date": null,
+                "quote": "The 1310nm DFB laser diode operates at a wide temperature range and is designed for 800G and above transceivers"
+              }
+            ],
+            "note": "官网产品页直接写 DR8 1310nm 70mW DFB、\"Optimised for SiPh flip-chip hybrid integration\"；出货规模小，属小市值候选。"
+          },
+          {
+            "name": "聯亞 LandMark",
+            "fullName": "LandMark Optoelectronics Corporation",
+            "ticker": "3081.TWO",
+            "market": "TW",
+            "stage": "material",
+            "role": "InP 外延片（MOCVD），供 CW 激光器芯片；媒体称 1.6T 硅光用 CW Laser 外延已量产",
+            "evidence": "consensus",
+            "companyId": "global.landmark",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Overview – LandMark Optoelectronics Corporation",
+                "url": "https://www.lmoc.com.tw/index.php?temp=intro&lang=en",
+                "publisher": "LandMark",
+                "date": null,
+                "quote": "Si-Photonics components for commercial applications",
+                "partial": true
+              },
+              {
+                "type": "media",
+                "title": "聯亞(3081)AI矽光子大反攻",
+                "url": "https://udn.com/news/story/6850/9674663",
+                "publisher": "聯合新聞網",
+                "date": "2026-08-06",
+                "quote": "目前1.6T矽光子所需的CW Laser已正式量產，成為AI資料中心升級的重要供應來源"
+              }
+            ],
+            "note": "官网只泛称硅光元件；1.6T CW Laser 量产来自媒体，故记 consensus。台湾 CW 激光外延最直接标的。"
+          },
+          {
+            "name": "光環 TrueLight",
+            "fullName": "光環科技股份有限公司",
+            "ticker": "3234.TWO",
+            "market": "TW",
+            "stage": "chip",
+            "role": "CW Laser 芯片代工（外延、E-beam 光栅等 ODM/OEM），2025 年起切入 AI 硅光供应链",
+            "evidence": "consensus",
+            "companyId": "global.truelight",
+            "sources": [
+              {
+                "type": "official",
+                "title": "光環科技 首頁",
+                "url": "https://www.truelight.com.tw/",
+                "publisher": "TrueLight",
+                "date": null,
+                "quote": "提供一條龍的客製化代工 (ODM/OEM) 服務，來滿足客戶在各種應用的需求。服務項目包括磊晶、E-beam 光柵製作",
+                "partial": true
+              },
+              {
+                "type": "media",
+                "title": "〈熱門股〉CW Laser成功切進AI供應鏈 光環周漲2成站上所有均線",
+                "url": "https://tw.stock.yahoo.com/news/%E7%86%B1%E9%96%80%E8%82%A1-cw-laser%E6%88%90%E5%8A%9F%E5%88%87%E9%80%B2ai%E4%BE%9B%E6%87%89%E9%8F%88-%E5%85%89%E7%92%B0%E5%91%A8%E6%BC%B22%E6%88%90%E7%AB%99%E4%B8%8A%E6%89%80%E6%9C%89%E5%9D%87%E7%B7%9A-020516511.html",
+                "publisher": "Yahoo 奇摩股市 / 鉅亨網",
+                "date": "2026-01-24",
+                "quote": "今 (2026) 年 CW Laser 的代工營收比重將持續提高，超越去 (2025) 年的水準，進而改善毛利率"
+              }
+            ],
+            "note": "官网未直接写 CW Laser；CW 代工来自媒体（DIGITIMES 亦称 TrueLight 以 CW laser foundry 切入 AI HPC）。与聯亞是上下游合作关系。"
+          },
+          {
+            "name": "全新光電 VPEC",
+            "fullName": "Visual Photonics Epitaxy Co., Ltd.",
+            "ticker": "2455.TW",
+            "market": "TW",
+            "stage": "material",
+            "role": "InP/GaAs 外延代工，TrendForce 点名为 CW 激光 / PD 外延代工厂之一",
+            "evidence": "consensus",
+            "companyId": "global.vpec",
+            "sources": [
+              {
+                "type": "media",
+                "title": "AI Data Centers Ignite a Laser Shortage Wave; Nvidia's Strategic Lock-In Reshapes the Global Laser Supply Chain",
+                "url": "https://www.trendforce.com/presscenter/news/20251208-12823.html",
+                "publisher": "TrendForce",
+                "date": "2025-12-08",
+                "quote": "Taiwan's epitaxy sector"
+              }
+            ],
+            "note": "TrendForce 稿件把 IntelliEPI (iET) 与 VPEC 列为外延代工受益者；官网 vpec.com.tw 抓取超时，未能拿到官方产品页。"
+          },
+          {
+            "name": "英特磊 IntelliEPI",
+            "fullName": "IntelliEPI Inc. (Cayman)",
+            "ticker": "4971.TWO",
+            "market": "TW",
+            "stage": "material",
+            "role": "MBE 外延片，含光纤通信用半导体激光外延；TrendForce 点名为 CW 激光外延代工厂",
+            "evidence": "consensus",
+            "companyId": "global.intelliepi",
+            "sources": [
+              {
+                "type": "official",
+                "title": "產品介紹 英特磊科技",
+                "url": "https://www.intelliepi.com.tw/products.html",
+                "publisher": "IntelliEPI",
+                "date": null,
+                "quote": "各種不同波長半導體雷射磊晶片，主要應用在光纖通訊與資料傳輸領域",
+                "partial": true
+              },
+              {
+                "type": "media",
+                "title": "AI Data Centers Ignite a Laser Shortage Wave",
+                "url": "https://www.trendforce.com/presscenter/news/20251208-12823.html",
+                "publisher": "TrendForce",
+                "date": "2025-12-08",
+                "quote": "Taiwan's epitaxy sector"
+              }
+            ],
+            "note": "官网写激光外延但未点 CW/InP 1310 nm；1.6T 关联来自 TrendForce，记 consensus。"
+          },
+          {
+            "name": "Furukawa Electric",
+            "fullName": "古河電気工業株式会社",
+            "ticker": "5801.T",
+            "market": "JP",
+            "stage": "chip",
+            "role": "高输出 CW-DFB 激光芯片（硅光信号光源），2025-12 宣布新建芯片厂扩产",
+            "evidence": "verified",
+            "companyId": "global.furukawa-electric",
+            "sources": [
+              {
+                "type": "official",
+                "title": "New manufacturing plant for high output DFB laser diode chips for signal light sources",
+                "url": "https://www.furukawaelectric.com/en/release/2025/comm_20251217.html",
+                "publisher": "Furukawa Electric",
+                "date": "2025-12-17",
+                "quote": "network transmission speeds are increasing from the current 400Gbps to 800Gbps and 1.6Tbps"
+              }
+            ],
+            "note": "同稿明确面向 \"silicon photonics technology\" 的信号光源；coverage_brief 未列 Furukawa，是日系 CW 激光第三家。"
           }
         ]
       },
@@ -1610,6 +2315,98 @@
               }
             ],
             "note": "官网保偏光纤(PANDA PM fiber)产品页与'保偏光纤'角色直接对应，判verified。"
+          },
+          {
+            "name": "炬光科技",
+            "fullName": "西安炬光科技股份有限公司",
+            "ticker": "688167.SH",
+            "market": "A",
+            "stage": "device",
+            "role": "微透镜阵列 MPLA、精密模压透镜、快慢轴透镜等微纳光学，面向高速模块 / NPO / CPO",
+            "evidence": "verified",
+            "companyId": "cn.688167",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "炬光科技 2026 年半年度报告",
+                "url": "http://file.finance.sina.com.cn/211.154.219.97:9494/MRGG/CNSESH_STOCK/2026/2026-8/2026-08-08/12483585.PDF",
+                "publisher": "上交所（新浪镜像）",
+                "date": "2026-08-08",
+                "quote": "高通道 V 型槽、微棱镜透镜阵列 MPLA、精密模压透镜及高速光通信激光器衬底材料……可为高速模块、OCS、NPO/CPO、OIO 等主要应用场景提供较完整的微纳光学解决方案"
+              }
+            ],
+            "note": "2024 年并购瑞士炬光后形成光通信微光学业务；'国际头部客户'未点名。"
+          },
+          {
+            "name": "蓝特光学",
+            "fullName": "浙江蓝特光学股份有限公司",
+            "ticker": "688127.SH",
+            "market": "A",
+            "stage": "device",
+            "role": "光通信用玻璃非球面透镜快速放量；高速光模块用微透镜通过多家主流客户样测，CPO 用微透镜阵列在验证",
+            "evidence": "consensus",
+            "companyId": "cn.688127",
+            "sources": [
+              {
+                "type": "media",
+                "title": "蓝特光学：8月24日召开业绩说明会，投资者参与",
+                "url": "https://news.10jqka.com.cn/20260825/c679277320.shtml",
+                "publisher": "同花顺（转述业绩说明会）",
+                "date": "2026-08-25",
+                "quote": "2025年度公司光学透镜主营业务收入4.14亿元，其中光通信用玻璃非球面透镜业务为增速较快的板块……高速光模块用微透镜产品已通过多家主流客户样品测试验证，后续将逐步进入小批量交付阶段"
+              }
+            ],
+            "note": "业绩说明会原纪要（上证 e 互动/公告）未打开，故记 consensus；非球面透镜更多用在 EML/TO 方案，硅光模块用的是微透镜/MLA，后者仍在样测。"
+          },
+          {
+            "name": "鑫宇科技",
+            "fullName": "河南鑫宇光科技股份有限公司",
+            "ticker": "",
+            "market": "私有",
+            "stage": "device",
+            "role": "光隔离器、适配器及陶瓷/永磁/金属结构件，主要用于各速率光模块，终端含数据中心/AI 算力中心",
+            "evidence": "verified",
+            "companyId": "private.xinyu",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "鑫宇科技：2025年年度报告",
+                "url": "http://file.finance.sina.com.cn/211.154.219.97:9494/MRGG/SBGG/2026/2026-5/2026-05-27/12358045.PDF",
+                "publisher": "全国股转系统/新浪财经公告",
+                "date": "2026-05-27",
+                "quote": "光隔离器、适配器等……主要应用于不同传输速率的光模块产品……数据中心、AI 算力中心、电信通讯、FTTX、气体传感、测风雷达等多个行业领域"
+              },
+              {
+                "type": "announcement",
+                "title": "鑫宇科技：申请公开发行股票并在北交所上市辅导备案及其进展公告",
+                "url": "https://xinsanban.eastmoney.com/Article/NoticeContent?id=AN202601141817012115",
+                "publisher": "东方财富/全国股转系统",
+                "date": "2026-01-14",
+                "quote": "申请公开发行股票并在北交所上市辅导备案"
+              }
+            ],
+            "note": "[新三板，北交所辅导中] 年报客户用序号披露；研报称客户含中际旭创但未在年报核实。隔离器是 CW 光源耦合链路必需件"
+          },
+          {
+            "name": "Kyocera",
+            "fullName": "京セラ株式会社",
+            "ticker": "6971.T",
+            "market": "JP",
+            "stage": "device",
+            "role": "激光器 AlN 薄膜子基板（submount），用于光通信模块中发热大的 LD 贴装",
+            "evidence": "verified",
+            "companyId": "global.kyocera",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Thin-Film Submounts for Laser Diodes | KYOCERA",
+                "url": "https://global.kyocera.com/prdct/semicon/semi/fo/submount.html",
+                "publisher": "Kyocera",
+                "date": null,
+                "quote": "In optical communication modules, the trend toward greater miniaturization and integration is making aluminum nitride essential as a submount material for laser diodes (LDs), which generate high levels of heat."
+              }
+            ],
+            "note": "CW 激光器封装的子基板属于光源耦合/激光封装环节；未点名 1.6T 客户。"
           }
         ]
       },
@@ -1953,6 +2750,224 @@
               }
             ],
             "note": "2025年报在研项目部分明确列出300mm硅光SOI项目(投资7000万元)，子公司新傲科技也提出聚焦硅光等应用；由consensus上调为verified，但注意仍为样品/客户送样阶段，尚未规模量产，非既有'国产SOI硅片'全面覆盖硅光级别的确证。"
+          },
+          {
+            "name": "燕麦科技",
+            "fullName": "深圳市燕麦科技股份有限公司",
+            "ticker": "688312.SH",
+            "market": "A",
+            "stage": "equip",
+            "role": "硅光晶圆检测设备已产生营收（占比不足 1%），已向海外晶圆厂交付",
+            "evidence": "consensus",
+            "companyId": "cn.688312",
+            "sources": [
+              {
+                "type": "media",
+                "title": "公司问答丨燕麦科技：公司的硅光晶圆检测设备已产生营收 但目前销售收入占比不足1%",
+                "url": "https://finance.sina.com.cn/stock/bxjj/2026-05-18/doc-inhyiewk0737560.shtml",
+                "publisher": "新浪财经（转述互动平台）",
+                "date": "2026-05-18",
+                "quote": "公司的硅光晶圆检测设备已产生营收，但目前销售收入占比不足1%"
+              }
+            ],
+            "note": "A 股唯一明确做硅光晶圆级测试设备的；体量极小。"
+          },
+          {
+            "name": "粤芯半导体",
+            "fullName": "粤芯半导体技术股份有限公司",
+            "ticker": "",
+            "market": "私有",
+            "stage": "chip",
+            "role": "12 英寸硅光（SiPho）工艺平台代工，国产硅光 PIC 代工新候选",
+            "evidence": "verified",
+            "companyId": "private.yuexin",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "粤芯半导体技术股份有限公司首次公开发行股票并在创业板上市招股说明书",
+                "url": "http://dataclouds.cninfo.com.cn/sjother2/documents/2026/2026-06-08/dffe9e457c867e08b8e1be194111c08c.pdf",
+                "publisher": "巨潮资讯/深交所",
+                "date": "2026-06-08",
+                "quote": "在硅光及光电融合领域，公司已成功推出12英寸硅光工艺技术平台，为国家硅光芯片规模化量产提供产能保障……聚焦硅光及光电融合工艺平台技术迭代，满足高速通信和人工智能对高带宽、低功耗光互连的需求"
+              }
+            ],
+            "note": "[创业板 IPO，2026-09-24 申购] 招股书未披露硅光平台收入与客户，能否承接 1.6T 级 MZM/Ge-PD 工艺待验证；与 CUMEC/中芯并列国产代工候选"
+          },
+          {
+            "name": "海光芯正",
+            "fullName": "北京海光芯正科技股份有限公司 Crealights Technology Co., Ltd.",
+            "ticker": "1191.HK",
+            "market": "HK",
+            "stage": "chip",
+            "role": "自研硅光子芯片（芯片设计到模块制造端到端）",
+            "evidence": "consensus",
+            "companyId": "global.crealights-technology",
+            "sources": [
+              {
+                "type": "media",
+                "title": "「海光芯正」通过聆讯，AI光模块赛道迎来H股新玩家",
+                "url": "https://finance.sina.com.cn/stock/hkstock/hkzmt/2026-06-14/doc-inicmxcc5073866.shtml",
+                "publisher": "新浪财经",
+                "date": "2026-06-14",
+                "quote": "凭借建立从芯片设计到光模块制造的端到端技术能力实现差异化竞争，并专注于硅光子技术领域"
+              }
+            ],
+            "note": "[2026-06 全球发售] 尚未盈利；代工厂未披露"
+          },
+          {
+            "name": "Jabil",
+            "fullName": "Jabil Inc.",
+            "ticker": "JBL",
+            "market": "US",
+            "stage": "chip",
+            "role": "1.6T 模块采用 Intel 硅光引擎（Intel 硅光 PIC）",
+            "evidence": "verified",
+            "companyId": "global.jabil",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Jabil Launches 1.6T Pluggable Transceiver",
+                "url": "https://investors.jabil.com/news/news-details/2025/Jabil-Launches-1-6T-Pluggable-Transceiver-to-Support-Growing-Demand-for-Intra-Data-Center-and-AI-Connectivity/default.aspx",
+                "publisher": "Jabil",
+                "date": "2025-04-01",
+                "quote": "The 1.6T transceiver is built using an Intel® Silicon Photonics engine."
+              }
+            ],
+            "note": "PIC 来自 Intel（Intel 保留硅光晶圆制造，模块业务卖给 Jabil）。"
+          },
+          {
+            "name": "Sicoya",
+            "fullName": "Sicoya GmbH",
+            "ticker": "",
+            "market": "私有",
+            "stage": "chip",
+            "role": "柏林硅光 PIC / 光引擎设计公司，已展示 1.6T-DR8 硅光收发器（TIA 堆叠在 PIC 上）",
+            "evidence": "verified",
+            "companyId": "private.sicoya",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Sicoya – silicon photonic dies and optical engines",
+                "url": "https://sicoya.com/",
+                "publisher": "Sicoya",
+                "date": null,
+                "quote": "World's First SiPho 1.6T-DR8 Transceiver with stacked TIA"
+              }
+            ],
+            "note": "官网首页直接写 1.6T-DR8 硅光收发器；量产客户未知，属早期/小众供应商。"
+          },
+          {
+            "name": "Credo（DustPhotonics）",
+            "fullName": "Credo Technology Group Holding Ltd",
+            "ticker": "CRDO",
+            "market": "US",
+            "stage": "chip",
+            "role": "以色列硅光 PIC 设计公司，Oz8 1.6T DR8 PIC（8×200G PAM4，含自校准调制器），2026-04 被 Credo 以 7.5 亿美元现金+股票收购",
+            "evidence": "verified",
+            "companyId": "global.credo",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Oz8 | 1.6T DR8 Silicon Photonics",
+                "url": "https://credosemi.com/products/silicon-photonics/oz8/",
+                "publisher": "Credo",
+                "date": null,
+                "quote": "The 'Oz8' is a 1.6Tbps Photonic Integrated Circuit (PIC) engine supporting eight optical transmit lanes operating at 200Gbps per lane with PAM-4 modulation"
+              },
+              {
+                "type": "official",
+                "title": "Credo Agrees to Acquire DustPhotonics, Accelerating Expansion into Silicon Photonics and Next Generation Optical Connectivity",
+                "url": "https://investors.credosemi.com/news-events/news/news-details/2026/Credo-Agrees-to-Acquire-DustPhotonics-Accelerating-Expansion-into-Silicon-Photonics-and-Next-Generation-Optical-Connectivity/default.aspx",
+                "publisher": "Credo",
+                "date": "2026-04-13",
+                "quote": "DustPhotonics has developed a differentiated portfolio of SiPho PICs spanning 400G, 800G, and 1.6T, with a roadmap that extends to 3.2T"
+              }
+            ],
+            "note": "[2026-04 Credo 收购 DustPhotonics] coverage_brief 里 Credo 只在 part.dsp；这里新增 part.pic（DR8 商用 PIC 的独立供应商，晶圆代工据信在 Tower）。"
+          },
+          {
+            "name": "STMicroelectronics",
+            "fullName": "STMicroelectronics N.V.",
+            "ticker": "STM",
+            "market": "US",
+            "stage": "chip",
+            "role": "PIC100 300 mm 硅光代工平台（Crolles），面向 800G–1.6T 模块，AWS 为首发客户",
+            "evidence": "verified",
+            "companyId": "global.stmicroelectronics",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Silicon photonics – STMicroelectronics",
+                "url": "https://www.st.com/content/st_com/en/about/innovation-and-technology/silicon-photonics.html",
+                "publisher": "STMicroelectronics",
+                "date": null,
+                "quote": "PIC100 provides a proven foundation supporting speeds up to 100 Gbaud and optical modules from 800 Gb/s to 1.6 Tb/s."
+              }
+            ],
+            "note": "Tower / GF / TSMC 之外的第四家硅光代工；首批客户偏向 AWS 自研模块，是否进入 NVIDIA 用模块待查。"
+          },
+          {
+            "name": "IQE",
+            "fullName": "IQE plc",
+            "ticker": "IQE.L",
+            "market": "UK",
+            "stage": "material",
+            "role": "向 Tower 硅光平台供 InP 外延片（用于 200G/lane 可插拔的激光/调制器集成），多年协议",
+            "evidence": "verified",
+            "companyId": "global.iqe",
+            "sources": [
+              {
+                "type": "official",
+                "title": "IQE and Tower Semiconductor announce multi-year InP epiwafer supply agreement",
+                "url": "https://www.iqep.com/media/press-releases/2026/iqe-and-tower-semiconductor-announce-multi-year-inp-epiwafer-supply-agreement/",
+                "publisher": "IQE",
+                "date": "2026-06-15",
+                "quote": "IQE's InP epiwafers will be used in several of Tower's advanced silicon photonics platforms for next-generation optical technologies"
+              }
+            ],
+            "note": "同稿提到 \"technology for the production of 200Gbs/lane for pluggable transceivers\"；Wafer Technology 是 IQE 子公司，不单列。"
+          },
+          {
+            "name": "santec",
+            "fullName": "santec Holdings Corporation",
+            "ticker": "6777.T",
+            "market": "JP",
+            "stage": "equip",
+            "role": "硅光晶圆级测试：Swept Photonics Analyzer / STS 可调谐激光测试系统",
+            "evidence": "verified",
+            "companyId": "global.santec",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Measurement range extended \"Swept Photonics Analyzer\" delivers on wafer silicon photonics testing",
+                "url": "https://www.santec.com/media/en/a505",
+                "publisher": "santec",
+                "date": "2024-09-03",
+                "quote": "30 m measurement range makes it ideal for integration into photonics devices testing systems."
+              }
+            ],
+            "note": "PIC 测试设备，不直接进 BOM。"
+          },
+          {
+            "name": "FormFactor",
+            "fullName": "FormFactor, Inc.",
+            "ticker": "FORM",
+            "market": "US",
+            "stage": "equip",
+            "role": "TRITON 硅光量产晶圆测试机（边耦合+面耦合自动光电测试）",
+            "evidence": "verified",
+            "companyId": "global.formfactor",
+            "sources": [
+              {
+                "type": "official",
+                "title": "TRITON High-Volume Silicon Photonics Production Test Cell System",
+                "url": "https://www.formfactor.com/product/probe-systems/300-mm-systems/triton/",
+                "publisher": "FormFactor",
+                "date": null,
+                "quote": "TRITON delivers automated, production-ready silicon photonics testing with edge & surface coupling."
+              }
+            ],
+            "note": "PIC 晶圆级测试设备，服务硅光代工/PIC 设计公司。"
           }
         ]
       },
@@ -2032,6 +3047,35 @@
             "companyId": "cn.002428",
             "sources": [],
             "note": "未找到公司公告/互动易/年报明确将锗材料用于光电探测器（PD）芯片的表述；公开披露中锗产品应用集中在红外光学、太阳能电池领域，'探测器'表述指向磷化铟而非锗材料本身，未找到支持来源。"
+          },
+          {
+            "name": "云岭光电",
+            "fullName": "武汉云岭光电股份有限公司",
+            "ticker": "",
+            "market": "私有",
+            "stage": "chip",
+            "role": "PIN/APD 探测器芯片与封装（ROSA 核心件）—— coverage 里只记了它的 CW 激光器，这里补 PD；同时把身份从“私有”更新为北交所在审",
+            "evidence": "verified",
+            "companyId": "private.yunling",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "云岭光电：招股说明书（申报稿）",
+                "url": "https://pdf.dfcfw.com/pdf/H2_AN202606301826610495_1.pdf",
+                "publisher": "北交所/东方财富公告",
+                "date": "2026-06-30",
+                "quote": "探测器芯片的主要作用为将光信号转换成电信号，是组成ROSA的核心部件……70mW/100mW CW激光器（400G/800G硅光模块光源）……56G Baud EML……应用于400G/800G光模块"
+              },
+              {
+                "type": "media",
+                "title": "光谷芯片公司云岭光电IPO获受理，拟北交所上市",
+                "url": "https://finance.sina.com.cn/wm/2026-07-01/doc-inifixkn2765124.shtml",
+                "publisher": "新浪财经",
+                "date": "2026-07-01",
+                "quote": "CW激光器芯片、EML激光器芯片及封装产品、DFB激光器芯片及封装产品、PIN/APD探测器产品……对第一大客户华工正源的销售占营收比例分别为47.51%、39.26%和39.39%"
+              }
+            ],
+            "note": "[新三板，北交所 IPO 2026-06-30 受理] 其 PD 是 InP 独立 PD（EML 路线用），硅光 DR8 的 Ge PD 在 PIC 上；对本模块相关性弱于其 CW 光源。华工科技为第二大股东"
           }
         ]
       },
@@ -2255,6 +3299,169 @@
               }
             ],
             "note": "2024年报明确披露公司已研发面向光模块芯片贴装/焊接质量的AOI检测设备，并在攻关先进封装TCB(热压键合，光引擎倒装核心工艺)整机，由candidate上调为verified；TCB样机据年报仍在2025年内完成阶段，尚非成熟量产。"
+          },
+          {
+            "name": "科瑞技术",
+            "fullName": "深圳科瑞技术股份有限公司",
+            "ticker": "002957.SZ",
+            "market": "A",
+            "stage": "equip",
+            "role": "光耦合设备（50 nm 重复定位）与共晶贴装设备（1 μm），获海外头部客户验证",
+            "evidence": "consensus",
+            "companyId": "cn.002957",
+            "sources": [
+              {
+                "type": "media",
+                "title": "调研速递|科瑞技术接受多家机构调研 光模块设备订单充沛",
+                "url": "https://finance.sina.com.cn/stock/aigc/jgdy/2026-05-09/doc-inhxhkfp3547712.shtml",
+                "publisher": "新浪财经（转述调研记录）",
+                "date": "2026-05-08",
+                "quote": "光耦合设备精度达50nm，共晶设备精度突破1μm……已获得海外头部客户验证和认可"
+              }
+            ],
+            "note": "对标 ficonTEC/MRSI 的国产耦合设备。"
+          },
+          {
+            "name": "博众精工",
+            "fullName": "博众精工科技股份有限公司",
+            "ticker": "688097.SH",
+            "market": "A",
+            "stage": "equip",
+            "role": "共晶贴片机在 400G/800G 光模块批量应用，收购中南鸿思切入耦合机",
+            "evidence": "consensus",
+            "companyId": "cn.688097",
+            "sources": [
+              {
+                "type": "media",
+                "title": "博众精工：布局了生产光模块产线的自动化设备，并已经供货给相关客户",
+                "url": "https://finance.sina.com.cn/jjxw/2026-04-01/doc-inhsysmc5043306.shtml",
+                "publisher": "新浪财经（转述互动平台）",
+                "date": "2026-04-01",
+                "quote": "博众精工的共晶贴片机设备已在400G/800G高速光模块规模化生产中批量应用……收购中南鸿思（中南鸿思主营产品为耦合机设备等）"
+              }
+            ],
+            "note": ""
+          },
+          {
+            "name": "智立方",
+            "fullName": "深圳市智立方自动化设备股份有限公司",
+            "ticker": "301312.SZ",
+            "market": "A",
+            "stage": "equip",
+            "role": "光通讯芯片排巴机、固晶机、AOI，已与多家光模块/光芯片客户形成订单",
+            "evidence": "consensus",
+            "companyId": "cn.301312",
+            "sources": [
+              {
+                "type": "media",
+                "title": "智立方：光模块及光芯片产业链订单交付有序、销售稳步增长",
+                "url": "https://finance.sina.com.cn/stock/relnews/cn/2026-03-24/doc-inhsamia4385666.shtml",
+                "publisher": "新浪财经（转述互动平台）",
+                "date": "2026-03-24",
+                "quote": "公司已与多家光模块、光芯片及产业链客户形成订单，相关产品目前交付有序、销售稳步增长。"
+              }
+            ],
+            "note": ""
+          },
+          {
+            "name": "猎奇智能",
+            "fullName": "苏州猎奇智能设备股份有限公司",
+            "ticker": "",
+            "market": "私有",
+            "stage": "equip",
+            "role": "光模块贴片、耦合设备；中际旭创贡献 53–62% 收入，客户还有光迅、索尔思、源杰",
+            "evidence": "verified",
+            "companyId": "private.lieqi",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "苏州猎奇智能设备股份有限公司首次公开发行股票并在创业板上市招股说明书",
+                "url": "https://dataclouds.cninfo.com.cn/sjother2/documents/2026/2026-07-14/5de46084a6a9968472ab824c0dc0a3d6.pdf",
+                "publisher": "巨潮资讯/深交所",
+                "date": "2026-07-14",
+                "quote": "公司产品已覆盖光模块封装测试的核心环节，包括贴片、耦合、老化测试等……对中际旭创的销售收入占比分别为62.19%、58.85%和53.42%"
+              },
+              {
+                "type": "media",
+                "title": "过半营收依赖中际旭创 猎奇智能IPO上会",
+                "url": "https://www.163.com/dy/article/L34KEOFU0519DFFO.html",
+                "publisher": "网易",
+                "date": "2026-07-31",
+                "quote": "专注于光通信、半导体及汽车自动化等领域智能生产装备的研发、生产和销售……贴片、耦合、老化测试设备"
+              }
+            ],
+            "note": "[创业板 IPO，2026-07-31 上会] 对标 ficonTEC/BESI/ASMPT，是 A 股此前缺失的国产贴片/耦合设备标的；猎奇本身对旭创重大依赖"
+          },
+          {
+            "name": "華星光 LuxNet",
+            "fullName": "LuxNet Corporation",
+            "ticker": "4979.TWO",
+            "market": "TW",
+            "stage": "engine",
+            "role": "800G 硅光模块组装技术（2024）、40 mW O-band CW DFB；媒体称 2026 年 1.6T 小量出货",
+            "evidence": "verified",
+            "companyId": "global.luxnet",
+            "sources": [
+              {
+                "type": "official",
+                "title": "LuxNet Company Overview",
+                "url": "https://www.luxnetcorp.com.tw/en-US/about-111-page179",
+                "publisher": "LuxNet",
+                "date": null,
+                "quote": "Developed 800G silicon photonic module assembly technology"
+              },
+              {
+                "type": "media",
+                "title": "AI drives high-speed optics shift as LuxNet, TrueLight scale 800G and CW lasers by 2026",
+                "url": "https://www.digitimes.com/news/a20251223PD224/cpo-laser-optical-communications-siph.html",
+                "publisher": "DIGITIMES",
+                "date": "2025-12-26",
+                "quote": "LuxNet expects 800G products to surpass 400G as the market mainstream in 2026, with 1.6T products entering initial shipments"
+              }
+            ],
+            "note": "注意：任务提示里 4979 写成 VPEC 是错的，4979 是華星光通 LuxNet；VPEC 全新光電是 2455.TW。官网时间轴写 800G 硅光模块组装 + 40mW CW DFB，1.6T 仅媒体。"
+          },
+          {
+            "name": "日月光 ASE",
+            "fullName": "ASE Technology Holding Co., Ltd.",
+            "ticker": "3711.TW",
+            "market": "TW",
+            "stage": "engine",
+            "role": "硅光封装 OSAT：高精度激光 die bonding、晶圆级 bump / Si-etch，服务硅光可插拔模块",
+            "evidence": "verified",
+            "companyId": "global.ase",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Silicon Photonics | ASE",
+                "url": "https://ase.aseglobal.com/silicon-photonics/",
+                "publisher": "ASE",
+                "date": null,
+                "quote": "There are already silicon photonics based pluggable optical transceivers up to 800Gbps in commercial."
+              }
+            ],
+            "note": "官网列 \"High-accuracy laser die bonding\"、\"Post-fab wafer-level bumping and Si-etch process\"；1.6T 客户未点名。"
+          },
+          {
+            "name": "Kulicke & Soffa",
+            "fullName": "Kulicke and Soffa Industries, Inc.",
+            "ticker": "KLIC",
+            "market": "US",
+            "stage": "equip",
+            "role": "热压键合（TCB，甲酸工艺）用于硅光 EIC/PIC 组装",
+            "evidence": "verified",
+            "companyId": "global.kulicke-soffa",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Kulicke & Soffa Expands Thermal Compression Bonding Capabilities to Accelerate Innovation in the Integration of Semiconductor and Silicon Photonics",
+                "url": "https://investor.kns.com/2022-02-01-Kulicke-Soffa-Expands-Thermal-Compression-Bonding-Capabilities-to-Accelerate-Innovation-in-the-Integration-of-Semiconductor-and-Silicon-Photonics",
+                "publisher": "Kulicke & Soffa",
+                "date": "2022-02-01",
+                "quote": "Kulicke & Soffa's TCB solution utilizes a unique formic acid process, that supports new assembly and packaging requirements for Silicon Photonics"
+              }
+            ],
+            "note": "来源偏旧（2022），且当时案例是 CPO；可插拔引擎倒装是否用 K&S 未点名。"
           }
         ]
       },
@@ -2450,6 +3657,182 @@
               }
             ],
             "note": "亨通光电官网确认G.654.D超低损光纤、空芯光纤等特种/单模光纤产品，官方来源确认，评级由candidate上调为verified。"
+          },
+          {
+            "name": "杰普特（矩阵光电）",
+            "fullName": "深圳市杰普特光电股份有限公司",
+            "ticker": "688025.SH",
+            "market": "A",
+            "stage": "device",
+            "role": "收购矩阵光电后 FAU 已在国内头部光模块厂批量出货",
+            "evidence": "verified",
+            "companyId": "cn.688025",
+            "sources": [
+              {
+                "type": "irm",
+                "title": "杰普特 2025 年 9 月 15 日投资者关系活动记录表",
+                "url": "https://file.finance.qq.com/finance/hs/pdf/2025/09/17/20250917091703659415096.pdf",
+                "publisher": "上交所（腾讯财经镜像）",
+                "date": "2025-09-15",
+                "quote": "公司近期收购的子公司矩阵光电的 FAU 已在国内头部光模块厂商批量出货"
+              }
+            ],
+            "note": "天孚/太辰光之外的第三家 A 股 FAU 量产来源。"
+          },
+          {
+            "name": "炬光科技",
+            "fullName": "西安炬光科技股份有限公司",
+            "ticker": "688167.SH",
+            "market": "A",
+            "stage": "material",
+            "role": "高通道 V 型槽（FAU 基板）",
+            "evidence": "verified",
+            "companyId": "cn.688167",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "炬光科技 2026 年半年度报告",
+                "url": "http://file.finance.sina.com.cn/211.154.219.97:9494/MRGG/CNSESH_STOCK/2026/2026-8/2026-08-08/12483585.PDF",
+                "publisher": "上交所（新浪镜像）",
+                "date": "2026-08-08",
+                "quote": "高通道 V 型槽、微棱镜透镜阵列 MPLA、精密模压透镜及高速光通信激光器衬底材料"
+              }
+            ],
+            "note": "V 槽是 FAU 的玻璃基件，卖给 FAU 组装厂。"
+          },
+          {
+            "name": "宇特光电",
+            "fullName": "江苏宇特光电科技股份有限公司",
+            "ticker": "",
+            "market": "私有",
+            "stage": "device",
+            "role": "FA 光纤阵列 —— 招股书定义的“高速光模块组件”之一，覆盖 400G/800G/1.6T",
+            "evidence": "verified",
+            "companyId": "private.yute",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "宇特光电：招股说明书（注册稿）",
+                "url": "https://pdf.dfcfw.com/pdf/H2_AN202607201827157957_1.pdf",
+                "publisher": "北交所/东方财富公告",
+                "date": "2026-07-20",
+                "quote": "由一段光纤短纤及一个或两个 MT 插芯组成的一种内置于光模块内部的预制成端光纤连接器……速率为 800G 及 1.6T 高速光模块组件及预制成端连接器的能力"
+              }
+            ],
+            "note": "[北交所 IPO，2026-07 注册稿] 第一大客户光迅科技占比升至 49.60%；可比公司列天孚、太辰光、蘅东光；未提硅光/CPO"
+          },
+          {
+            "name": "维度科技",
+            "fullName": "深圳市维度科技股份有限公司",
+            "ticker": "",
+            "market": "私有",
+            "stage": "equip",
+            "role": "光纤端面检测仪/干涉仪/插回损测试仪，覆盖 FAU 与高密度光纤连接器的制造与质控",
+            "evidence": "verified",
+            "companyId": "private.weidu",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "维度科技：首次公开发行股票并在创业板上市招股说明书（申报稿）",
+                "url": "http://reportdocs.static.szse.cn/UpFiles/rasinfodisc1/202606/RAS_202606_05190513973EF3F4C543ACAD440FFE49CDFB2B.pdf",
+                "publisher": "深交所发行上市审核信息公开网站",
+                "date": "2026-06-05",
+                "quote": "广泛应用于高密度光纤连接器、FAU光纤集成组件、高速光模块、硅光集成电路、CPO交换机等光通信核心器件的研发、制造、质量控制、部署及运维全生命周期环节"
+              }
+            ],
+            "note": "[创业板 IPO，2026-06-05 受理] 客户含新易盛、天孚通信、富士康、蘅东光、仕佳光子、NVIDIA、Lumentum、CommScope；可比公司 Keysight/VIAVI/EXFO/联讯仪器"
+          },
+          {
+            "name": "上詮 FOCI",
+            "fullName": "Fiber Optic Communications, Inc.",
+            "ticker": "3363.TWO",
+            "market": "TW",
+            "stage": "device",
+            "role": "硅光芯片用光纤阵列（FA solutions for SiPh Chip），台系 FAU 龙头",
+            "evidence": "verified",
+            "companyId": "global.foci",
+            "sources": [
+              {
+                "type": "official",
+                "title": "FOCI Product Category",
+                "url": "https://www.foci.com.tw/en-gb/product-category",
+                "publisher": "FOCI",
+                "date": null,
+                "quote": "FA solutions for SiPh Chip"
+              },
+              {
+                "type": "media",
+                "title": "上詮強化矽光子與光通訊布局，CPO 整合啟動、2027 放量",
+                "url": "https://finance.technews.tw/2025/11/24/foci-3363/",
+                "publisher": "TechNews",
+                "date": "2025-11-24",
+                "quote": "FAU 是 CPO 的『光學 I/O』，負責將光訊號在矽光晶片、封裝與系統面板之間導入匯出。"
+              }
+            ],
+            "note": "官网产品分类直接列硅光芯片 FA；媒体多把它与 TSMC COUPE/CPO 绑定，可插拔模块 FAU 客户未点名。"
+          },
+          {
+            "name": "波若威 Browave",
+            "fullName": "Browave Corporation",
+            "ticker": "3163.TWO",
+            "market": "TW",
+            "stage": "device",
+            "role": "光纖陣列（FAU）产品线",
+            "evidence": "verified",
+            "companyId": "global.browave",
+            "sources": [
+              {
+                "type": "official",
+                "title": "波若威科技 產品",
+                "url": "https://www.browave.com/",
+                "publisher": "Browave",
+                "date": null,
+                "quote": "光纖陣列"
+              }
+            ],
+            "note": "官网产品树列 光纖陣列 / 極化保偏連接器；是否供 1.6T 模块厂未见点名。"
+          },
+          {
+            "name": "Sumitomo Electric（FAU）",
+            "fullName": "住友電気工業株式会社",
+            "ticker": "5802.T",
+            "market": "JP",
+            "stage": "device",
+            "role": "FlexBeamGuidE 低剖面硅光用光纤阵列（8 芯），适配 QSFP-DD 类模块",
+            "evidence": "verified",
+            "companyId": "global.sumitomo-electric",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Low Profile Fiber-array for Silicon Photonics, FlexBeamGuidE",
+                "url": "https://sumitomoelectric.com/products/FlexBeamGuidE",
+                "publisher": "Sumitomo Electric",
+                "date": null,
+                "quote": "Guarantees singlemode operation that contributes to low loss coupling to integrated photonic circuit"
+              }
+            ],
+            "note": "coverage_brief 里 SEI 只在 cw-laser 芯片与 InP 衬底；这里新增 part.fau。"
+          },
+          {
+            "name": "Orbray（原 Adamant Namiki）",
+            "fullName": "Orbray Co., Ltd.",
+            "ticker": "",
+            "market": "私有",
+            "stage": "device",
+            "role": "1D 光纤阵列（FAU），窄间距，直接与 LD/PD/PIC 耦合",
+            "evidence": "verified",
+            "companyId": "private.orbray",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Fiber Array Unit (FAU) | Orbray Co., Ltd.",
+                "url": "https://orbray.com/en/product/optical/device/1d-fiber-array.html",
+                "publisher": "Orbray",
+                "date": null,
+                "quote": "High-density, narrow-pitch structures - fiber-to-fiber pitch is less than 125 µm, enabling high-density connection."
+              }
+            ],
+            "note": "日本陶瓷插芯/FAU 老厂；1.6T 客户未点名。"
           }
         ]
       },
@@ -2598,6 +3981,135 @@
               }
             ],
             "note": "官网确认Corning提供MTP兼容的数据中心光连接系统产品线，与\"数据中心光连接系统\"角色一致，官方来源确认，评级由consensus上调为verified。"
+          },
+          {
+            "name": "杰普特（矩阵光电）",
+            "fullName": "深圳市杰普特光电股份有限公司",
+            "ticker": "688025.SH",
+            "market": "A",
+            "stage": "connect",
+            "role": "MPO 通过 Senko 体系认证、MMC 通过 US Conec 认证，募投 7.66 亿扩 MPO/MMC/FAU 产能",
+            "evidence": "verified",
+            "companyId": "cn.688025",
+            "sources": [
+              {
+                "type": "irm",
+                "title": "杰普特 2025 年 9 月 15 日投资者关系活动记录表",
+                "url": "https://file.finance.qq.com/finance/hs/pdf/2025/09/17/20250917091703659415096.pdf",
+                "publisher": "上交所（腾讯财经镜像）",
+                "date": "2025-09-15",
+                "quote": "公司的 MPO 产品已通过 senko 体系认证，MMC 产品已通过 uscon 体系认证"
+              }
+            ],
+            "note": "同时是激光/检测设备商，光模块检测设备为另一条候选（未单列）。"
+          },
+          {
+            "name": "致尚科技",
+            "fullName": "深圳市致尚科技股份有限公司",
+            "ticker": "301486.SZ",
+            "market": "A",
+            "stage": "connect",
+            "role": "向美国 PH 客户供 MPO 光纤跳线等光纤连接器，累计订单 6,640 万美元；配合 Senko 开发 MPC 耦合器（CPO 用）",
+            "evidence": "consensus",
+            "companyId": "cn.301486",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "致尚科技关于收到日常经营订单的自愿性披露公告（2026-038）",
+                "url": "http://static.cninfo.com.cn/finalpage/2026-06-04/1225352232.PDF",
+                "publisher": "巨潮资讯",
+                "date": "2026-06-04",
+                "quote": "公司主要向 PH 客户销售光纤连接器（MPO 光纤跳线等光通信产品）……累积订单金额约 6,640.04 万美元",
+                "partial": true
+              }
+            ],
+            "note": "站在模块面板 MPO 插座的对端（跳线/连接器），不是模块内插座本身；MPC 是 CPO 路线。"
+          },
+          {
+            "name": "唯科科技（久腾通讯）",
+            "fullName": "厦门唯科模塑科技股份有限公司",
+            "ticker": "301196.SZ",
+            "market": "A",
+            "stage": "connect",
+            "role": "收购久腾通讯 51%，主营 MPO 跳线及核心零部件 MT 插芯",
+            "evidence": "verified",
+            "companyId": "cn.301196",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "唯科科技关于通过增资及购买的方式收购久腾通讯科技（湖州）有限公司股权的公告（2026-034）",
+                "url": "https://disc.static.szse.cn/disc/disk03/finalpage/2026-04-29/c214f59b-ce4c-4f3c-ae43-3d8ea496dc47.PDF",
+                "publisher": "深交所",
+                "date": "2026-04-29",
+                "quote": "久腾科技主营光通讯领域产品，基本完成 MPO 跳线及核心零部件 MT 插芯产品的研发及生产。"
+              }
+            ],
+            "note": "A 股少有的明确做 MT 插芯的标的（对标 US Conec），但久腾体量小、是否进入头部模块厂未知。"
+          },
+          {
+            "name": "宇特光电",
+            "fullName": "江苏宇特光电科技股份有限公司",
+            "ticker": "",
+            "market": "私有",
+            "stage": "connect",
+            "role": "MT 组件（模块内 MT 插芯短纤）与预制成端连接器",
+            "evidence": "consensus",
+            "companyId": "private.yute",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "关于江苏宇特光电科技股份有限公司公开发行股票并在北交所上市申请文件的审核问询函",
+                "url": "https://xinsanban.eastmoney.com/Article/NoticeContent?id=AN202601291818551411",
+                "publisher": "北交所/东方财富",
+                "date": "2026-01-29",
+                "quote": "主要从事光连接产品的研发设计、制造与销售，主要产品包括高速光模块组件、预制成端连接器、现场组装型光纤连接器……向武汉光迅科技及其关联方销售金额占比分别为9.61%、13.39%、37.35%和49.60%",
+                "partial": true
+              }
+            ],
+            "note": "[北交所 IPO，2026-07 注册稿] 同上招股书；MT 插芯本身外购（US Conec 系）"
+          },
+          {
+            "name": "Seikoh Giken",
+            "fullName": "株式会社精工技研",
+            "ticker": "6834.T",
+            "market": "JP",
+            "stage": "equip",
+            "role": "MT/MPO 插芯端面研磨机与夹具（US Conec 推荐工艺），以及陶瓷插芯/连接器",
+            "evidence": "consensus",
+            "companyId": "global.seikoh-giken",
+            "sources": [
+              {
+                "type": "official",
+                "title": "MT 24 Flock Polishing (SFP-550C)",
+                "url": "https://www.seikoh-giken.co.jp/en/products/pdf/sfp_550c_mt_e.pdf",
+                "publisher": "Seikoh Giken",
+                "date": null,
+                "quote": "Pressure Module: PH55-MT-PRM TYPE1 (MT/MPO Pressure Module for 550C/550E3/550S3)",
+                "partial": true
+              }
+            ],
+            "note": "MT 插芯研磨设备与耗材，AI 数据中心 MPO 密度提升的间接受益者；不直接进 BOM。"
+          },
+          {
+            "name": "Hakusan",
+            "fullName": "白山工業株式会社",
+            "ticker": "",
+            "market": "私有",
+            "stage": "connect",
+            "role": "MT 插芯（12/16/24/32/36/48 芯），用于光收发器 MT 线束与 MPO 连接器",
+            "evidence": "verified",
+            "companyId": "private.hakusan",
+            "sources": [
+              {
+                "type": "official",
+                "title": "MT Ferrule | Hakusan Inc.",
+                "url": "https://hakusan-mfg.co.jp/en/optical/products/mt-ferrule/",
+                "publisher": "Hakusan",
+                "date": null,
+                "quote": "MT harness (for optical transceivers)"
+              }
+            ],
+            "note": "US Conec 之外少数 MT 插芯厂（日本），官网写 12/16 芯规格与光收发器用途。"
           }
         ]
       },
@@ -2673,7 +4185,8 @@
                 "url": "https://www.jsgian.com/",
                 "publisher": "精研科技官网",
                 "date": null,
-                "quote": "以MIM产品为主业，致力于精密、复杂、轻量化零部件的开发、制造和销售"
+                "quote": "以MIM产品为主业，致力于精密、复杂、轻量化零部件的开发、制造和销售",
+                "partial": true
               }
             ],
             "note": "官网确认精研以MIM金属结构件为主业，但未提及光模块/散热顶盖等具体应用领域，仅泛泛描述通用零部件能力，仍列candidate。"
@@ -2688,6 +4201,49 @@
             "companyId": "global.honeywell",
             "sources": [],
             "note": "Dow官网（DOWSIL）确认导热界面材料产品用于数据中心散热，与\"TIM材料\"角色一致，官方来源确认，评级由consensus上调为verified；Honeywell本轮未独立找到官方来源（官网未见TIM/电子材料业务页面）。"
+          },
+          {
+            "name": "Laird（DuPont）",
+            "fullName": "Laird Performance Materials（DuPont de Nemours 旗下）",
+            "ticker": "DD",
+            "market": "US",
+            "stage": "material",
+            "role": "Tflex SF10 无硅 TIM 垫，客户用于 100G SFP 到 800G OSFP 模块",
+            "evidence": "verified",
+            "companyId": "global.laird",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Application Note: Laird Tflex SF10 Enhances Thermal Management in Optical Interconnects",
+                "url": "https://www.laird.com/sites/default/files/2025-11/Application%20Note_Laird%20TFLEX%E2%84%A2%20SF10%20Enhances%20Thermal%20Management%20in%20Optical%20Interconnects_Updated%20Nov%2025.pdf",
+                "publisher": "Laird / DuPont",
+                "date": "2025-11",
+                "quote": "The silicone-free formulation, high thermal conductivity, and long-term stability make it a gold standard for optical and data center applications."
+              }
+            ],
+            "note": "应用笔记写 \"100G SFP modules to 800G OSFP modules\"；1.6T 未点名但同形态。coverage_brief 只有 Honeywell/Dow candidate，这条是 TIM 的 verified 补充。"
+          },
+          {
+            "name": "Parker Chomerics",
+            "fullName": "Parker-Hannifin Corporation (Chomerics Division)",
+            "ticker": "PH",
+            "market": "US",
+            "stage": "material",
+            "role": "光模块用可点胶导热凝胶（THERM-A-GAP 系列）",
+            "evidence": "consensus",
+            "companyId": "global.parker-chomerics",
+            "sources": [
+              {
+                "type": "media",
+                "title": "Thermal interface materials prove essential for latest optical transceivers",
+                "url": "https://www.electronicspecifier.com/products/component-management/thermal-interface-materials-prove-essential-for-latest-optical-transceivers",
+                "publisher": "Electronic Specifier",
+                "date": "2022-08-01",
+                "quote": "Thermal gels with high thermal conductivity and good flow rate are ideal for robotic dispensing in high-volume applications such as optical modules.",
+                "partial": true
+              }
+            ],
+            "note": "Parker 官网 QSFP-DD 博客链接已 404，只剩媒体转载，故 consensus。"
           }
         ]
       },
@@ -2754,7 +4310,8 @@
                 "url": "http://static.cninfo.com.cn/finalpage/2026-04-25/1225190103.PDF",
                 "publisher": "巨潮资讯网（铭普光磁）",
                 "date": "2026-04-25",
-                "quote": "磁性元器件（网络变压器等）；光器件、光模块产品涵盖数据中心等"
+                "quote": "磁性元器件（网络变压器等）；光器件、光模块产品涵盖数据中心等",
+                "partial": true
               }
             ],
             "note": "年报显示磁性元器件（网络变压器/电感）和光器件光模块均为主营业务，但均未提及光模块结构件/壳体/EMI屏蔽件，属泛泛提及，无法坐实该具体部件，故仍列candidate。"
@@ -2769,6 +4326,27 @@
             "companyId": null,
             "sources": [],
             "note": "占位，不是一家公司"
+          },
+          {
+            "name": "长盈精密",
+            "fullName": "深圳市长盈精密技术股份有限公司",
+            "ticker": "300115.SZ",
+            "market": "A",
+            "stage": "device",
+            "role": "AI 基建产品含光模块壳体、高速互连模块与液冷零组件",
+            "evidence": "consensus",
+            "companyId": "cn.300115",
+            "sources": [
+              {
+                "type": "media",
+                "title": "长盈精密AI基建产品涵盖高速互连模块、光模块壳体及液冷散热核心零组件",
+                "url": "https://finance.sina.com.cn/stock/relnews/cn/2026-05-15/doc-inhxxwvr3424338.shtml",
+                "publisher": "新浪财经（引 A+H 招股文件）",
+                "date": "2026-05-15",
+                "quote": "高速互连模块、连接器、光模块壳体及液冷散热核心零组件等"
+              }
+            ],
+            "note": "补上 coverage_brief 里'壳体压铸厂多为未上市'的缺口；港股招股书原文未打开。"
           }
         ]
       },
@@ -2928,26 +4506,6 @@
               }
             ],
             "note": "公司公告明确披露拟建设800G/1.6T高速光模块生产线，直接证实其在1.6T模块环节的量产布局，与'800G/1.6T二线'角色一致。"
-          },
-          {
-            "name": "华西股份（索尔思）",
-            "ticker": "000936.SZ",
-            "market": "A",
-            "stage": "module",
-            "role": "并购 Source Photonics",
-            "evidence": "verified",
-            "companyId": "cn.000936",
-            "sources": [
-              {
-                "type": "announcement",
-                "title": "关于转让参股公司股份的公告",
-                "url": "http://static.cninfo.com.cn/finalpage/2025-06-14/1223879877.pdf",
-                "publisher": "巨潮资讯网（华西股份）",
-                "date": "2025-06-14",
-                "quote": "上海启澜拟将其持有索尔思光电股份转让给超毅集团（香港）"
-              }
-            ],
-            "note": "公司公告披露其通过控股的上海启澜持有Source Photonics（索尔思光电）股份并拟转让部分股权，证实华西股份与Source Photonics的股权并购关系，但该份公告本身是关于减持而非最初收购。"
           },
           {
             "name": "Coherent",
@@ -3174,6 +4732,358 @@
               }
             ],
             "note": "官网BA-1600-OSFP产品页明确说明可通过双OSFP端口测试两个1.6T收发器，直接对应1.6T OSFP光测试角色。"
+          },
+          {
+            "name": "东山精密",
+            "fullName": "苏州东山精密制造股份有限公司",
+            "ticker": "002384.SZ",
+            "market": "A",
+            "stage": "module",
+            "role": "通过全资收购索尔思光电（Source Photonics）进入整模块，1.6T 已向客户供货，硅光与自研 EML 双路线并行",
+            "evidence": "verified",
+            "companyId": "cn.002384",
+            "sources": [
+              {
+                "type": "irm",
+                "title": "苏州东山精密制造股份有限公司投资者关系活动记录表 2026-08-24",
+                "url": "http://static.cninfo.com.cn/finalpage/2026-08-24/1225497036.PDF",
+                "publisher": "巨潮资讯",
+                "date": "2026-08-24",
+                "quote": "公司1.6T光模块产品已向客户供货，但基于商业保密原则，具体订单信息不便披露。……公司坚持硅光与EML双技术路线并行，多元布局应对光互联技术迭代。"
+              },
+              {
+                "type": "media",
+                "title": "东山精密子公司拟斥资59.35亿元收购索尔思光电",
+                "url": "https://www.chnfund.com/article/AR02c5b684-b8aa-0c77-0496-3a1a7e9e8eb3",
+                "publisher": "中国基金报",
+                "date": "2025-06-13",
+                "quote": "东山精密拟通过全资子公司超毅集团（香港）有限公司...收购Source Photonics Holdings……整体投资金额合计不超过59.35亿元"
+              },
+              {
+                "type": "media",
+                "title": "东山精密“追光”的这一年",
+                "url": "https://finance.sina.com.cn/cj/2026-07-08/doc-inihaxzy4778870.shtml",
+                "publisher": "新浪财经",
+                "date": "2026-07-08",
+                "quote": "1.6T已通过英伟达验证，2026年四季度量产"
+              }
+            ],
+            "note": "coverage_brief 把索尔思挂在华西股份名下，实际 2025-06 起索尔思 100% 归东山精密（华西股份仅为原少数股东）。1.6T 供货已由公司在投关记录中确认；'通过英伟达验证'仅媒体说法。"
+          },
+          {
+            "name": "中天科技",
+            "fullName": "江苏中天科技股份有限公司",
+            "ticker": "600522.SH",
+            "market": "A",
+            "stage": "module",
+            "role": "800G 已批量出货，1.6T 单波 200G 硅光模块在 OFC 2026 首次展出",
+            "evidence": "consensus",
+            "companyId": "cn.600522",
+            "sources": [
+              {
+                "type": "media",
+                "title": "中天科技(600522.SH)：已完成800G高速光模块批量出货",
+                "url": "https://finance.sina.com.cn/stock/bxjj/2026-04-30/doc-inhwhkum4200184.shtml",
+                "publisher": "新浪财经（转述互动平台）",
+                "date": "2026-04-30",
+                "quote": "公司已完成800G高速光模块批量出货……在OFC 2026首次公开展出了基于单通道200G技术的1.6T硅光模块"
+              }
+            ],
+            "note": "互动平台原答复经媒体转述，未打开 sseinfo 原帖，故记 consensus；1.6T 硅光尚为展品级。"
+          },
+          {
+            "name": "德科立",
+            "fullName": "无锡市德科立光电子技术股份有限公司",
+            "ticker": "688205.SH",
+            "market": "A",
+            "stage": "module",
+            "role": "1.6T 数通模块完成 EML / 硅光 / TFLN 三种方案开发，400G/800G 数通模块获小批量订单；主业仍是电信 DCI/光放",
+            "evidence": "verified",
+            "companyId": "cn.688205",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "德科立 2025 年年度报告",
+                "url": "https://stockmc.xueqiu.com/202603/688205_20260331_J1LK.pdf",
+                "publisher": "上交所（雪球镜像）",
+                "date": "2026-03-31",
+                "quote": "400G/800G 数通模块完成迭代并获客户小批量订单；1.6T 数通模块完成 EML、硅光、TFLN 三种技术方案的产品开发。"
+              }
+            ],
+            "note": "有硅光 1.6T 产品开发的年报原文，但客户/出货未披露，属于二线候选。"
+          },
+          {
+            "name": "汇绿生态（钧恒科技）",
+            "fullName": "汇绿生态科技集团股份有限公司",
+            "ticker": "001267.SZ",
+            "market": "A",
+            "stage": "module",
+            "role": "并表武汉钧恒科技，量产至 800G，持有硅光芯片/光引擎与 1.6T 相关专利，客户含 Coherent、索尔思；1.6T 送样为媒体说法",
+            "evidence": "verified",
+            "companyId": "cn.001267",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "汇绿生态 2025 年年度报告摘要",
+                "url": "http://static.cninfo.com.cn/finalpage/2026-04-03/1225076555.PDF",
+                "publisher": "巨潮资讯",
+                "date": "2026-04-03",
+                "quote": "传输速率覆盖10Gbps-800Gbps……包括400G、800G、1.6T、硅光模块等高速光模块的发明专利……拥有硅光模块通用光路技术、硅光芯片及其光引擎技术……与主要客户Coherent、北京金山云网络技术有限公司、索尔思光电、新华三等多家知名企业建立了稳定合作关系"
+              },
+              {
+                "type": "media",
+                "title": "从百货到光模块！汇绿生态两度“换命”成算力新贵",
+                "url": "https://finance.sina.com.cn/tech/roll/2026-07-10/doc-inihifxz8401772.shtml",
+                "publisher": "新浪科技",
+                "date": "2026-07-10",
+                "quote": "可量产200G/400G/800G高速光模块，1.6T产品已完成送样测试",
+                "partial": true
+              }
+            ],
+            "note": "身份更像 Coherent / 索尔思的二级代工，站位在整模块组装侧。"
+          },
+          {
+            "name": "协创数据（光为科技）",
+            "fullName": "协创数据技术股份有限公司",
+            "ticker": "300857.SZ",
+            "market": "A",
+            "stage": "module",
+            "role": "子公司光为科技覆盖 200G–1.6T 光模块矩阵，面向自有算力集群及国内智算中心",
+            "evidence": "consensus",
+            "companyId": "cn.300857",
+            "sources": [
+              {
+                "type": "media",
+                "title": "协创数据(300857.SZ)：光为科技已形成覆盖200G/400G/800G/1.6T全系列光模块的产品矩阵",
+                "url": "https://finance.sina.com.cn/stock/bxjj/2026-05-19/doc-inhymivh3280581.shtml",
+                "publisher": "新浪财经（转述互动平台）",
+                "date": "2026-05-19",
+                "quote": "光为科技已形成覆盖200G/400G/800G/1.6T全系列光模块的产品矩阵，具备规模化量产与稳定交付能力。"
+              }
+            ],
+            "note": "客户主要在国内且部分自用，与 NVIDIA X800 生态关系弱；硅光/EML 路线未披露。"
+          },
+          {
+            "name": "环旭电子",
+            "fullName": "环旭电子股份有限公司",
+            "ticker": "601231.SH",
+            "market": "A",
+            "stage": "module",
+            "role": "SiP/EMS 厂切入光模块，1.6T 进入小批量生产与测试；子公司光创联推 ELSFP 外置光源",
+            "evidence": "consensus",
+            "companyId": "cn.601231",
+            "sources": [
+              {
+                "type": "media",
+                "title": "环旭电子：2024年布局光模块，2026年生产1.6T光模块",
+                "url": "https://www.c114.com.cn/news/16/a1303016.html",
+                "publisher": "C114",
+                "date": "2025-12-26",
+                "quote": "目前公司的1.6T光模块产品已经进入到小批量生产和测试阶段"
+              }
+            ],
+            "note": "缺公告/年报原文；ELSFP 属 CPO 外置光源路线，不在本可插拔模块内。"
+          },
+          {
+            "name": "联讯仪器",
+            "fullName": "苏州联讯仪器股份有限公司",
+            "ticker": "688808.SH",
+            "market": "A",
+            "stage": "equip",
+            "role": "1.6T 光模块全套测试仪器量产（全球第二家），客户含中际旭创、新易盛、博通、Lumentum；2026-04 科创板上市",
+            "evidence": "consensus",
+            "companyId": "cn.688808",
+            "sources": [
+              {
+                "type": "media",
+                "title": "光通信测试国产龙头联讯仪器今日正式登陆科创板 1.6T测试能力跻身全球前列",
+                "url": "https://www.stcn.com/article/detail/3802496.html",
+                "publisher": "证券时报",
+                "date": "2026-04-24",
+                "quote": "全球第二家推出1.6T光模块全套测试仪器并实现量产的厂商……客户覆盖中际旭创、新易盛、比亚迪半导体、士兰微、博通、Lumentum等国内外龙头企业"
+              }
+            ],
+            "note": "Keysight 之外的国产替代主标的；招股书原文未打开。"
+          },
+          {
+            "name": "华盛昌（伽蓝特）",
+            "fullName": "深圳市华盛昌科技实业股份有限公司",
+            "ticker": "002980.SZ",
+            "market": "A",
+            "stage": "equip",
+            "role": "4.6 亿元收购伽蓝特 100%，伽蓝特专注光通信模块与光芯片测试仪器",
+            "evidence": "consensus",
+            "companyId": "cn.002980",
+            "sources": [
+              {
+                "type": "media",
+                "title": "华盛昌拟4.6亿元收购伽蓝特100%股权 后者专注于光通信模块和光芯片测试领域",
+                "url": "https://news.qq.com/rain/a/20260227A07DY300",
+                "publisher": "腾讯新闻（转述公告）",
+                "date": "2026-02-27",
+                "quote": "伽蓝特专注于仪器仪表测试测量行业中的光通信模块和光芯片测试领域"
+              }
+            ],
+            "note": "伽蓝特是否有 1.6T/224G 级仪器未知。"
+          },
+          {
+            "name": "维度科技",
+            "fullName": "深圳市维度科技股份有限公司",
+            "ticker": "",
+            "market": "私有",
+            "stage": "equip",
+            "role": "光通信测试装备（光传输性能、电信号性能测试）用于高速光模块产线",
+            "evidence": "consensus",
+            "companyId": "private.weidu",
+            "sources": [
+              {
+                "type": "media",
+                "title": "维度科技创业板IPO获受理 拟募资13.90亿元",
+                "url": "https://www.163.com/dy/article/KUMJ4882053469RG.html",
+                "publisher": "网易/证券之星",
+                "date": "2026-06-05",
+                "quote": "核心业务聚焦于光通信测试仪器及光通信测试装备……已与客户一、新易盛、天孚通信、富士康、蘅东光、仕佳光子、NVIDIA、Lumentum、CommScope等国内外知名企业建立合作关系"
+              }
+            ],
+            "note": "[创业板 IPO，2026-06-05 受理] 同上招股书"
+          },
+          {
+            "name": "猎奇智能",
+            "fullName": "苏州猎奇智能设备股份有限公司",
+            "ticker": "",
+            "market": "私有",
+            "stage": "equip",
+            "role": "老化测试设备与自动化整线",
+            "evidence": "verified",
+            "companyId": "private.lieqi",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "苏州猎奇智能设备股份有限公司首次公开发行股票并在创业板上市招股说明书",
+                "url": "https://dataclouds.cninfo.com.cn/sjother2/documents/2026/2026-07-14/5de46084a6a9968472ab824c0dc0a3d6.pdf",
+                "publisher": "巨潮资讯/深交所",
+                "date": "2026-07-14",
+                "quote": "公司产品已覆盖光模块封装测试的核心环节，包括贴片、耦合、老化测试等"
+              }
+            ],
+            "note": "[创业板 IPO，2026-07-31 上会] 同上招股书"
+          },
+          {
+            "name": "纳真科技（原海信宽带）",
+            "fullName": "纳真科技公司 Ligent Technologies, Inc.",
+            "ticker": "",
+            "market": "私有",
+            "stage": "module",
+            "role": "全球专业光模块厂商第五，800G 批量、1.6T 样品已送客户验证",
+            "evidence": "verified",
+            "companyId": "private.ligent",
+            "sources": [
+              {
+                "type": "filing",
+                "title": "纳真科技：港交所申请版本招股书",
+                "url": "https://www1.hkexnews.hk/app/sehk/2026/108264/documents/sehk26030502134_c.pdf",
+                "publisher": "HKEXnews",
+                "date": "2026-03-05",
+                "quote": "我们已交付1.6T光模块产品样品以供客户验证……2024年按全球光模块收入计排名第五，按中国光模块收入计排名第三"
+              },
+              {
+                "type": "media",
+                "title": "海信旗下纳真科技通过港交所上市聆讯 AI产业再布新局",
+                "url": "https://www.chinanews.com.cn/cj/2026/08-31/10687210.shtml",
+                "publisher": "中国新闻网",
+                "date": "2026-08-31",
+                "quote": "800G和1.6T光模块……DFB激光器芯片已量产……在研150mW/400mW CW-DFB"
+              }
+            ],
+            "note": "[港交所 IPO，2026-08-30 通过聆讯] 海光芯正招股书把海信宽带列为竞争对手；1.6T 仍在样品阶段"
+          },
+          {
+            "name": "海光芯正",
+            "fullName": "北京海光芯正科技股份有限公司 Crealights Technology Co., Ltd.",
+            "ticker": "1191.HK",
+            "market": "HK",
+            "stage": "module",
+            "role": "硅光光模块厂，400G 及以上单模模块全部硅光；在开发 1.6T/3.2T",
+            "evidence": "consensus",
+            "companyId": "global.crealights-technology",
+            "sources": [
+              {
+                "type": "announcement",
+                "title": "北京海光芯正科技股份有限公司：全球发售公告",
+                "url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0618/2026061800076_c.pdf",
+                "publisher": "HKEXnews",
+                "date": "2026-06-18",
+                "quote": "北京海光芯正科技股份有限公司（Crealights Technology Co., Ltd.）……股份代号 1191",
+                "partial": true
+              },
+              {
+                "type": "media",
+                "title": "「海光芯正」通过聆讯，AI光模块赛道迎来H股新玩家",
+                "url": "https://finance.sina.com.cn/stock/hkstock/hkzmt/2026-06-14/doc-inicmxcc5073866.shtml",
+                "publisher": "新浪财经",
+                "date": "2026-06-14",
+                "quote": "所有400G及以上规格的单模光模块均采用硅光子技术……1.6T、3.2T及其他下一代高速光电互连产品"
+              },
+              {
+                "type": "media",
+                "title": "北京这家光模块新秀，要IPO了",
+                "url": "https://news.pedaily.cn/202606/565257.shtml",
+                "publisher": "投资界",
+                "date": "2026-06-16",
+                "quote": "竞争对手包括中际旭创、新易盛、Coherent、光迅科技、海信宽带、华工正源"
+              }
+            ],
+            "note": "[2026-06 全球发售] 港交所公告只证身份；业务描述来自媒体转述聆讯后招股书，招股章程 PDF 未能打开，故 consensus"
+          },
+          {
+            "name": "Jabil",
+            "fullName": "Jabil Inc.",
+            "ticker": "JBL",
+            "market": "US",
+            "stage": "module",
+            "role": "接手 Intel 硅光可插拔模块产品线，已发布 1.6T DR8 / DR8+ / 2xFR4 硅光模块",
+            "evidence": "verified",
+            "companyId": "global.jabil",
+            "sources": [
+              {
+                "type": "official",
+                "title": "Jabil Launches 1.6T Pluggable Transceiver to Support Growing Demand for Intra-Data Center and AI Connectivity",
+                "url": "https://investors.jabil.com/news/news-details/2025/Jabil-Launches-1-6T-Pluggable-Transceiver-to-Support-Growing-Demand-for-Intra-Data-Center-and-AI-Connectivity/default.aspx",
+                "publisher": "Jabil",
+                "date": "2025-04-01",
+                "quote": "will be available in DR8, DR8+, and 2xFR4 variants to support intra-data center connectivity."
+              },
+              {
+                "type": "official",
+                "title": "Jabil Invests in the Future of AI with Intel Silicon Photonics Transceiver Deal",
+                "url": "https://investors.jabil.com/news/news-details/2023/Jabil-Invests-in-the-Future-of-AI-with-Intel-Silicon-Photonics-Transceiver-Deal/default.aspx",
+                "publisher": "Jabil",
+                "date": "2023-10-30",
+                "quote": "today announced it will take over the manufacture and sale of Intel's current Silicon Photonics-based pluggable optical transceiver (\"module\") product lines"
+              }
+            ],
+            "note": "海外 1.6T DR8 硅光模块的第二梯队；是否进入 NVIDIA 供应链未见来源。"
+          },
+          {
+            "name": "MultiLane",
+            "fullName": "MultiLane Inc.",
+            "ticker": "",
+            "market": "私有",
+            "stage": "equip",
+            "role": "OSFP 1.6T MCB/HCB、有源/无源环回、224G BERT 等模块测试夹具与仪器",
+            "evidence": "verified",
+            "companyId": "private.multilane",
+            "sources": [
+              {
+                "type": "official",
+                "title": "OSFP1.6T — Multilane",
+                "url": "https://multilaneinc.com/s-categories/Data%20Center%20Test%20Solutions/s-category.php?type=OSFP1.6T",
+                "publisher": "MultiLane",
+                "date": null,
+                "quote": "OSFP1.6T has emerged as a leading standard to drive the development of 1.6T interconnectivity."
+              }
+            ],
+            "note": "黎巴嫩/美国私有测试公司，官网列 OSFP 1.6T MCB/HCB/Loopback 产品。"
           }
         ]
       }

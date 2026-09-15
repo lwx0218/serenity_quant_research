@@ -15,22 +15,29 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import config
-from .routers import baskets, chain, companies, events, nodes, notes, overview, physical, research
+from .ingest.schema import ensure_schema as ensure_ingest_schema
+from .routers import baskets, chain, companies, events, ingest, nodes, notes, overview, physical, research
 from .seed import ensure_database
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     ensure_database(config.DB_PATH, config.SEED_DIR)
+    from .db import connect
+    conn = connect(config.DB_PATH)
+    try:
+        ensure_ingest_schema(conn)      # 接入层的表可以加在已有库上
+    finally:
+        conn.close()
     yield
 
 
-app = FastAPI(title="Teardown — from part to position", version="0.2.0", lifespan=lifespan)
+app = FastAPI(title="Teardown — from part to position", version="0.3.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-    allow_methods=["GET", "PUT", "POST", "PATCH"],
+    allow_methods=["GET", "PUT", "POST", "PATCH", "DELETE"],
     allow_headers=["*"],
 )
 
@@ -43,6 +50,7 @@ app.include_router(baskets.router)
 app.include_router(notes.router)
 app.include_router(research.router)
 app.include_router(physical.router)
+app.include_router(ingest.router)
 
 
 @app.get("/api/health", tags=["meta"])
