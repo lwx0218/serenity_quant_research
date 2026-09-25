@@ -1,6 +1,7 @@
 """API tests. Run with `pytest` (or `python -m unittest` — no pytest required)."""
 from __future__ import annotations
 
+import json
 import os
 import tempfile
 import unittest
@@ -72,8 +73,22 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(len(sp["companies"]), 4)
 
     def test_company_filters(self):
-        all_ = self.client.get("/api/companies").json()
-        self.assertEqual(len(all_), 35)
+        response = self.client.get("/api/companies")
+        self.assertEqual(response.status_code, 200)
+        all_ = response.json()
+        # The catalogue includes both CPO and physical-layer seed companies.
+        seed_paths = [
+            config.SEED_DIR / "cpo-research-seed.json",
+            config.SEED_DIR / "cpo-reference-exposures.json",
+            config.REPO_ROOT / "data" / "seeds" / "physical" / "companies.json",
+        ]
+        expected_ids = {
+            c["id"]
+            for path in seed_paths
+            for c in json.loads(path.read_text(encoding="utf-8"))["companies"]
+        }
+        self.assertEqual({c["id"] for c in all_}, expected_ids)
+        self.assertEqual(len(all_), len(expected_ids))
         by_chain = self.client.get("/api/companies", params={"chain": "cpo.chain.light-source"}).json()
         self.assertEqual([c["short_name"] for c in by_chain], ["Coherent", "Lumentum", "仕佳光子", "长光华芯"])
         by_node = self.client.get("/api/companies", params={"node": "cpo.mod.thermal"}).json()
