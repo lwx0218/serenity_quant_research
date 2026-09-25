@@ -10,6 +10,7 @@
   "packages": [
     "npm:pi-web-access",
     "npm:pi-subagents@0.60.0",
-    "npm:pi-frontend-check@1.1.0"
+    "npm:pi-frontend-check@1.1.0",
+    "npm:pi-web-ui@0.95.0"
   ]
 }
