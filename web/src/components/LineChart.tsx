@@ -8,7 +8,8 @@ import { useMemo, useState } from "react";
 export interface ChartSeries { key: string; label: string; points: [string, number][]; kind: "subject" | "reference" }
 export interface ChartEvent { id?: string; date: string; label: string; value: number; onClick?: () => void; hot?: boolean }
 
-const M = { l: 44, r: 150, t: 14, b: 30 };
+const DEFAULT_M = { l: 44, r: 150, t: 14, b: 30 };
+type M = typeof DEFAULT_M;
 
 function niceTicks(lo: number, hi: number, n: number): number[] {
   const span = hi - lo;
@@ -21,7 +22,7 @@ function niceTicks(lo: number, hi: number, n: number): number[] {
   return out;
 }
 
-function monthTicks(dates: string[]): { x: string; label: string }[] {
+function monthTicks(dates: string[]): { x: string; label: string }[] {   // 相邻两个太近时(窗口起点只剩月底几天)去掉前一个,见调用处
   const out: { x: string; label: string }[] = [];
   let last = "";
   for (const d of dates) {
@@ -31,7 +32,8 @@ function monthTicks(dates: string[]): { x: string; label: string }[] {
   return out;
 }
 
-export function LineChart({ series, events = [], height = 300, width = 800, yTicks = 5 }: { series: ChartSeries[]; events?: ChartEvent[]; height?: number; width?: number; yTicks?: number }) {
+export function LineChart({ series, events = [], height = 300, width = 800, yTicks = 5, margin }: { series: ChartSeries[]; events?: ChartEvent[]; height?: number; width?: number; yTicks?: number; margin?: Partial<M> }) {
+  const M = { ...DEFAULT_M, ...margin };      // 窄栏(如物理页右栏 460)线尾标签短,右边距可以收
   const [hover, setHover] = useState<number | null>(null);
   const dates = useMemo(() => Array.from(new Set(series.flatMap((s) => s.points.map((p) => p[0])))).sort(), [series]);
   const idx = useMemo(() => new Map(dates.map((d, i) => [d, i])), [dates]);
@@ -62,10 +64,17 @@ export function LineChart({ series, events = [], height = 300, width = 800, yTic
     lastX = x;
   }
   const months = monthTicks(dates);
+  if (months.length > 1 && X(months[1].x) - X(months[0].x) < 34) months.shift();
   const hoverDate = hover !== null ? dates[hover] : null;
+  // 线尾标签:两条线收在差不多的高度时上下错开,不叠字
+  const endY = series.map((s) => { const l = s.points[s.points.length - 1]; return l ? Y(l[1]) + 4 : 0; });
+  if (endY.length === 2 && Math.abs(endY[0] - endY[1]) < 14) {
+    const mid = (endY[0] + endY[1]) / 2, up = endY[0] <= endY[1] ? 0 : 1;
+    endY[up] = mid - 7; endY[1 - up] = mid + 7;
+  }
 
   return (
-    <svg className="chart" viewBox={`0 0 ${width} ${height}`} width="100%" style={{ display: "block", overflow: "visible" }} role="img"
+    <svg className={`chart${hover !== null ? " is-hover" : ""}`} viewBox={`0 0 ${width} ${height}`} width="100%" style={{ display: "block", overflow: "visible" }} role="img"
       onMouseMove={(e) => {
         const r = (e.currentTarget as SVGSVGElement).getBoundingClientRect();
         const x = ((e.clientX - r.left) / r.width) * width;
@@ -82,14 +91,15 @@ export function LineChart({ series, events = [], height = 300, width = 800, yTic
       {months.map((m) => (
         <text key={m.x} x={X(m.x)} y={height - 8} className="chart-tick">{m.label}</text>
       ))}
-      {series.map((s) => {
+      {series.map((s, si) => {
         const d = s.points.map((p, i) => `${i ? "L" : "M"}${X(p[0]).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join(" ");
         const last = s.points[s.points.length - 1];
+        const labelY = last ? endY[si] : 0;
         return (
           <g key={s.key}>
             <path d={d} fill="none" stroke={s.kind === "subject" ? "var(--accent)" : "var(--faint)"} strokeWidth={s.kind === "subject" ? 1.6 : 1.3} strokeLinejoin="round" />
             {last && (
-              <text x={X(last[0]) + 10} y={Y(last[1]) + 4} className={`chart-label${s.kind === "reference" ? " is-muted" : ""}`}>
+              <text x={X(last[0]) + 10} y={labelY} className={`chart-label${s.kind === "reference" ? " is-muted" : ""}`}>
                 {s.label} {Math.round(last[1])}
               </text>
             )}
@@ -112,7 +122,7 @@ export function LineChart({ series, events = [], height = 300, width = 800, yTic
             const p = s.points.find((q) => q[0] === hoverDate);
             return p ? <circle key={s.key} cx={X(p[0])} cy={Y(p[1])} r={3} fill={s.kind === "subject" ? "var(--accent)" : "var(--muted)"} /> : null;
           })}
-          <text x={X(hoverDate) + 8} y={M.t + 12} className="chart-tip">
+          <text x={X(hoverDate) + (X(hoverDate) > width - M.r - 170 ? -8 : 8)} y={M.t + 12} textAnchor={X(hoverDate) > width - M.r - 170 ? "end" : "start"} className="chart-tip">
             {hoverDate.slice(5)}
             {series.map((s) => { const p = s.points.find((q) => q[0] === hoverDate); return p ? ` · ${s.label} ${p[1].toFixed(1)}` : ""; })}
           </text>

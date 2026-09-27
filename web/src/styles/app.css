@@ -226,6 +226,8 @@ a.row:hover .row-title, button.row:hover .row-title { color: var(--accent); }
 .chart-label.is-muted { fill: var(--muted); }
 .chart-ev { font-family: var(--font-mono); font-size: 10px; fill: var(--accent); }
 .chart-ev.is-hot { fill: var(--ink); font-weight: 600; }
+.chart-ev { transition: opacity 0.12s; }
+.chart.is-hover .chart-ev { opacity: 0; }   /* 十字线读数在上沿,事件标签先让开 */
 .chart-tip { font-family: var(--font-mono); font-size: 11px; fill: var(--ink-2); }
 .legend { display: flex; gap: 22px; align-items: baseline; font-size: 13px; color: var(--ink-2); }
 .legend .swatch { display: inline-block; width: 14px; height: 0; border-top: 2px solid var(--accent); vertical-align: middle; margin-right: 8px; }

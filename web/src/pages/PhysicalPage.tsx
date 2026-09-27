@@ -1,7 +1,9 @@
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as RMouseEvent } from "react";
 import { Footer, Shell } from "../components/Shell";
-import { AsOf, Conclusion, Head, Sig } from "../components/Signal";
-import { api, md, mkt as marketApi, type PartActivity, type PhysDrawing, type PhysLink, type PhysMarket, type PhysObject, type PhysPart, type PhysStep } from "../lib/api";
+import { AsOf, Conclusion, Head, Reading, Sig } from "../components/Signal";
+import { CROWD_RULE, CrowdingReadings, EventsNarrow } from "../components/Research";
+import { LineChart } from "../components/LineChart";
+import { api, md, mkt as marketApi, type PartActivity, type PartMarket, type PhysDrawing, type PhysLink, type PhysMarket, type PhysObject, type PhysPart, type PhysStep } from "../lib/api";
 import { Evidence } from "../components/Evidence";
 import { Link, useRouter } from "../lib/router";
 import "./physical.css";
@@ -65,6 +67,7 @@ export function PhysicalPage({ id = DEFAULT_OBJECT, part = null }: { id?: string
   const [stageH, setStageH] = useState(1500);
   const [votesTop, setVotesTop] = useState(GRID_TOP + 200);
   const [pm, setPm] = useState<PhysMarket | null>(null);
+  const [partM, setPartM] = useState<PartMarket | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -79,6 +82,15 @@ export function PhysicalPage({ id = DEFAULT_OBJECT, part = null }: { id?: string
     api.physicalSvg(id, theme, dir).then((t) => { if (live) setSvg(t); }).catch(() => { if (live) setSvg(""); });
     return () => { live = false; };
   }, [id, theme, dir]);
+
+  // 选中一个部件:它的篮子与卡口事件
+  useEffect(() => {
+    setPartM(null);
+    if (!part) return;
+    let live = true;
+    marketApi.partMarket(id, part, 3).then((m) => { if (live) setPartM(m); }).catch(() => { if (live) setPartM(null); });
+    return () => { live = false; };
+  }, [id, part]);
 
   const parts = useMemo(() => Object.fromEntries((obj?.parts ?? []).map((p) => [p.id, p])), [obj]);
   const seq: PhysStep[] = useMemo(() => {
@@ -124,7 +136,7 @@ export function PhysicalPage({ id = DEFAULT_OBJECT, part = null }: { id?: string
       : GRID_TOP + (stationsRef.current?.offsetHeight ?? 0) + VOTES_GAP + (votesRef.current?.offsetHeight ?? 0) + 80;
     setVotesTop(GRID_TOP + (stationsRef.current?.offsetHeight ?? 0) + VOTES_GAP);
     setStageH(Math.max(h, 900));
-  }, [selected, obj, dir, seq, pm]);
+  }, [selected, obj, dir, seq, pm, partM]);
 
   // mark selected / hovered groups inside the svg (it is plain DOM, not React)
   useEffect(() => {
@@ -207,7 +219,8 @@ export function PhysicalPage({ id = DEFAULT_OBJECT, part = null }: { id?: string
             {pm && drawing && settled && !selected && <ActivityDots parts={pm.parts} drawing={drawing} />}
             {pm && <Votes ref={votesRef} pm={pm} seq={obj.signal[dir]} top={votesTop} hidden={!!selected} hover={hover} />}
 
-            {sel && <PartDetail ref={detailRef} p={sel} step={obj.signal[dir].find((s) => s.partId === sel.id)?.step ?? null} total={obj.signal[dir].length} dir={dir} />}
+            {sel && <PartDetail ref={detailRef} p={sel} step={obj.signal[dir].find((s) => s.partId === sel.id)?.step ?? null} total={obj.signal[dir].length} dir={dir}
+                                m={partM && partM.part.id === sel.id ? partM : null} />}
             {sel && <PartCompanies ref={companiesRef} p={sel} stages={obj.stages} onBack={() => select(null)} />}
           </div>
         )}
@@ -317,7 +330,7 @@ const Votes = forwardRef<HTMLDivElement, { pm: PhysMarket; seq: PhysStep[]; top:
 
 /* --------------------------------------------------------------- selected part */
 
-const PartDetail = forwardRef<HTMLDivElement, { p: PhysPart; step: number | null; total: number; dir: "tx" | "rx" }>(function PartDetail({ p, step, total, dir }, ref) {
+const PartDetail = forwardRef<HTMLDivElement, { p: PhysPart; step: number | null; total: number; dir: "tx" | "rx"; m: PartMarket | null }>(function PartDetail({ p, step, total, dir, m }, ref) {
   return (
     <div ref={ref} className="ph-detail ph-fade">
       <div className="focus-head">
@@ -336,9 +349,50 @@ const PartDetail = forwardRef<HTMLDivElement, { p: PhysPart; step: number | null
           <div className="rows-end" />
         </div>
       )}
+      {m && <PartMoney m={m} />}
+      {m && <PartEvents m={m} />}
     </div>
   );
 });
+
+/** 选中部件 · 资金投票:部件篮子对整机。有行情的成员不足 3 家时不成篮子,只报家数。 */
+function PartMoney({ m }: { m: PartMarket }) {
+  if (m.listed === 0) return null;                  // 没有能进篮子的上市公司(如金手指):不放这一段
+  const cr = m.crowding;
+  return (
+    <div className="block" style={{ gap: 12 }}>
+      <Head title={`资金投票 · 部件篮子 ${m.members} 家`} right={<AsOf date={m.as_of} horizon={`${m.window_months} 个月`} extra="相对整机" />} />
+      {m.has_basket ? (
+        <>
+          <Conclusion c={m.conclusion} />
+          <LineChart width={460} height={210} margin={{ l: 36, r: 76, t: 18 }}
+                     series={[{ key: "basket", label: "篮子", points: m.series.basket, kind: "subject" }, { key: "product", label: "整机", points: m.series.product, kind: "reference" }]}
+                     events={m.chart_events.map((e) => ({ id: e.id, date: e.date, label: e.category_label, value: e.value }))} />
+          <div className="readings">
+            <Reading label={`篮子 ${m.window_days} 天`}><Sig v={m.readings.excess_window} size={14} /></Reading>
+            <Reading label={`${m.window_months} 个月`}><Sig v={m.readings.excess_months} size={14} /></Reading>
+          </div>
+          {cr && <CrowdingReadings metrics={cr.metrics} directions={cr.directions} kind="basket" />}
+          {cr && <p className="rule-note">{CROWD_RULE}</p>}
+        </>
+      ) : (
+        <p className="quiet" style={{ padding: "12px 0", borderTop: "1px solid var(--hair)" }}>有行情的公司 {m.members} 家,不足 {m.min_members} 家,不成篮子;没有篮子读数。</p>
+      )}
+    </div>
+  );
+}
+
+/** 选中部件 · 卡口事件 30 天:落在这个部件上的事件(一条事件只算到一个部件),窄栏两行式。 */
+function PartEvents({ m }: { m: PartMarket }) {
+  if (m.listed === 0 && m.events.length === 0) return null;
+  return (
+    <div className="block" style={{ gap: 12 }}>
+      <Head title={`卡口事件 · ${m.events_days} 天 · ${m.events.length} 条`} right={<AsOf date={m.as_of} horizon={`${m.events_days} 天`} extra="T+1 相对篮子" />} />
+      <Conclusion c={m.events_conclusion} />
+      {m.events.length > 0 && <EventsNarrow items={m.events} />}
+    </div>
+  );
+}
 
 const PartCompanies = forwardRef<HTMLDivElement, { p: PhysPart; stages: PhysObject["stages"]; onBack: () => void }>(function PartCompanies({ p, stages, onBack }, ref) {
   const a = aCount(p);
