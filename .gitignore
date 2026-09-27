@@ -48,3 +48,4 @@ data/events/
 
 # Web build
 web/dist/
+web/dist-snapshot/

@@ -18,7 +18,7 @@ physical/
   design/build_prototype.py          可交互原型 → dist/teardown-1.6t-prototype.html；同时导出 web/public/physical/*.svg|json
   design/reference-intel-1.6t-opened.png  部件摆位参考（Intel 1.6T 拆解图）
   dist/teardown-1.6t-prototype.html  单文件原型（选中部件 / 发收切换 / 浅深 / Esc 回整机）
-  dist/teardown-web-snapshot.html    整个 web/ 应用的单文件快照（hash 路由 + 内嵌 API 数据），双击即开，用来验 UX
+  dist/teardown-web-snapshot.html    整个 web/ 应用的单文件快照（hash 路由 + 内嵌 API 数据），双击即开，用来验 UX；用 tools/snapshot/build.py 重建
   index.html · build.py · dist/teardown-1.6t-dr8-siph.html  第一版横截面页（风格不合，已被原型取代，待删）
 ```
 

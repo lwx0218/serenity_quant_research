@@ -16,8 +16,26 @@ interface RouterCtx {
 
 const Ctx = createContext<RouterCtx | null>(null);
 
+// 单文件快照（tools/snapshot）用 hash 路由：file:// 下没有 history 路由可用。
+const HASH = import.meta.env.VITE_HASH_ROUTER === "1";
+
 function read(): Route {
+  if (HASH) {
+    const h = window.location.hash.slice(1);
+    const [path, qs] = h.split("?");
+    return { path: path || "/", params: new URLSearchParams(qs || "") };
+  }
   return { path: window.location.pathname || "/", params: new URLSearchParams(window.location.search) };
+}
+
+function write(to: string, replace: boolean) {
+  if (HASH) {
+    if (replace) window.location.replace("#" + to);
+    else window.location.hash = to;
+    return;
+  }
+  if (replace) window.history.replaceState(null, "", to);
+  else window.history.pushState(null, "", to);
 }
 
 export function RouterProvider({ children }: { children: ReactNode }) {
@@ -26,12 +44,12 @@ export function RouterProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const onPop = () => setRoute(read());
     window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
+    if (HASH) window.addEventListener("hashchange", onPop);
+    return () => { window.removeEventListener("popstate", onPop); if (HASH) window.removeEventListener("hashchange", onPop); };
   }, []);
 
   const navigate = useCallback((to: string, opts?: { replace?: boolean }) => {
-    if (opts?.replace) window.history.replaceState(null, "", to);
-    else window.history.pushState(null, "", to);
+    write(to, Boolean(opts?.replace));
     setRoute(read());
     window.scrollTo({ top: 0 });
   }, []);
@@ -72,7 +90,7 @@ export function Link({
   const { navigate } = useRouter();
   return (
     <a
-      href={to}
+      href={HASH ? "#" + to : to}
       className={className}
       onClick={(e) => {
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
