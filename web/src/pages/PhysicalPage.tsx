@@ -388,7 +388,7 @@ function PartEvents({ m }: { m: PartMarket }) {
   if (m.listed === 0 && m.events.length === 0) return null;
   return (
     <div className="block" style={{ gap: 12 }}>
-      <Head title={`卡口事件 · ${m.events_days} 天 · ${m.events.length} 条`} right={<AsOf date={m.as_of} horizon={`${m.events_days} 天`} extra="T+1 相对篮子" />} />
+      <Head title={`卡口事件 · ${m.events_days} 天 · ${m.events.length} 条`} right={<AsOf date={m.as_of} extra="T+1 相对篮子" />} />   {/* 窗口已在标题里 */}
       <Conclusion c={m.events_conclusion} />
       {m.events.length > 0 && <EventsNarrow items={m.events} />}
     </div>
