@@ -89,27 +89,33 @@ export function EventsNarrow({ items, onPick, hotId }: { items: MarketEvent[]; o
   );
 }
 
-/** Wide events table for full-width columns: 日期 · 来源/对象 · 事件 · 类别 · T+1 · 量比 · 时效 */
+/** Wide events table: 日期 · 来源/对象 · 事件 · 类别 · T+1 · 量比 · 时效；落到部件时类别与部件折到标题下一行 */
 export function EventsWide({ items, who = "source", onPick, hotId }: { items: MarketEvent[]; who?: "source" | "subject"; onPick?: (e: MarketEvent) => void; hotId?: string | null }) {
   const withPart = items.some((e) => e.part);   // the physical seam: which part an event lands on
   return (
     <div className="rows">
       <div className={`row ev-wide${withPart ? " has-part" : ""} is-head`} style={{ padding: "6px 0" }}>
-        <span className="row-meta">日期</span><span className="row-meta">{who === "source" ? "来源" : "对象"}</span><span className="row-meta">事件</span>
-        <span className="row-meta">类别</span>{withPart && <span className="row-meta">→ 部件</span>}<span className="row-meta">T+1</span><span className="row-meta">量比</span><span className="row-meta">时效</span>
+        <span className="row-meta">日期</span><span className="row-meta">{who === "source" ? "来源" : "对象"}</span><span className="row-meta">{withPart ? "事件 · 类别 → 部件" : "事件"}</span>
+        {!withPart && <span className="row-meta">类别</span>}<span className="row-meta">T+1</span><span className="row-meta">量比</span><span className="row-meta">时效</span>
       </div>
       {items.map((e) => {
         const s = subjectOf(e);
+        const title = <span className="ev-title">{e.source_url ? <a href={e.source_url} target="_blank" rel="noreferrer" style={{ color: "inherit" }}>{e.title}</a> : e.title}</span>;
         return (
           <div key={e.id} className={`row ev-wide${withPart ? " has-part" : ""}${hotId === e.id ? " is-hot-row" : ""}`} onClick={onPick ? () => onPick(e) : undefined} style={onPick ? { cursor: "pointer" } : undefined}>
             <span className="row-meta">{md(e.date)}</span>
             {who === "source" ? <span className="row-meta">{e.source_label}</span> : <span style={{ fontSize: 13 }}>{s.to ? <Link to={s.to}>{s.label}</Link> : s.label}</span>}
-            <span className="ev-title">{e.source_url ? <a href={e.source_url} target="_blank" rel="noreferrer" style={{ color: "inherit" }}>{e.title}</a> : e.title}</span>
-            <span className="ev-cat">{e.category_label}</span>
-            {withPart && (
-              <span className="ev-part" style={{ fontSize: 13 }}>
-                {e.part ? <Link to={`/physical/${encodeURIComponent(e.part.object_id)}?part=${encodeURIComponent(e.part.part_id)}`} style={{ color: "inherit" }} title={e.part.others ? `该公司还站在另 ${e.part.others} 个部件上` : undefined}>{e.part.part_name.split("（")[0]}</Link> : <span className="row-meta">—</span>}
+            {withPart ? (
+              /* 两行式：事件标题 / 类别 → 部件（列宽给标题，见 design-rules §8 hairline rows） */
+              <span className="ev-main">
+                {title}
+                <span className="ev-sub">
+                  <span className="ev-cat">{e.category_label}</span>
+                  {e.part && <> → <Link to={`/physical/${encodeURIComponent(e.part.object_id)}?part=${encodeURIComponent(e.part.part_id)}`} className="ev-part" title={e.part.others ? `该公司还站在另 ${e.part.others} 个部件上` : undefined}>{e.part.part_name.split("（")[0]}</Link></>}
+                </span>
               </span>
+            ) : (
+              <>{title}<span className="ev-cat">{e.category_label}</span></>
             )}
             <Sig v={e.reaction.t1} size={13} />
             <span className="row-meta" style={{ color: "var(--ink-2)" }}>{e.volume_ratio != null ? e.volume_ratio.toFixed(1) : "—"}</span>
@@ -187,15 +193,16 @@ export function ThesisBlock({ t, subject, onChange, compact }: { t: Thesis | nul
 export function ResonanceBlock({ r, onSwitch, canSwitch }: { r: Resonance; onSwitch?: () => void; canSwitch?: boolean }) {
   const ev = r.event;
   const peers = r.peers.map((p) => <span key={p.company.id}>{p.company.short_name ?? p.company.name} <Sig v={p.t1} /></span>);
+  const unit = r.scope?.kind === "part" ? "同部件" : "同环节";
   return (
     <div className="block" style={{ gap: 12 }}>
       <Head title={`共振 · ${md(ev.date)} ${ev.category_label}`} right={<><AsOf date={r.as_of} horizon="事件后 T+1 / T+3" extra={`时效 T+${ev.freshness.validity}`} />{canSwitch && <button type="button" className="btn" onClick={onSwitch}>换一个事件</button>}</>} />
       <Conclusion c={r.conclusion} />
       <div className="rows">
         <Row k="本公司">T+1 <Sig v={r.self.t1} /> · T+3 <Sig v={r.self.t3} /> · 量比 {r.self.volume_ratio?.toFixed(1) ?? "—"}{r.self.turnover_pct_rank != null && <> · 换手分位 {Math.round(r.self.turnover_pct_rank)}%</>}</Row>
-        <Row k="同环节">{peers.length ? peers.reduce<ReactNode[]>((acc, x, i) => (i ? [...acc, " · ", x] : [x]), [])
-          : "没有同环节公司"} → {r.same_direction.k}/{r.same_direction.n} 同向{r.basket_t1 != null && <>,{r.layer?.name}篮子 T+1 相对整机 <Sig v={r.basket_t1} /></>}</Row>
-        <Row k="相邻层">{r.adjacent.map((a, i) => <span key={a.node.id}>{i ? " · " : ""}{a.relation} {a.node.name} 篮子 {a.t1 == null ? "—" : Math.abs(a.t1) < 0.005 ? "无反应" : <Sig v={a.t1} />}</span>)}</Row>
+        <Row k={unit}>{peers.length ? <>{peers.reduce<ReactNode[]>((acc, x, i) => (i ? [...acc, " · ", x] : [x]), [])} → {r.same_direction.k}/{r.same_direction.n} 同向</>
+          : `没有${unit}公司`}{r.basket_t1 != null && <>,{r.scope?.name}篮子 T+1 相对整机 <Sig v={r.basket_t1} /></>}</Row>
+        {r.adjacent.length > 0 && <Row k="相邻层">{r.adjacent.map((a, i) => <span key={a.node.id}>{i ? " · " : ""}{a.relation} {a.node.name} 篮子 {a.t1 == null ? "—" : Math.abs(a.t1) < 0.005 ? "无反应" : <Sig v={a.t1} />}</span>)}</Row>}
         {r.attention && (
           <Row k="资金与关注">
             {r.attention.margin_change_3d_pct != null && <>融资余额 <Sig v={r.attention.margin_change_3d_pct / 100} />(3 日)· </>}

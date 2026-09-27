@@ -16,7 +16,7 @@ from unittest import mock
 _tmp = tempfile.mkdtemp()
 os.environ["SQR_DB_PATH"] = str(Path(_tmp) / "ingest.sqlite")
 
-from app import market  # noqa: E402
+from app import insights, market  # noqa: E402
 from app.db import connect  # noqa: E402
 from app.ingest import candidates as C  # noqa: E402
 from app.ingest import crowding as CR  # noqa: E402
@@ -110,7 +110,7 @@ class PipelineTests(unittest.TestCase):
                 days.append(d)
             d += timedelta(days=1)
         cls.days = days
-        for cid in ("cn.300308", "cn.688498", "cn.688048", "global.broadcom", "global.nvidia", "cn.002384"):
+        for cid in ("cn.300308", "cn.688498", "cn.688048", "global.broadcom", "global.nvidia", "cn.002384", "cn.300620", "cn.300394"):
             if not cls.conn.execute("SELECT 1 FROM companies WHERE id=?", (cid,)).fetchone():
                 continue
             lvl, rows = 100.0, []
@@ -166,6 +166,28 @@ class PipelineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             C.confirm(self.conn, nocat["id"])
         self.assertTrue(C.confirm(self.conn, nocat["id"], category="order")["ok"])
+
+    def test_resonance_for_physical_only_company_uses_its_part(self):
+        # 光库科技只在实物层（光源耦合），不在 main 任何层：共振比同部件（天孚通信），不能说「同环节没有跟随」
+        self.assertIsNone(self.conn.execute("SELECT 1 FROM exposures WHERE company_id='cn.300620'").fetchone())
+        item = {"id": news.cand_id("https://t/fl"), "date": "2026-09-08", "title": "光库科技薄膜铌酸锂调制器送样", "url": "https://t/fl", "summary": "",
+                "source": "讯石光通讯", "source_type": "rss", "tier": 1, "weight": 0.8, "evidence": "consensus", "category": "qualification",
+                "companies": [{"companyId": "cn.300620", "name": "光库科技"}], "part_ids": [], "also_reported_by": []}
+        news.store(self.conn, [item])
+        eid = C.confirm(self.conn, item["id"])["event_id"]
+        try:
+            r = market.resonance(self.conn, eid)
+            self.assertIsNone(r["layer"])
+            self.assertEqual(r["scope"]["kind"], "part")
+            self.assertIn("cn.300394", [p["company"]["id"] for p in r["peers"]])
+            text = insights.resonance(r)["text"]
+            self.assertNotIn("同环节", text)
+            self.assertIn("部件", text)
+            # 同行一个都没有时如实说分不清，而不是「没有跟随」
+            lone = dict(r, peers=[], same_direction={"k": 1, "n": 1})
+            self.assertIn("没有可比的同部件公司", insights.resonance(lone)["text"])
+        finally:
+            C.reopen(self.conn, item["id"])
 
     def test_relevance_triage(self):
         src = {"type": "cninfo_announcement"}

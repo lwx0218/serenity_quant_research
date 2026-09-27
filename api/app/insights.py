@@ -159,11 +159,15 @@ def resonance(res: dict) -> dict:
         layer = (res.get("layer") or {}).get("name", "这一层")
         follow = f"相邻的{'、'.join(a['node']['name'] for a in adj)}同向" if adj else "相邻层没有跟随"
         return {"direction": d, "text": f"层级事件:{layer}篮子 T+1 相对整机 {pct(t1)},{follow}。没有个股维度,共振只看层与层。"}
-    broad = sd["n"] >= 2 and sd["k"] / sd["n"] >= 0.6
+    unit = "部件" if (res.get("scope") or {}).get("kind") == "part" else "环节"
+    volume = (s.get("volume_ratio") or 0) >= 1.5
+    if sd["n"] < 2:
+        return {"direction": d, "text": f"没有可比的同{unit}公司,分不清是个股还是{unit}级事件;{'资金用量确认' if volume else '没有放量'}。"}
+    broad = sd["k"] / sd["n"] >= 0.6
     adj = [a for a in res["adjacent"] if a["t1"] is not None and a["t1"] * t1 > 0 and abs(a["t1"]) >= A.REACTION_THRESHOLD]
-    scale = "环节级事件而非个股事件" if broad else "个股事件而非环节级事件"
-    detail = ("同环节" + ("与相邻层" if adj else "") + "同向") if broad else "同环节没有跟随"
-    conf = "资金用量确认" if (s.get("volume_ratio") or 0) >= 1.5 else "但没有放量"
+    scale = f"{unit}级事件而非个股事件" if broad else f"个股事件而非{unit}级事件"
+    detail = (f"同{unit}" + ("与相邻层" if adj else "") + "同向") if broad else f"同{unit}没有跟随"
+    conf = "资金用量确认" if volume else "但没有放量"
     text = f"{scale}:{detail},{conf}。"
     tr = s.get("turnover_pct_rank")
     if d == "pos" and tr and tr >= A.CROWD_HI:

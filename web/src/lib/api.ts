@@ -271,6 +271,8 @@ export interface Resonance {
   adjacent: { node: { id: string; name: string; sort: number }; t1: number | null; relation: string }[];
   attention: Record<string, any> | null; baseline: { n: number; avg_t1: number; hits: number; above: boolean } | null;
   layer: ModuleBrief | null;
+  /** 同行按什么比：main 的层；不在任何层的实物公司退到它最相关的部件 */
+  scope: { kind: "layer" | "part"; id: string; name: string } | null;
 }
 
 export interface CompanyMarket {

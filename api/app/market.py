@@ -11,6 +11,7 @@ from typing import Any
 from . import analytics as A
 from . import physical as PH
 from .market_seed import basket_members, company_layers, primary_layer, product_members
+from .ingest.recompute import part_basket_members
 
 CATEGORY_LABEL = {
     "capex": "扩产", "order": "订单合同", "qualification": "认证导入", "supply": "供需", "price": "涨价",
@@ -313,26 +314,32 @@ def resonance(conn: sqlite3.Connection, event_id: str, when: date | None = None)
         return None
     ev_date = _d(ev["date"])
     layer = ev["layer_id"]
+    # 不在 main 任何层的实物公司：同行是同部件的公司，篮子是部件篮子（与反应的参照同一条规则，见 recompute.reference_for）
+    part = ev.get("part") if not layer and ev["company"] else None
     pid = product_id(conn)
     t1d, t3d = A.add_trading_days(ev_date, 1), A.add_trading_days(ev_date, 3)
     start = ev_date - timedelta(days=10)
     product = load_series(conn, f"basket:{pid}", start)
-    layer_b = load_series(conn, f"basket:{layer}", start) if layer else {}
+    scope_b = load_series(conn, f"basket:{layer or (part or {}).get('part_id')}", start) if layer or part else {}
 
-    peers = []
+    peer_ids: list[str] = []
     if layer and ev["company"]:
-        for cid in basket_members(conn, layer):
-            if cid == ev["company"]["id"]:
-                continue
-            s = load_series(conn, f"company:{cid}", start)
-            r = A.reaction(s, None, ev_date, 1, when)
-            peers.append({"company": company_brief(conn, cid), "t1": r["abs_return"] if r else None})
+        peer_ids = basket_members(conn, layer)
+    elif part:
+        peer_ids = part_basket_members(conn, part["part_id"])
+    peers = []
+    for cid in peer_ids:
+        if cid == ev["company"]["id"]:
+            continue
+        s = load_series(conn, f"company:{cid}", start)
+        r = A.reaction(s, None, ev_date, 1, when)
+        peers.append({"company": company_brief(conn, cid), "t1": r["abs_return"] if r else None})
     self_t1 = ev["reaction"]["abs_t1"]
     self_excess = ev["reaction"]["t1"]
     rx3 = conn.execute("SELECT abs_return FROM reactions WHERE event_id=? AND horizon=3", (event_id,)).fetchone()
     same = [p for p in peers if p["t1"] is not None and self_t1 is not None and (p["t1"] >= 0) == (self_t1 >= 0)]
     n_peers = sum(1 for p in peers if p["t1"] is not None)
-    basket_t1 = A.excess_return(layer_b, product, ev_date, t1d) if layer_b and t1d <= when else None
+    basket_t1 = A.excess_return(scope_b, product, ev_date, t1d) if scope_b and t1d <= when else None
 
     # adjacent layers in the stack (the neighbours in sort order)
     adjacent = []
@@ -369,6 +376,8 @@ def resonance(conn: sqlite3.Connection, event_id: str, when: date | None = None)
         "peers": peers, "same_direction": {"k": len(same) + (1 if self_t1 is not None else 0), "n": n_peers + (1 if self_t1 is not None else 0)},
         "basket_t1": basket_t1, "adjacent": adjacent, "attention": attention, "baseline": baseline,
         "layer": module_of(conn, layer) if layer else None,
+        "scope": ({"kind": "layer", "id": layer, "name": module_of(conn, layer)["name"]} if layer
+                  else {"kind": "part", "id": part["part_id"], "name": part["part_name"]} if part else None),
     }
 
 
