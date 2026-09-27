@@ -12,7 +12,7 @@ export function Dir({ d, label, className }: { d: Direction; label?: string; cla
 
 /** A signed percentage coloured by its sign. */
 export function Sig({ v, digits = 1, size, d }: { v: number | null | undefined; digits?: number; size?: number; d?: Direction }) {
-  const dir = d ?? dirOf(v);
+  const dir = d ?? dirOf(v, 0.5 / 10 ** (digits + 2));   // 按显示出来的数着色:四舍五入成 0.0% 的不着色
   return <span className={`sig is-${dir}`} style={size ? { fontSize: size } : undefined}>{pct(v, digits)}</span>;
 }
 

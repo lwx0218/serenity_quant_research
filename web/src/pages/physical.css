@@ -73,3 +73,17 @@
 .ev-link:hover { color: var(--accent); }
 .ev-src { margin-left: 6px; color: var(--muted); font-size: 10.5px; }
 .ph-co-row { grid-template-columns: 150px 96px 40px minmax(0, 1fr) 116px; }
+
+/* 资金投票 · 按部件(整只模块视图,九站下面) */
+.ph-votes { position: absolute; left: 0; width: 1280px; display: flex; flex-direction: column; gap: 12px; }
+button.ph-vrow { appearance: none; background: none; border: 0; border-top: 1px solid var(--hair); margin: 0; font: inherit; color: inherit; text-align: left; width: 100%; cursor: pointer; }
+.ph-vrow { grid-template-columns: 40px minmax(0, 1.15fr) 72px 84px 84px 96px minmax(0, 1.5fr); padding: 12px 0; }
+.ph-vrow.is-head { cursor: default; padding: 6px 0; }
+.ph-vrow .row-title { font-size: 15px; transition: color 0.15s; }
+.ph-vrow.hov .row-title { color: var(--accent); }
+.ph-vname { display: flex; gap: 10px; align-items: baseline; min-width: 0; }
+.ph-vlast { display: flex; gap: 10px; align-items: baseline; min-width: 0; font-size: 13px; color: var(--ink-2); white-space: nowrap; overflow: hidden; }
+.ph-cat { font-family: var(--font-mono); font-size: 12px; color: var(--accent); }
+/* 图上的呼吸点:加一圈底色,落在绿色 PCB 上也看得见 */
+.ph-dot { pointer-events: none; }
+.ph-dot .live { box-shadow: 0 0 0 1.5px var(--bg); }

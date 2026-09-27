@@ -232,6 +232,24 @@ export interface PhysObjectRef { id: string; name: string; name_en: string | nul
 export interface CompanyPart { object_id: string; object_name: string; part_id: string; part_name: string; step: number | null; stage: string; role: string | null; evidence: PhysEvidence; sources: PhysSource[]; note: string | null }
 export interface PhysDrawing { object: string; width: number; height: number; anchors: Record<string, [number, number]> }
 
+/** 首页「资金投票 · 按部件」的一行。部件不成篮子(有行情的成员不足 min_members 家)时只有家数与事件。 */
+export interface PartActivity {
+  id: string; name: string; label: string; sort: number; members: number; listed: number; has_basket: boolean;
+  events: number; basket_excess: number | null; excess_3m: number | null; direction: Direction | null;
+  crowd: { ret20_pct_rank: number | null; direction: Direction | null; level: string } | null;
+  last_event: { id: string; date: string; company: CompanyBrief | null; category_label: string; t1: number | null; freshness: Freshness } | null;
+}
+export interface PhysMarket { as_of: string; window_days: number; events_days: number; min_members: number; sample: boolean; conclusion: Conclusion; events: number; parts: PartActivity[] }
+/** 选中一个部件:篮子走势与读数、卡口事件。 */
+export interface PartMarket {
+  as_of: string; window_days: number; window_months: number; events_days: number; sample: boolean;
+  part: { id: string; name: string; label: string }; members: number; listed: number; min_members: number; has_basket: boolean;
+  series: { basket: [string, number][]; product: [string, number][] };
+  chart_events: { id: string; date: string; category_label: string; value: number; company: string | null }[];
+  readings: { excess_window: number | null; excess_months: number | null };
+  crowding: Crowding | null; conclusion: Conclusion | null; events: MarketEvent[]; events_conclusion: Conclusion;
+}
+
 export interface EventsResponse { as_of: string; window_days: number | null; count: number; items: MarketEvent[]; conclusion: Conclusion | null; validity_days: number | null; sample: boolean }
 
 export interface Overview {
@@ -357,6 +375,8 @@ export const mkt = {
     return get<EventsResponse>(`/api/events${s ? "?" + s : ""}`);
   },
   resonance: (id: string) => get<Resonance>(`/api/events/${encodeURIComponent(id)}/resonance`),
+  physicalMarket: (id: string, days = 7) => get<PhysMarket>(`/api/physical/${encodeURIComponent(id)}/market?days=${days}`),
+  partMarket: (id: string, part: string, months = 3) => get<PartMarket>(`/api/physical/${encodeURIComponent(id)}/parts/${encodeURIComponent(part)}/market?months=${months}`),
   companyMarket: (id: string, months = 6) => get<CompanyMarket>(`/api/companies/${encodeURIComponent(id)}/market?months=${months}`),
   basket: (nodeId: string, months = 6) => get<Basket>(`/api/baskets/${encodeURIComponent(nodeId)}?months=${months}`),
   baskets: () => get<{ as_of: string; items: BasketSummary[]; sample: boolean }>(`/api/baskets`),

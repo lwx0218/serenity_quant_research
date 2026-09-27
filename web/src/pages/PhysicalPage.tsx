@@ -1,7 +1,7 @@
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as RMouseEvent } from "react";
 import { Footer, Shell } from "../components/Shell";
-import { Head } from "../components/Signal";
-import { api, type PhysDrawing, type PhysLink, type PhysObject, type PhysPart, type PhysStep } from "../lib/api";
+import { AsOf, Conclusion, Head, Sig } from "../components/Signal";
+import { api, md, mkt as marketApi, type PartActivity, type PhysDrawing, type PhysLink, type PhysMarket, type PhysObject, type PhysPart, type PhysStep } from "../lib/api";
 import { Evidence } from "../components/Evidence";
 import { Link, useRouter } from "../lib/router";
 import "./physical.css";
@@ -11,6 +11,8 @@ const LEFT = 80;                       // page margin, matches --page-x
 const OV = { top: 360, scale: 1 };     // drawing in the overview
 const SEL = { top: 150, scale: 0.6 };  // drawing once a part is selected
 const GRID_TOP = 1000;
+const VOTES_GAP = 72;                  // stations → 资金投票 · 按部件
+const WINDOW_DAYS = 7;                 // 首页读数窗口,与原 Explorer 首页一致
 
 /** The theme actually painted: explicit data-theme wins, else the OS. Follows the toggle live. */
 function useEffectiveTheme(): "light" | "dark" {
@@ -59,13 +61,17 @@ export function PhysicalPage({ id = DEFAULT_OBJECT, part = null }: { id?: string
   const companiesRef = useRef<HTMLDivElement>(null);
   const detailRef = useRef<HTMLDivElement>(null);
   const stationsRef = useRef<HTMLDivElement>(null);
+  const votesRef = useRef<HTMLDivElement>(null);
   const [stageH, setStageH] = useState(1500);
+  const [votesTop, setVotesTop] = useState(GRID_TOP + 200);
+  const [pm, setPm] = useState<PhysMarket | null>(null);
 
   useEffect(() => {
     let live = true;
     setObj(null); setError(null);
     api.physicalObject(id).then((o) => { if (live) setObj(o); }).catch((e) => { if (live) setError(String(e)); });
     api.physicalDrawing(id).then((d) => { if (live) setDrawing(d); }).catch(() => { if (live) setDrawing(null); });
+    marketApi.physicalMarket(id, WINDOW_DAYS).then((m) => { if (live) setPm(m); }).catch(() => { if (live) setPm(null); });
     return () => { live = false; };
   }, [id]);
   useEffect(() => {
@@ -115,9 +121,10 @@ export function PhysicalPage({ id = DEFAULT_OBJECT, part = null }: { id?: string
   useEffect(() => {
     const h = selected
       ? Math.max(540 + (companiesRef.current?.offsetHeight ?? 0), 96 + (detailRef.current?.offsetHeight ?? 0)) + 120
-      : GRID_TOP + (stationsRef.current?.offsetHeight ?? 0) + 120;
+      : GRID_TOP + (stationsRef.current?.offsetHeight ?? 0) + VOTES_GAP + (votesRef.current?.offsetHeight ?? 0) + 80;
+    setVotesTop(GRID_TOP + (stationsRef.current?.offsetHeight ?? 0) + VOTES_GAP);
     setStageH(Math.max(h, 900));
-  }, [selected, obj, dir, seq]);
+  }, [selected, obj, dir, seq, pm]);
 
   // mark selected / hovered groups inside the svg (it is plain DOM, not React)
   useEffect(() => {
@@ -135,7 +142,7 @@ export function PhysicalPage({ id = DEFAULT_OBJECT, part = null }: { id?: string
   const crumbs = [{ label: obj?.host?.platforms?.[0]?.name?.split(" ")[1] ?? "Quantum-X800" }, { label: obj?.name ?? "…", to: `/physical/${id}` }, ...(sel ? [{ label: short(sel.name) }] : [])];
 
   return (
-    <Shell crumbs={crumbs} footer={<Footer note={`示意图按 OSFP224 DR8 硅光方案的通用结构摆放,不对应任何一家的具体设计 · 公司映射 ${obj?.parts.reduce((n, p) => n + p.companies.length, 0) ?? "…"} 条 · 证据级三档`} />}>
+    <Shell crumbs={crumbs} footer={<Footer note={<>{`示意图按 OSFP224 DR8 硅光方案的通用结构摆放,不对应任何一家的具体设计 · 公司映射 ${obj?.parts.reduce((n, p) => n + p.companies.length, 0) ?? "…"} 条 · 证据级三档`}{pm?.sample && " · 事件、反应与读数为样式示例。"}</>} />}>
       <main className="page">
         {error && <p className="quiet" style={{ paddingTop: 40 }}>加载失败:{error}</p>}
         {!obj && !error && <p className="quiet" style={{ paddingTop: 40 }}>加载中…</p>}
@@ -197,6 +204,9 @@ export function PhysicalPage({ id = DEFAULT_OBJECT, part = null }: { id?: string
               })}
             </div>
 
+            {pm && drawing && settled && !selected && <ActivityDots parts={pm.parts} drawing={drawing} />}
+            {pm && <Votes ref={votesRef} pm={pm} seq={obj.signal[dir]} top={votesTop} hidden={!!selected} hover={hover} />}
+
             {sel && <PartDetail ref={detailRef} p={sel} step={obj.signal[dir].find((s) => s.partId === sel.id)?.step ?? null} total={obj.signal[dir].length} dir={dir} />}
             {sel && <PartCompanies ref={companiesRef} p={sel} stages={obj.stages} onBack={() => select(null)} />}
           </div>
@@ -238,6 +248,72 @@ function SelectedLeader({ anchor }: { anchor: [number, number] }) {
     </g>
   );
 }
+
+/* --------------------------------------------------------------- 资金投票 · 按部件 */
+
+/** 图上的呼吸点:窗口内落了事件的部件,颜色 = 部件篮子这一周的方向(同 Explorer 的层活动点)。 */
+function ActivityDots({ parts, drawing }: { parts: PartActivity[]; drawing: PhysDrawing }) {
+  return (
+    <>
+      {parts.filter((p) => p.events > 0 && p.direction && drawing.anchors[p.id]).map((p) => {
+        const [ax, ay] = drawing.anchors[p.id];
+        const x = ax + 12 - 3.5, y = OV.top + ay - 12 - 3.5;      // 站号圆圈的右上角
+        return (
+          <span key={p.id} className="ph-dot" aria-hidden="true">
+            <span className={`live-ring is-${p.direction}`} style={{ left: x, top: y }} />
+            <span className={`live is-${p.direction}`} style={{ left: x, top: y }} />
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
+const Dash = () => <span className="row-meta">—</span>;
+
+/** 九站下面:资金本周在给哪个部件投票,每个部件一行。行按当前方向的信号顺序,不在路径上的部件排在后面。 */
+const Votes = forwardRef<HTMLDivElement, { pm: PhysMarket; seq: PhysStep[]; top: number; hidden: boolean; hover: string | null }>(function Votes({ pm, seq, top, hidden, hover }, ref) {
+  const step = new Map(seq.map((s) => [s.partId, s.step]));
+  const byId = new Map(pm.parts.map((p) => [p.id, p]));
+  const order = [...seq.map((s) => s.partId), ...pm.parts.map((p) => p.id).filter((id) => !step.has(id))];
+  const shown = order.map((id) => byId.get(id)).filter((p): p is PartActivity => !!p && (p.listed > 0 || !!p.last_event));
+  const skipped = pm.parts.filter((p) => !shown.includes(p)).map((p) => p.name);
+  return (
+    <div ref={ref} className={`ph-votes ph-fade${hidden ? " is-hidden" : ""}`} style={{ top }}>
+      <Head title="资金投票 · 按部件" right={<AsOf date={pm.as_of} horizon={`${pm.window_days} 天`} extra={`篮子 = 部件上 ≥ ${pm.min_members} 家有行情的公司等权 · 相对整机`} />} />
+      <Conclusion c={pm.conclusion} lead />
+      <div className="rows" style={{ marginTop: 10 }}>
+        <div className="row ph-vrow is-head">
+          <span className="row-meta">站</span><span className="row-meta">部件 · 有行情</span><span className="row-meta">事件 {pm.window_days} 天</span>
+          <span className="row-meta">篮子 {pm.window_days} 天</span><span className="row-meta">3 个月</span><span className="row-meta">20 日涨幅分位</span>
+          <span className="row-meta">最近一条 · {pm.events_days} 天 · T+1</span>
+        </div>
+        {shown.map((p) => {
+          const le = p.last_event, st = step.get(p.id);
+          return (
+            <button key={p.id} type="button" className={`row ph-vrow${hover === p.id ? " hov" : ""}`} data-part={p.id}
+                    title={p.has_basket ? undefined : `有行情的公司不足 ${pm.min_members} 家,不成篮子`}>
+              <span className="row-meta">{st ? String(st).padStart(2, "0") : "—"}</span>
+              <span className="ph-vname"><span className="row-title">{p.name}</span><span className="row-meta" style={{ fontSize: 11 }}>{p.members} 家</span></span>
+              {p.events ? <span className="reading-v" style={{ fontSize: 13 }}>{p.events}</span> : <Dash />}
+              {p.basket_excess != null ? <Sig v={p.basket_excess} size={13} /> : <Dash />}
+              {p.excess_3m != null ? <Sig v={p.excess_3m} size={13} /> : <Dash />}
+              {p.crowd?.ret20_pct_rank != null ? <span className={`reading-v is-${p.crowd.direction ?? "neu"}`} style={{ fontSize: 13 }}>{Math.round(p.crowd.ret20_pct_rank)}%</span> : <Dash />}
+              <span className="ph-vlast">
+                {le ? <><span className="row-meta">{md(le.date)}</span><span>{le.company?.short_name ?? le.company?.name ?? "—"}</span><span className="ph-cat">{le.category_label}</span><Sig v={le.t1} size={13} /></> : <Dash />}
+              </span>
+            </button>
+          );
+        })}
+        <div className="rows-end" />
+      </div>
+      <p className="rule-note">
+        {skipped.length > 0 && `${skipped.join("、")}没有能进篮子的上市公司,不列。`}
+        有行情的公司不足 {pm.min_members} 家的部件不成篮子,只列家数。20 日涨幅分位高于 80 视为脆弱(偏空),低于 20 视为出清(偏多);拥挤度是状态量,不是信号。点任何一行看这个部件。
+      </p>
+    </div>
+  );
+});
 
 /* --------------------------------------------------------------- selected part */
 
