@@ -11,7 +11,7 @@ from typing import Any
 from . import analytics as A
 from . import physical as PH
 from .market_seed import basket_members, company_layers, primary_layer, product_members
-from .ingest.recompute import part_basket_members
+from .ingest.recompute import MIN_PART_BASKET, companies_with_series, part_basket_members, part_members
 
 CATEGORY_LABEL = {
     "capex": "扩产", "order": "订单合同", "qualification": "认证导入", "supply": "供需", "price": "涨价",
@@ -88,10 +88,18 @@ def primary_layer_id(conn: sqlite3.Connection, ev: dict) -> str | None:
     return primary_layer(conn, ev)
 
 
-def peer_basket(conn: sqlite3.Connection, layer: str, company_id: str, start: date | None = None) -> A.Series:
-    """Equal-weight basket of the layer's other members (the reference for a company's reaction)."""
-    peers = [c for c in basket_members(conn, layer) if c != company_id]
-    return A.basket_series([load_series(conn, f"company:{c}", start) for c in peers]) if peers else {}
+def part_peer_basket(conn: sqlite3.Connection, company_id: str, start: date | None = None,
+                     category: str | None = None) -> tuple[A.Series, dict | None]:
+    """公司的篮子参照:它(按事件类别)最相关的那个部件的篮子,去掉自己;与反应参照同一条规则。
+    部件不成篮子(有行情的成员不足 3 家)时参照为空,读数退到整机。返回 (篮子, 部件)。"""
+    part = PH.part_for_event(conn, company_id, category)
+    if not part:
+        return {}, None
+    members = part_basket_members(conn, part["part_id"])
+    if len(members) < MIN_PART_BASKET:
+        return {}, part
+    peers = [c for c in members if c != company_id]
+    return (A.basket_series([load_series(conn, f"company:{c}", start) for c in peers]) if peers else {}), part
 
 
 # -------------------------------------------------------------------- efficacy
@@ -144,7 +152,7 @@ def _reactions(conn: sqlite3.Connection, event_id: str) -> dict[int, dict]:
 def event_public(conn: sqlite3.Connection, ev: dict, when: date, vcache: dict | None = None) -> dict:
     rx = _reactions(conn, ev["id"])
     layer = primary_layer_id(conn, ev)
-    # a company's reaction is read against its layer basket; a layer's against the whole device
+    # 公司事件读它那个部件的篮子(不含自己;部件不成篮子时退到整机),层级事件读整机
     key = "excess_basket" if ev.get("company_id") else "excess_product"
     t = {f"t{h}": (rx[h][key] if h in rx and rx[h][key] is not None else rx[h]["excess_product"] if h in rx else None) for h in A.HORIZONS}
     fr = A.freshness(_d(ev["date"]), when, validity_days(conn, layer, vcache), t["t1"])
@@ -157,7 +165,7 @@ def event_public(conn: sqlite3.Connection, ev: dict, when: date, vcache: dict | 
         "source_kind": ev["source_kind"], "source_label": SOURCE_LABEL.get(ev["source_kind"], ev["source_kind"]),
         "source_title": ev.get("source_title"), "source_url": ev.get("source_url"),
         "company": company, "node": subject_node, "layer_id": layer, "layer_ids": layers,
-        "reaction": {**t, "reference": "篮子" if ev.get("company_id") else "整机",
+        "reaction": {**t, "reference": "篮子" if ev.get("company_id") and 1 in rx and rx[1]["excess_basket"] is not None else "整机",
                      "abs_t1": rx[1]["abs_return"] if 1 in rx else None},
         "volume_ratio": ev.get("volume_ratio"), "turnover_pct_rank": ev.get("turnover_pct_rank"),
         "freshness": fr, "status": ev.get("status", "candidate"), "is_sample": bool(ev.get("is_sample")),
@@ -211,6 +219,107 @@ def layer_activity(conn: sqlite3.Connection, days: int = 7, when: date | None = 
             direction = "pos" if exc >= A.REACTION_THRESHOLD else "neg" if exc <= -A.REACTION_THRESHOLD else "neu"
         out.append({**m, "events": n, "basket_excess": exc, "direction": direction, "has_basket": bool(basket)})
     return out
+
+
+# ------------------------------------------------------------ parts (physical)
+EVENTS_DAYS = 30        # 选中部件:卡口事件窗口
+PART_MONTHS = 3         # 部件篮子的「3 个月」:首页一行与选中部件用同一个起点(30 × 月数天前)
+
+
+def _object_parts(conn: sqlite3.Connection, object_id: str) -> list[dict]:
+    return [dict(r) for r in conn.execute("SELECT id, name, sort FROM physical_parts WHERE object_id=? ORDER BY sort, id", (object_id,))]
+
+
+def part_events(conn: sqlite3.Connection, part_id: str, days: int, when: date | None = None) -> list[dict]:
+    """落在这个部件上的事件:一条事件只算到一个部件上(physical.part_for_event,与收件箱「→ 部件」同一条规则)。"""
+    return [e for e in list_events(conn, days=days, limit=500, when=when) if (e.get("part") or {}).get("part_id") == part_id]
+
+
+def part_activity(conn: sqlite3.Connection, object_id: str, days: int = 7, when: date | None = None) -> list[dict]:
+    """每个部件:窗口内落在它上面的事件数、部件篮子相对整机的超额(窗口 / 3 个月)与方向、拥挤、最近一条事件。
+    部件不成篮子(有行情的成员不足 3 家)时只有家数与事件,没有篮子读数。"""
+    when = when or as_of(conn)
+    start, start3 = when - timedelta(days=days), when - timedelta(days=30 * PART_MONTHS)
+    product = load_series(conn, f"basket:{product_id(conn)}", start3 - timedelta(days=10))
+    events = list_events(conn, days=EVENTS_DAYS, limit=500, when=when)
+    have = companies_with_series(conn)
+    out = []
+    for p in _object_parts(conn, object_id):
+        evs = [e for e in events if (e.get("part") or {}).get("part_id") == p["id"]]
+        n = sum(1 for e in evs if _d(e["date"]) >= start)
+        members = part_basket_members(conn, p["id"], have)
+        basket = load_series(conn, f"basket:{p['id']}", start3 - timedelta(days=10)) if len(members) >= MIN_PART_BASKET else {}
+        exc = A.excess_return(basket, product, start, when) if basket else None
+        direction = None
+        if exc is not None and (n > 0 or abs(exc) >= 0.01):
+            direction = "pos" if exc >= A.REACTION_THRESHOLD else "neg" if exc <= -A.REACTION_THRESHOLD else "neu"
+        cr = crowding_for(conn, f"basket:{p['id']}") if basket else None
+        last = evs[0] if evs else None
+        out.append({
+            "id": p["id"], "name": PH.short_name(p["name"]), "label": PH.label(p["name"]), "sort": p["sort"],
+            "members": len(members), "listed": len(part_members(conn, p["id"])), "has_basket": bool(basket),
+            "events": n, "basket_excess": exc, "excess_3m": A.excess_return(basket, product, start3, when) if basket else None,
+            "direction": direction,
+            "crowd": ({"ret20_pct_rank": cr["metrics"].get("ret20_pct_rank"), "direction": cr["directions"].get("ret20_pct_rank"), "level": cr["level"]} if cr else None),
+            "last_event": ({"id": last["id"], "date": last["date"], "company": last["company"], "category_label": last["category_label"],
+                            "t1": last["reaction"]["t1"], "freshness": last["freshness"]} if last else None),
+        })
+    return out
+
+
+def physical_market(conn: sqlite3.Connection, object_id: str, days: int = 7, when: date | None = None) -> dict | None:
+    """首页:资金本周在给哪个部件投票。层篮子不进这句结论。"""
+    from . import insights  # local import, same as node_market
+    if not conn.execute("SELECT 1 FROM physical_objects WHERE id=?", (object_id,)).fetchone():
+        return None
+    when = when or as_of(conn)
+    parts = part_activity(conn, object_id, days, when)
+    events = [dict(e, part_ids=[e["part"]["part_id"]] if e.get("part") else []) for e in list_events(conn, days=days, limit=500, when=when)]
+    ids = {p["id"] for p in parts}
+    events = [e for e in events if set(e["part_ids"]) & ids]
+    concl = insights.overview([{**p, "name": p["label"]} for p in parts], events, days, unit="部件", scope="part_ids")
+    return {"as_of": when.isoformat(), "window_days": days, "events_days": EVENTS_DAYS, "min_members": MIN_PART_BASKET,
+            "sample": is_sample(conn), "conclusion": concl, "events": len(events), "parts": parts}
+
+
+def part_market(conn: sqlite3.Connection, object_id: str, part_id: str, months: int = PART_MONTHS, days: int = 7, when: date | None = None) -> dict | None:
+    """选中一个部件:部件篮子对整机的走势与读数、落在它上面的卡口事件 30 天。"""
+    from . import insights
+    r = conn.execute("SELECT id, name FROM physical_parts WHERE id=? AND object_id=?", (part_id, object_id)).fetchone()
+    if not r:
+        return None
+    when = when or as_of(conn)
+    start = when - timedelta(days=30 * months)
+    members = part_basket_members(conn, part_id)
+    has_basket = len(members) >= MIN_PART_BASKET
+    b = load_series(conn, f"basket:{part_id}", start - timedelta(days=10)) if has_basket else {}
+    has_basket = bool(b)
+    p = load_series(conn, f"basket:{product_id(conn)}", start - timedelta(days=10))
+    cr = crowding_for(conn, f"basket:{part_id}") if has_basket else None
+    exc_w = A.excess_return(b, p, when - timedelta(days=days), when) if b else None
+    exc_m = A.excess_return(b, p, start, when) if b else None
+    events = part_events(conn, part_id, EVENTS_DAYS, when)
+    chart_events = []
+    if b:
+        idx = A.index_to(b, start)
+        for e in part_events(conn, part_id, 30 * months, when):
+            v = A.value_at(idx, _d(e["date"]))
+            if v is not None:
+                chart_events.append({"id": e["id"], "date": e["date"], "category_label": e["category_label"], "value": round(v, 3),
+                                     "company": (e["company"] or {}).get("short_name")})
+    name, lab = PH.short_name(r["name"]), PH.label(r["name"])
+    return {
+        "as_of": when.isoformat(), "window_days": days, "window_months": months, "events_days": EVENTS_DAYS, "sample": is_sample(conn),
+        "part": {"id": part_id, "name": name, "label": lab},
+        "members": len(members), "listed": len(part_members(conn, part_id)), "min_members": MIN_PART_BASKET, "has_basket": has_basket,
+        "series": {"basket": series_points(b, start) if b else [], "product": series_points(p, start) if b and p else []},
+        "chart_events": chart_events,
+        "readings": {"excess_window": exc_w, "excess_months": exc_m},
+        "crowding": cr,
+        "conclusion": insights.basket({"excess_window": exc_m, "crowding": cr, "efficacy": None, "window_months": months}, unit="部件") if has_basket else None,
+        "events": events,
+        "events_conclusion": insights.layer_events(events, lab, unit="部件"),
+    }
 
 
 # -------------------------------------------------------------------- crowding
@@ -313,24 +422,21 @@ def resonance(conn: sqlite3.Connection, event_id: str, when: date | None = None)
     if not ev:
         return None
     ev_date = _d(ev["date"])
-    layer = ev["layer_id"]
-    # 不在 main 任何层的实物公司：同行是同部件的公司，篮子是部件篮子（与反应的参照同一条规则，见 recompute.reference_for）
-    part = ev.get("part") if not layer and ev["company"] else None
+    # 公司事件:同行 = 事件落到的那个部件的篮子成员,篮子 = 部件篮子(与反应参照同一条规则,见 recompute.reference_for);
+    # 层级事件(只有样例里有)没有个股维度,仍按层读。
+    part = ev.get("part") if ev["company"] else None
+    layer = None if ev["company"] else ev["layer_id"]
     pid = product_id(conn)
-    t1d, t3d = A.add_trading_days(ev_date, 1), A.add_trading_days(ev_date, 3)
+    t1d = A.add_trading_days(ev_date, 1)
     start = ev_date - timedelta(days=10)
     product = load_series(conn, f"basket:{pid}", start)
-    scope_b = load_series(conn, f"basket:{layer or (part or {}).get('part_id')}", start) if layer or part else {}
+    scope_id = part["part_id"] if part else layer
+    scope_b = load_series(conn, f"basket:{scope_id}", start) if scope_id else {}
 
-    peer_ids: list[str] = []
-    if layer and ev["company"]:
-        peer_ids = basket_members(conn, layer)
-    elif part:
-        peer_ids = part_basket_members(conn, part["part_id"])
+    members = part_basket_members(conn, part["part_id"]) if part else []
+    peer_ids = [c for c in members if c != ev["company"]["id"]] if part and len(members) >= MIN_PART_BASKET else []
     peers = []
     for cid in peer_ids:
-        if cid == ev["company"]["id"]:
-            continue
         s = load_series(conn, f"company:{cid}", start)
         r = A.reaction(s, None, ev_date, 1, when)
         peers.append({"company": company_brief(conn, cid), "t1": r["abs_return"] if r else None})
@@ -341,17 +447,28 @@ def resonance(conn: sqlite3.Connection, event_id: str, when: date | None = None)
     n_peers = sum(1 for p in peers if p["t1"] is not None)
     basket_t1 = A.excess_return(scope_b, product, ev_date, t1d) if scope_b and t1d <= when else None
 
-    # adjacent layers in the stack (the neighbours in sort order)
+    # 相邻:部件取发送信号路径上的上一站 / 下一站;层取叠层里的上下两层
     adjacent = []
-    mods = module_rows(conn)
-    idx = next((i for i, m in enumerate(mods) if m["id"] == layer), None)
-    if idx is not None:
-        for j in (idx - 1, idx + 1):
-            if 0 <= j < len(mods):
-                nb = load_series(conn, f"basket:{mods[j]['id']}", start)
-                r = A.excess_return(nb, product, ev_date, t1d) if nb and t1d <= when else None
-                adjacent.append({"node": {"id": mods[j]["id"], "name": mods[j]["name"], "sort": mods[j]["sort"]},
-                                 "t1": r, "relation": "上一层" if j < idx else "下一层"})
+    if part:
+        tx = [x["partId"] for x in (json.loads(conn.execute("SELECT signal FROM physical_objects WHERE id=?", (part["object_id"],)).fetchone()["signal"] or "{}").get("tx") or [])]
+        if part["part_id"] in tx:
+            i = tx.index(part["part_id"])
+            for j in (i - 1, i + 1):
+                if 0 <= j < len(tx):
+                    nb = load_series(conn, f"basket:{tx[j]}", start)
+                    r = A.excess_return(nb, product, ev_date, t1d) if nb and t1d <= when else None
+                    name = conn.execute("SELECT name FROM physical_parts WHERE id=?", (tx[j],)).fetchone()["name"]
+                    adjacent.append({"node": {"id": tx[j], "name": PH.short_name(name), "sort": j + 1}, "t1": r, "relation": "上一站" if j < i else "下一站"})
+    elif layer:
+        mods = module_rows(conn)
+        idx = next((i for i, m in enumerate(mods) if m["id"] == layer), None)
+        if idx is not None:
+            for j in (idx - 1, idx + 1):
+                if 0 <= j < len(mods):
+                    nb = load_series(conn, f"basket:{mods[j]['id']}", start)
+                    r = A.excess_return(nb, product, ev_date, t1d) if nb and t1d <= when else None
+                    adjacent.append({"node": {"id": mods[j]["id"], "name": mods[j]["name"], "sort": mods[j]["sort"]},
+                                     "t1": r, "relation": "上一层" if j < idx else "下一层"})
 
     attention = None
     if ev["company"]:
@@ -376,8 +493,8 @@ def resonance(conn: sqlite3.Connection, event_id: str, when: date | None = None)
         "peers": peers, "same_direction": {"k": len(same) + (1 if self_t1 is not None else 0), "n": n_peers + (1 if self_t1 is not None else 0)},
         "basket_t1": basket_t1, "adjacent": adjacent, "attention": attention, "baseline": baseline,
         "layer": module_of(conn, layer) if layer else None,
-        "scope": ({"kind": "layer", "id": layer, "name": module_of(conn, layer)["name"]} if layer
-                  else {"kind": "part", "id": part["part_id"], "name": part["part_name"]} if part else None),
+        "scope": ({"kind": "part", "id": part["part_id"], "name": PH.short_name(part["part_name"]), "members": len(members)} if part
+                  else {"kind": "layer", "id": layer, "name": module_of(conn, layer)["name"]} if layer else None),
     }
 
 
@@ -469,7 +586,7 @@ def company_market(conn: sqlite3.Connection, company_id: str, months: int = 6, w
     s = load_series(conn, f"company:{company_id}", start - timedelta(days=10))
     layers = company_layers(conn, company_id)
     layer = layers[0] if layers else None
-    b = peer_basket(conn, layer, company_id, start - timedelta(days=10)) if layer else {}
+    b, part = part_peer_basket(conn, company_id, start - timedelta(days=10))
     p = load_series(conn, f"basket:{pid}", start - timedelta(days=10))
     start3 = when - timedelta(days=91)
     val = conn.execute("SELECT pe_ttm, pe_pct_rank_5y FROM valuation WHERE company_id=?", (company_id,)).fetchone()
@@ -484,6 +601,7 @@ def company_market(conn: sqlite3.Connection, company_id: str, months: int = 6, w
     mods = [module_of(conn, l) for l in layers]
     return {
         "as_of": when.isoformat(), "company": c, "layers": [m for m in mods if m], "primary_layer": module_of(conn, layer) if layer else None,
+        "basket_part": ({"id": part["part_id"], "name": PH.short_name(part["part_name"])} if part and b else None),
         "series": series_points(s, start) if s else [], "chart_events": chart_events, "window_months": months,
         "metrics": {
             "pe_ttm": val["pe_ttm"] if val else None, "pe_pct_rank_5y": val["pe_pct_rank_5y"] if val else None,
@@ -524,7 +642,7 @@ def node_market(conn: sqlite3.Connection, node_id: str, days: int = 7, when: dat
     return {
         "as_of": when.isoformat(), "window_days": days, "module": m, "sample": is_sample(conn),
         "basket": {"excess": act["basket_excess"] if act else None, "direction": act["direction"] if act else None, "members": len(members)},
-        "events": events, "events_conclusion": insights.layer_events(events, m["name"]),
+        "events": events, "events_conclusion": insights.layer_events(events, m["name"], unit="层"),
         "validity_days": validity_days(conn, m["id"]),
         "thesis": research.thesis_for_node(conn, node_id, when),
         "company_events": companies_with_last_event(conn, members, when),

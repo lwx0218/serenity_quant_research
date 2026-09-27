@@ -114,6 +114,16 @@ def import_physical(conn: sqlite3.Connection) -> dict[str, int]:
 
 
 # ------------------------------------------------------------------- read
+def short_name(name: str) -> str:
+    """「CW 激光器（外置光源）」→「CW 激光器」:行、标题里用。"""
+    return name.split("（")[0].split("(")[0]
+
+
+def label(name: str) -> str:
+    """「光源耦合：隔离器 / 透镜 / 保偏光纤」→「光源耦合」:嵌进结论句里用。"""
+    return short_name(name).split("：")[0]
+
+
 def _j(s: str | None):
     return json.loads(s) if s else None
 

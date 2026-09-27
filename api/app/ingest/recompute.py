@@ -10,9 +10,11 @@ from statistics import mean, pstdev
 
 from .. import analytics as A
 from .. import physical as PH
-from ..market_seed import basket_members, company_layers, primary_layer
+from ..market_seed import basket_members
 
 CORE_STAGES = ("chip", "device", "engine", "module")
+MIN_PART_BASKET = 3                 # 部件篮子:成员 ≥ 3 家且有行情才成篮子(分位 / 偏离 / 3 个月读数都从它来);不足只报家数
+MODULE_PART = "part.module-maker"   # 模块 / 客户阶段的公司只在「整模块」进篮子
 
 
 # ------------------------------------------------------------------ series
@@ -34,11 +36,33 @@ def product_basket_members(conn: sqlite3.Connection) -> list[str]:
     return sorted(ids & have)
 
 
-def part_basket_members(conn: sqlite3.Connection, part_id: str) -> list[str]:
-    have = set(companies_with_bars(conn))
-    ids = {r["company_id"] for r in conn.execute(
-        "SELECT DISTINCT company_id FROM physical_part_companies WHERE part_id=? AND company_id IS NOT NULL AND evidence IN ('verified','consensus')", (part_id,))}
-    return sorted(ids & have)
+def part_members(conn: sqlite3.Connection, part_id: str) -> list[str]:
+    """部件上能进篮子的公司(不看有没有行情):已核验 / 行业图示,候选不进;模块 / 客户阶段只在整模块进。"""
+    return [r["company_id"] for r in conn.execute(
+        """SELECT DISTINCT company_id FROM physical_part_companies
+           WHERE part_id=? AND company_id IS NOT NULL AND evidence IN ('verified','consensus') AND (stage != 'module' OR part_id = ?)
+           ORDER BY company_id""", (part_id, MODULE_PART))]
+
+
+def companies_with_series(conn: sqlite3.Connection) -> set[str]:
+    return {r["instrument"][len("company:"):] for r in conn.execute("SELECT DISTINCT instrument FROM series WHERE instrument LIKE 'company:%'")}
+
+
+def part_basket_members(conn: sqlite3.Connection, part_id: str, have: set[str] | None = None) -> list[str]:
+    """…且有行情(series 里有它)。have 给了就不再查库(重算时序列还在内存里)。"""
+    have = companies_with_series(conn) if have is None else have
+    return [c for c in part_members(conn, part_id) if c in have]
+
+
+def part_baskets(conn: sqlite3.Connection, series: dict[str, A.Series]) -> dict[str, A.Series]:
+    """每个成员够数的部件一条等权篮子;真行情(rebuild_series)与样例层(seed)共用。"""
+    have = {k[len("company:"):] for k in series if k.startswith("company:")}
+    out = {}
+    for r in conn.execute("SELECT id FROM physical_parts"):
+        members = part_basket_members(conn, r["id"], have)
+        if len(members) >= MIN_PART_BASKET:
+            out[f"basket:{r['id']}"] = A.basket_series([series[f"company:{c}"] for c in members])
+    return out
 
 
 def rebuild_series(conn: sqlite3.Connection) -> dict:
@@ -55,10 +79,7 @@ def rebuild_series(conn: sqlite3.Connection) -> dict:
         if members:
             series[f"basket:{r['id']}"] = A.basket_series([series[f"company:{c}"] for c in members])
     # 实物部件篮子
-    for r in conn.execute("SELECT id FROM physical_parts"):
-        members = part_basket_members(conn, r["id"])
-        if len(members) >= 2:
-            series[f"basket:{r['id']}"] = A.basket_series([series[f"company:{c}"] for c in members])
+    series.update(part_baskets(conn, series))
     # 整机
     pid = conn.execute("SELECT id FROM nodes WHERE kind='product'").fetchone()["id"]
     members = product_basket_members(conn)
@@ -70,25 +91,52 @@ def rebuild_series(conn: sqlite3.Connection) -> dict:
     return {"instruments": len(series), "points": sum(len(s) for s in series.values()), "product_members": len(members)}
 
 
+def sample_part_baskets(conn: sqlite3.Connection) -> dict:
+    """样例层的序列不是从 bars 来的:导入实物之后,按同一套规则补部件篮子,再按部件篮子重算样例事件的反应与部件篮子的拥挤度。"""
+    from .crowding import basket_metrics
+    series: dict[str, A.Series] = {}
+    for r in conn.execute("SELECT instrument, date, value FROM series WHERE instrument LIKE 'company:%' ORDER BY instrument, date"):
+        series.setdefault(r["instrument"], {})[date.fromisoformat(r["date"])] = r["value"]
+    if not series:
+        return {"part_baskets": 0}
+    baskets = part_baskets(conn, series)
+    cur = conn.cursor()
+    cur.execute("DELETE FROM series WHERE instrument LIKE 'basket:part.%'")
+    cur.executemany("INSERT INTO series (instrument, date, value, is_sample) VALUES (?,?,?,1)",
+                    [(inst, d.isoformat(), v) for inst, s in baskets.items() for d, v in s.items()])
+    conn.commit()
+    when = date.fromisoformat(conn.execute("SELECT value FROM settings WHERE key='as_of'").fetchone()["value"])
+    out = {"part_baskets": len(baskets), **rebuild_reactions(conn, when)}
+    pid = conn.execute("SELECT id FROM nodes WHERE kind='product'").fetchone()["id"]
+    for inst in baskets:
+        m = basket_metrics(conn, inst, pid)
+        if m:
+            cur.execute("INSERT OR REPLACE INTO crowding (instrument, as_of, window_days, metrics, is_sample) VALUES (?,?,20,?,1)",
+                        (inst, when.isoformat(), json.dumps(m, ensure_ascii=False)))
+    conn.commit()
+    return out
+
+
 # ------------------------------------------------------------------ reactions
 def _load(conn: sqlite3.Connection, inst: str) -> A.Series:
     return {date.fromisoformat(r["date"]): r["value"] for r in conn.execute("SELECT date, value FROM series WHERE instrument=? ORDER BY date", (inst,))}
 
 
 def reference_for(conn: sqlite3.Connection, ev: dict, cache: dict) -> A.Series | None:
-    """公司事件的参照：所在层的其他成员；不在 main 任何层的实物公司用它主要部件的篮子（去掉自己）。"""
+    """公司事件的参照:事件落到的那个部件(physical.part_for_event)的篮子,去掉自己。
+    部件不成篮子(成员不足 3 家)时没有篮子参照,反应读整机;层级事件本来就读整机。"""
     cid = ev.get("company_id")
     if not cid:
         return None
-    layer = primary_layer(conn, ev)
-    if layer:
-        peers = [c for c in basket_members(conn, layer) if c != cid and f"company:{c}" in cache]
-        return A.basket_series([cache[f"company:{c}"] for c in peers]) if peers else None
     part = PH.part_for_event(conn, cid, ev.get("category"))
-    if part:
-        peers = [c for c in part_basket_members(conn, part["part_id"]) if c != cid and f"company:{c}" in cache]
-        return A.basket_series([cache[f"company:{c}"] for c in peers]) if peers else None
-    return None
+    if not part:
+        return None
+    have = {k[len("company:"):] for k in cache if k.startswith("company:")}
+    members = part_basket_members(conn, part["part_id"], have)
+    if len(members) < MIN_PART_BASKET:
+        return None
+    peers = [c for c in members if c != cid]
+    return A.basket_series([cache[f"company:{c}"] for c in peers]) if peers else None
 
 
 def rebuild_reactions(conn: sqlite3.Connection, when: date) -> dict:

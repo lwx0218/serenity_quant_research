@@ -193,7 +193,9 @@ export function ThesisBlock({ t, subject, onChange, compact }: { t: Thesis | nul
 export function ResonanceBlock({ r, onSwitch, canSwitch }: { r: Resonance; onSwitch?: () => void; canSwitch?: boolean }) {
   const ev = r.event;
   const peers = r.peers.map((p) => <span key={p.company.id}>{p.company.short_name ?? p.company.name} <Sig v={p.t1} /></span>);
-  const unit = r.scope?.kind === "part" ? "同部件" : "同环节";
+  const isPart = r.scope?.kind === "part";
+  const unit = isPart ? "同部件" : "同环节";
+  const small = isPart && (r.scope?.members ?? 0) < 3;      // 部件不成篮子:不拿一两家当同行
   return (
     <div className="block" style={{ gap: 12 }}>
       <Head title={`共振 · ${md(ev.date)} ${ev.category_label}`} right={<><AsOf date={r.as_of} horizon="事件后 T+1 / T+3" extra={`时效 T+${ev.freshness.validity}`} />{canSwitch && <button type="button" className="btn" onClick={onSwitch}>换一个事件</button>}</>} />
@@ -201,8 +203,8 @@ export function ResonanceBlock({ r, onSwitch, canSwitch }: { r: Resonance; onSwi
       <div className="rows">
         <Row k="本公司">T+1 <Sig v={r.self.t1} /> · T+3 <Sig v={r.self.t3} /> · 量比 {r.self.volume_ratio?.toFixed(1) ?? "—"}{r.self.turnover_pct_rank != null && <> · 换手分位 {Math.round(r.self.turnover_pct_rank)}%</>}</Row>
         <Row k={unit}>{peers.length ? <>{peers.reduce<ReactNode[]>((acc, x, i) => (i ? [...acc, " · ", x] : [x]), [])} → {r.same_direction.k}/{r.same_direction.n} 同向</>
-          : `没有${unit}公司`}{r.basket_t1 != null && <>,{r.scope?.name}篮子 T+1 相对整机 <Sig v={r.basket_t1} /></>}</Row>
-        {r.adjacent.length > 0 && <Row k="相邻层">{r.adjacent.map((a, i) => <span key={a.node.id}>{i ? " · " : ""}{a.relation} {a.node.name} 篮子 {a.t1 == null ? "—" : Math.abs(a.t1) < 0.005 ? "无反应" : <Sig v={a.t1} />}</span>)}</Row>}
+          : small ? `有行情的 ${r.scope?.members ?? 0} 家,不足 3 家不成篮子` : `没有${unit}公司`}{r.basket_t1 != null && <>,{r.scope?.name}篮子 T+1 相对整机 <Sig v={r.basket_t1} /></>}</Row>
+        {r.adjacent.length > 0 && <Row k={isPart ? "相邻部件" : "相邻层"}>{r.adjacent.map((a, i) => <span key={a.node.id}>{i ? " · " : ""}{a.relation} {a.node.name} 篮子 {a.t1 == null ? "—" : Math.abs(a.t1) < 0.005 ? "无反应" : <Sig v={a.t1} />}</span>)}</Row>}
         {r.attention && (
           <Row k="资金与关注">
             {r.attention.margin_change_3d_pct != null && <>融资余额 <Sig v={r.attention.margin_change_3d_pct / 100} />(3 日)· </>}

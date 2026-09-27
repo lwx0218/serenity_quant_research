@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Any
 
 from . import analytics as A
+from .ingest.recompute import MIN_PART_BASKET
 
 
 def pct(x: float | None, digits: int = 1) -> str:
@@ -39,26 +40,27 @@ def _pad(name: str) -> str:
 
 
 # ------------------------------------------------------------------- overview
-def overview(activity: list[dict], events: list[dict], days: int) -> dict:
-    """首页第一行:资金本周在给谁投票。"""
+def overview(activity: list[dict], events: list[dict], days: int, unit: str = "环节", scope: str = "layer_ids") -> dict:
+    """资金本周在给谁投票。activity 是层或部件的读数;scope 是事件上记它属于哪些 activity 的字段
+    (层:layer_ids;部件:part_ids),unit 是句子里的单位(环节 / 部件)。"""
     active = [a for a in activity if a["events"] > 0 and a["basket_excess"] is not None]
     if not events:
         return {"direction": "neu", "text": f"过去 {days} 天没有新的卡口事件;篮子读数按日更新。"}
     if not active:
         return {"direction": "neu", "text": f"过去 {days} 天有 {len(events)} 条卡口事件,但没有一层的篮子给出方向。"}
     def score(a: dict) -> tuple:
-        evs = [e for e in events if a["id"] in e["layer_ids"]]
+        evs = [e for e in events if a["id"] in e[scope]]
         reacted = [e for e in evs if e["freshness"]["state"] in ("window", "priced")]
         return (len(reacted), abs(a["basket_excess"]))
     lead = max(active, key=score)
-    lead_events = [e for e in events if lead["id"] in e["layer_ids"]]
+    lead_events = [e for e in events if lead["id"] in e[scope]]
     reacted = [e for e in lead_events if e["freshness"]["state"] in ("window", "priced")]
     same = [e for e in reacted if (e["reaction"]["t1"] or 0) * lead["basket_excess"] > 0]
     trigger = max(lead_events, key=lambda e: abs(e["reaction"]["t1"] or 0)) if lead_events else None
     direction = "pos" if lead["basket_excess"] > 0 else "neg"
     parts = [f"资金本周在给 {lead['name']} 投票" if direction == "pos" else f"资金本周在离开 {lead['name']}"]
     if trigger:
-        parts[0] += f":{trigger['date'][5:]} {trigger['category_label']}后环节内 {len(same)}/{len(lead_events)} 同向,篮子 {days} 天相对整机 {pct(lead['basket_excess'])}"
+        parts[0] += f":{trigger['date'][5:]} {trigger['category_label']}后{unit}内 {len(same)}/{len(lead_events)} 同向,篮子 {days} 天相对整机 {pct(lead['basket_excess'])}"
     followers = [a for a in active if a["id"] != lead["id"] and a["basket_excess"] * lead["basket_excess"] > 0 and abs(a["basket_excess"]) >= A.REACTION_THRESHOLD]
     if followers:
         f = max(followers, key=lambda a: abs(a["basket_excess"]))
@@ -75,11 +77,12 @@ def overview(activity: list[dict], events: list[dict], days: int) -> dict:
 
 
 # --------------------------------------------------------------------- events
-def layer_events(events: list[dict], layer_name: str) -> dict:
-    """选中一层 · 最近事件:资金在给这一层的哪一段投票。"""
+def layer_events(events: list[dict], layer_name: str, unit: str = "部件") -> dict:
+    """选中一个部件(或一层)· 最近事件:资金在给这一段投票吗。unit:部件 / 层。"""
     layer_name = _pad(layer_name)
+    this = "这个部件" if unit == "部件" else f"这一{unit}"
     if not events:
-        return {"direction": "neu", "text": f"窗口内没有触及{layer_name}的卡口事件。"}
+        return {"direction": "neu", "text": f"窗口内没有{'落在' if unit == '部件' else '触及'}{layer_name}{'上' if unit == '部件' else ''}的卡口事件。"}
     with_t1 = [e for e in events if e["reaction"]["t1"] is not None]
     if not with_t1:
         return {"direction": "neu", "text": f"{len(events)} 条事件都还没有 T+1 收盘,先别下结论。"}
@@ -102,7 +105,7 @@ def layer_events(events: list[dict], layer_name: str) -> dict:
         text = f"{n} 条里 {len(pos)} 条同向({who}){lag};{tail} —— 资金在给{seg}{layer_name}这一段投票。"
     elif len(neg) >= max(2, n // 2 + 1):
         d = "neg"
-        text = f"{n} 条里 {len(neg)} 条被卖出({'、'.join(_subject(e) for e in neg[:3])});这一层的利好没有被买单。"
+        text = f"{n} 条里 {len(neg)} 条被卖出({'、'.join(_subject(e) for e in neg[:3])});{this}的利好没有被买单。"
     else:
         d = "neu"
         text = f"{n} 条事件方向分散(同向 {len(pos)}、反向 {len(neg)}),资金还没有对{layer_name}形成一致看法。"
@@ -130,7 +133,7 @@ def company_events(events: list[dict]) -> dict:
 
 
 # ------------------------------------------------------------------- crowding
-def crowding(cr: dict | None, kind: str = "company", dispersion: dict | None = None) -> dict:
+def crowding(cr: dict | None, kind: str = "company", dispersion: dict | None = None, unit: str = "环节") -> dict:
     """拥挤度 / 脆弱性:状态量,不是信号。"""
     if not cr:
         return {"direction": "neu", "text": "没有拥挤度读数。"}
@@ -140,7 +143,7 @@ def crowding(cr: dict | None, kind: str = "company", dispersion: dict | None = N
             parts = ["篮子整体进入拥挤区"]
             if dispersion and (dispersion["high"] + dispersion["low"] + dispersion["mid"]) > 0 and dispersion["low"] > 0:
                 parts[0] += f",但分化明显:{dispersion['high']} 家高、{dispersion['low']} 家低"
-            text = parts[0] + "。环节级仓位此时加,买到的是“已被投票过的”那一半。"
+            text = parts[0] + f"。{unit}级仓位此时加,买到的是“已被投票过的”那一半。"
         else:
             reasons = []
             if (m.get("ret20_pct_rank") or 0) >= A.CROWD_HI:
@@ -169,14 +172,17 @@ def resonance(res: dict) -> dict:
         layer = (res.get("layer") or {}).get("name", "这一层")
         follow = f"相邻的{'、'.join(a['node']['name'] for a in adj)}同向" if adj else "相邻层没有跟随"
         return {"direction": d, "text": f"层级事件:{layer}篮子 T+1 相对整机 {pct(t1)},{follow}。没有个股维度,共振只看层与层。"}
-    unit = "部件" if (res.get("scope") or {}).get("kind") == "part" else "环节"
+    sc = res.get("scope") or {}
+    unit = "部件" if sc.get("kind") == "part" else "环节"
     volume = (s.get("volume_ratio") or 0) >= 1.5
+    if sc.get("kind") == "part" and (sc.get("members") or 0) < MIN_PART_BASKET:
+        return {"direction": d, "text": f"这个部件有行情的公司不足 {MIN_PART_BASKET} 家,不成篮子,分不清是个股还是部件级事件;{'资金用量确认' if volume else '没有放量'}。"}
     if sd["n"] < 2:
         return {"direction": d, "text": f"没有可比的同{unit}公司,分不清是个股还是{unit}级事件;{'资金用量确认' if volume else '没有放量'}。"}
     broad = sd["k"] / sd["n"] >= 0.6
     adj = [a for a in res["adjacent"] if a["t1"] is not None and a["t1"] * t1 > 0 and abs(a["t1"]) >= A.REACTION_THRESHOLD]
     scale = f"{unit}级事件而非个股事件" if broad else f"个股事件而非{unit}级事件"
-    detail = (f"同{unit}" + ("与相邻层" if adj else "") + "同向") if broad else f"同{unit}没有跟随"
+    detail = (f"同{unit}" + (f"与相邻{'部件' if unit == '部件' else '层'}" if adj else "") + "同向") if broad else f"同{unit}没有跟随"
     conf = "资金用量确认" if volume else "但没有放量"
     text = f"{scale}:{detail},{conf}。"
     tr = s.get("turnover_pct_rank")
@@ -204,8 +210,9 @@ def efficacy(eff: dict | None, layer_name: str) -> dict:
     return {"direction": d, "text": text}
 
 
-def basket(detail: dict) -> dict:
-    """篮子页第一行:趋势、拥挤、时效三者合成。"""
+def basket(detail: dict, unit: str = "环节") -> dict:
+    """篮子页第一行:趋势、拥挤、时效三者合成。unit:环节(层篮子)/ 部件(部件篮子)。"""
+    who = "部件篮子" if unit == "部件" else unit
     exc = detail.get("excess_window")
     cr = detail.get("crowding")
     eff = detail.get("efficacy")
@@ -215,20 +222,20 @@ def basket(detail: dict) -> dict:
     v = eff["validity_days"] if eff else A.DEFAULT_VALIDITY_DAYS
     if trend == "pos" and crowded:
         d = "neu"
-        text = (f"环节相对整机 {months} 个月 {pct(exc)},趋势偏多;但当前拥挤({sigma(cr['metrics'].get('deviation_sigma'))})且事件效力只有约 {v} 天。"
+        text = (f"{who}相对整机 {months} 个月 {pct(exc)},趋势偏多;但当前拥挤({sigma(cr['metrics'].get('deviation_sigma'))})且事件效力只有约 {v} 天。"
                 f"结论:不追,等回到 +1σ 以内或出现二次确认再加。")
     elif trend == "pos":
         d = "pos"
-        text = f"环节相对整机 {months} 个月 {pct(exc)},趋势偏多且不拥挤;按事件加,时效约 {v} 天。"
+        text = f"{who}相对整机 {months} 个月 {pct(exc)},趋势偏多且不拥挤;按事件加,时效约 {v} 天。"
     elif trend == "neg" and cr and cr["direction"] == "pos":
         d = "pos"
-        text = f"环节相对整机 {months} 个月 {pct(exc)},但拥挤度已出清;下一条被资金确认的事件值得跟。"
+        text = f"{who}相对整机 {months} 个月 {pct(exc)},但拥挤度已出清;下一条被资金确认的事件值得跟。"
     elif trend == "neg":
         d = "neg"
-        text = f"环节相对整机 {months} 个月 {pct(exc)},资金在离开;不做左侧。"
+        text = f"{who}相对整机 {months} 个月 {pct(exc)},资金在离开;不做左侧。"
     else:
         d = "neu"
-        text = f"环节相对整机 {months} 个月 {pct(exc)},没有趋势;只看事件,不看仓位。"
+        text = f"{who}相对整机 {months} 个月 {pct(exc)},没有趋势;只看事件,不看仓位。"
     return {"direction": d, "text": text}
 
 

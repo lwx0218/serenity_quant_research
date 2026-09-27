@@ -16,8 +16,7 @@ physical/
   data/coverage-1.6t-dr8-siph.json   反向扫描的全集：每家公司 on / off / pending 与理由——「不在这只模块上」是决定，不是遗漏
   design/gen_physical.py             方向稿画板（Claude Design 画布用 .dc.html，浅深两版）；等距揭盖图的几何在这里
   design/build_prototype.py          可交互原型 → dist/teardown-1.6t-prototype.html；同时导出 web/public/physical/*.svg|json
-  design/build_market_direction.py   方向稿「物理页 · 事件 / 资金投票」→ dist/teardown-1.6t-market-direction.html（在原型上加：图上呼吸点、按部件的资金投票、选中部件的篮子走势与卡口事件）
-  design/market_direction_data.py    方向稿的数据：演示库（情景行情 + 走真实确认路径的事件）+ 部件级读数（part_activity / part_detail，通过后搬进 api/app/market.py）
+  dist/teardown-1.6t-market-direction.html  方向稿「物理页 · 事件 / 资金投票」（2026-09-27 评审通过，留档）；部件级读数已进 api/app/market.py，演示库改成测试夹具 api/tests/scenario_physical.py
   design/reference-intel-1.6t-opened.png  部件摆位参考（Intel 1.6T 拆解图）
   dist/teardown-1.6t-prototype.html  单文件原型（选中部件 / 发收切换 / 浅深 / Esc 回整机）
   dist/teardown-web-snapshot.html    整个 web/ 应用的单文件快照（hash 路由 + 内嵌 API 数据），双击即开，用来验 UX；用 tools/snapshot/build.py 重建

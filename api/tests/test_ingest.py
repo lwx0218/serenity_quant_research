@@ -168,7 +168,7 @@ class PipelineTests(unittest.TestCase):
         self.assertTrue(C.confirm(self.conn, nocat["id"], category="order")["ok"])
 
     def test_resonance_for_physical_only_company_uses_its_part(self):
-        # 光库科技只在实物层（光源耦合），不在 main 任何层：共振比同部件（天孚通信），不能说「同环节没有跟随」
+        # 光库科技只在实物层（光源耦合），不在 main 任何层：共振按部件读，不能说「同环节没有跟随」
         self.assertIsNone(self.conn.execute("SELECT 1 FROM exposures WHERE company_id='cn.300620'").fetchone())
         item = {"id": news.cand_id("https://t/fl"), "date": "2026-09-08", "title": "光库科技薄膜铌酸锂调制器送样", "url": "https://t/fl", "summary": "",
                 "source": "讯石光通讯", "source_type": "rss", "tier": 1, "weight": 0.8, "evidence": "consensus", "category": "qualification",
@@ -178,13 +178,15 @@ class PipelineTests(unittest.TestCase):
         try:
             r = market.resonance(self.conn, eid)
             self.assertIsNone(r["layer"])
-            self.assertEqual(r["scope"]["kind"], "part")
-            self.assertIn("cn.300394", [p["company"]["id"] for p in r["peers"]])
+            self.assertEqual((r["scope"]["kind"], r["scope"]["id"]), ("part", "part.laser-coupling"))
+            # 这里光源耦合只有光库、天孚两家有行情:不足 3 家不成篮子,不拿一两家当同行,如实说分不清
+            self.assertEqual(r["scope"]["members"], 2)
+            self.assertEqual(r["peers"], [])
             text = insights.resonance(r)["text"]
+            self.assertIn("不足 3 家,不成篮子", text)
             self.assertNotIn("同环节", text)
-            self.assertIn("部件", text)
-            # 同行一个都没有时如实说分不清，而不是「没有跟随」
-            lone = dict(r, peers=[], same_direction={"k": 1, "n": 1})
+            # 成篮子但同行都没有 T+1 时,也如实说分不清,而不是「没有跟随」
+            lone = dict(r, scope=dict(r["scope"], members=5), peers=[], same_direction={"k": 1, "n": 1})
             self.assertIn("没有可比的同部件公司", insights.resonance(lone)["text"])
         finally:
             C.reopen(self.conn, item["id"])

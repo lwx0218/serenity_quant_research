@@ -171,6 +171,9 @@ def import_seed(conn: sqlite3.Connection, seed_dir: Path = SEED_DIR, include_sam
 
     counts.update(import_market(conn, seed_dir, include_sample=include_sample))
     counts.update(import_physical(conn))
+    if include_sample:                  # 样例层的部件篮子要等实物导入之后才能算
+        from .ingest.recompute import sample_part_baskets
+        counts.update(sample_part_baskets(conn))
     return counts
 
 

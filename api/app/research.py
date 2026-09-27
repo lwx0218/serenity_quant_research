@@ -48,8 +48,8 @@ def thesis_view(conn: sqlite3.Connection, subject: str, when: date | None = None
         if kind == "basket":
             exc = market.excess_since(conn, inst, f"basket:{pid}", since, when)
         else:
-            layers = market.company_layers(conn, ident)
-            ref = market.peer_basket(conn, layers[0], ident, since - timedelta(days=7)) if layers else market.load_series(conn, f"basket:{pid}", since - timedelta(days=7))
+            ref, _ = market.part_peer_basket(conn, ident, since - timedelta(days=7))
+            ref = ref or market.load_series(conn, f"basket:{pid}", since - timedelta(days=7))
             exc = A.excess_return(market.load_series(conn, inst, since - timedelta(days=7)), ref, since, when) if ref else None
         readings.append({"instrument": inst, "label": _label_for(conn, inst), "excess": exc})
     d["readings"] = readings

@@ -3,7 +3,7 @@ ret20_pct_rank · turnover_pct_rank · deviation_sigma · margin_to_float_pct ·
 turnover_share_pct / turnover_share_mean_pct · attention{margin_change_3d_pct, irm_questions_7d}。
 
 分位都是「现在这个值在过去 250 个交易日同类值里的百分位」；偏离是「公司 20 日收益 − 参照篮子 20 日收益」
-相对其一年分布的 σ 数。参照：所在层篮子 → 主要部件篮子 → 整机。"""
+相对其一年分布的 σ 数。参照：主要部件篮子 → 整机（部件不成篮子时）。"""
 from __future__ import annotations
 
 import json
@@ -12,7 +12,6 @@ from datetime import date, datetime, timedelta
 from statistics import mean, pstdev
 
 from .. import physical as PH
-from ..market_seed import company_layers
 from . import eastmoney
 from .symbols import is_a_share
 
@@ -60,9 +59,7 @@ def _deviation_sigma(subject: dict[str, float], ref: dict[str, float]) -> float 
 
 
 def reference_instrument(conn: sqlite3.Connection, company_id: str, pid: str) -> str:
-    layers = company_layers(conn, company_id)
-    if layers:
-        return f"basket:{layers[0]}"
+    """偏离的参照:公司主要部件的篮子(与反应同一条规则),部件不成篮子时用整机。"""
     part = PH.part_for_event(conn, company_id, None)
     if part and conn.execute("SELECT 1 FROM series WHERE instrument=? LIMIT 1", (f"basket:{part['part_id']}",)).fetchone():
         return f"basket:{part['part_id']}"

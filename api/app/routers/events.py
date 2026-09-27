@@ -21,7 +21,7 @@ def list_events(
     conclusion = None
     if node:
         m = market.module_of(conn, node)
-        conclusion = insights.layer_events(items, m["name"] if m else "这一层")
+        conclusion = insights.layer_events(items, m["name"] if m else "这一层", unit="层")
     elif company:
         conclusion = insights.company_events(items)
     validity = market.validity_days(conn, market.module_of(conn, node)["id"]) if node and market.module_of(conn, node) else None

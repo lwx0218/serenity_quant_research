@@ -149,8 +149,13 @@ class ResearchApiTests(unittest.TestCase):
 
     def test_resonance_and_basket_pages(self):
         r = self.client.get("/api/events/evt.2026-08-26.cn.300308.capex/resonance").json()
-        self.assertEqual(r["same_direction"]["n"], 4)
-        self.assertEqual(len(r["adjacent"]), 2)
+        # 公司事件按它落到的部件读:中际旭创的扩产落在光引擎组装(不在信号路径上,没有上一站 / 下一站)
+        self.assertEqual((r["scope"]["kind"], r["scope"]["id"]), ("part", "part.engine-assembly"))
+        self.assertEqual(r["same_direction"]["n"], r["scope"]["members"])
+        self.assertEqual(r["adjacent"], [])
+        r = self.client.get("/api/events/evt.2026-08-27.cpo.mod.host-board.price/resonance").json()
+        self.assertEqual(r["scope"]["kind"], "layer")          # 层级事件(只有样例里有)仍按层读
+        self.assertEqual([a["relation"] for a in r["adjacent"]], ["上一层"])      # 主板是叠层最底下一层
         b = self.client.get("/api/baskets/cpo.mod.pic").json()
         self.assertEqual(len(b["members"]), 4)
         self.assertTrue(b["series"]["basket"] and b["series"]["product"])
