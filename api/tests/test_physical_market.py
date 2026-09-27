@@ -60,6 +60,12 @@ class PartMarketTests(unittest.TestCase):
         self.assertFalse(d["has_basket"])
         self.assertIsNone(d["conclusion"]); self.assertIsNone(d["crowding"]); self.assertEqual(d["series"]["basket"], [])
 
+    def test_event_lands_on_a_verified_mapping_first(self):
+        # 深南电路在金手指上只是候选,在主 PCB 上已核验:扩产落在主 PCB,而不是信号顺序更靠前的金手指
+        ev = {r["part_id"]: r["evidence"] for r in self.conn.execute("SELECT part_id, evidence FROM physical_part_companies WHERE company_id='cn.002916'")}
+        self.assertEqual((ev["part.edge-fingers"], ev["part.pcb"]), ("candidate", "verified"))
+        self.assertEqual(market.PH.part_for_event(self.conn, "cn.002916", "capex")["part_id"], "part.pcb")
+
     # ---------------------------------------------------------------- 参照
     def test_reaction_is_read_against_the_part_basket(self):
         e = market.get_event(self.conn, self._event("cn.300308"))

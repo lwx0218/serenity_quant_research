@@ -65,6 +65,7 @@ CATEGORY_STAGES = {
     "roadmap": ["chip", "engine", "device", "module"],        # 技术路线
 }
 STAGE_RANK = ["material", "chip", "device", "engine", "connect", "module", "equip"]
+EVIDENCE_RANK = {"verified": 0, "consensus": 1, "candidate": 2}   # 挑部件时先看证据级:已核验 → 行业图示 → 候选
 
 
 def import_physical(conn: sqlite3.Connection) -> dict[str, int]:
@@ -179,9 +180,10 @@ def company_parts(conn: sqlite3.Connection, company_id: str) -> list[dict]:
 
 
 def part_for_event(conn: sqlite3.Connection, company_id: str | None, category: str | None) -> dict | None:
-    """The one part an event most likely lands on: the company's parts, ranked by
-    how close their stage is to the event category. None when the company is
-    not on any physical object."""
+    """The one part an event most likely lands on. The company's parts are ranked
+    by evidence first (已核验 before 行业图示 before 候选 — a candidate-only link
+    never outranks a verified one), then by how close their stage is to the event
+    category, then by signal order. None when the company is not on any object."""
     if not company_id:
         return None
     parts = company_parts(conn, company_id)
@@ -189,6 +191,6 @@ def part_for_event(conn: sqlite3.Connection, company_id: str | None, category: s
         return None
     pref = CATEGORY_STAGES.get(category or "", STAGE_RANK)
     rank = {s: i for i, s in enumerate(pref)}
-    best = min(parts, key=lambda p: (rank.get(p["stage"], 99), p["step"] or 99))
+    best = min(parts, key=lambda p: (EVIDENCE_RANK.get(p["evidence"], 9), rank.get(p["stage"], 99), p["step"] or 99))
     return {"object_id": best["object_id"], "object_name": best["object_name"], "part_id": best["part_id"],
             "part_name": best["part_name"], "step": best["step"], "stage": best["stage"], "others": len(parts) - 1}
