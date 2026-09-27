@@ -873,12 +873,12 @@
           {
             "name": "则成电子",
             "fullName": "深圳市则成电子股份有限公司",
-            "ticker": "837821.BJ",
+            "ticker": "920821.BJ",
             "market": "A",
             "stage": "device",
             "role": "HDI/细间距 PCB，向全球头部光模块厂送样 1.6T 规格 PCB，主攻 400G 批量与 800G/1.6T 招标",
             "evidence": "verified",
-            "companyId": "cn.837821",
+            "companyId": "cn.920821",
             "sources": [
               {
                 "type": "announcement",
@@ -889,7 +889,7 @@
                 "quote": "公司从去年四季度开始，持续向全球头部光模块厂商推广对应的PCB产品……已完成送样的主要为1.6T光模块规格研发产品……明年上半年目标锁定为400G光模块用PCB的大批量交付"
               }
             ],
-            "note": "公告级来源，明确 1.6T 送样；缺 2025-2026 年批量证据"
+            "note": "[北交所新代码 920821，原 837821] 公告级来源，明确 1.6T 送样；缺 2025-2026 年批量证据"
           },
           {
             "name": "强达电路",
@@ -944,7 +944,7 @@
           {
             "name": "台燿 TUC",
             "fullName": "Taiwan Union Technology Corporation",
-            "ticker": "6274.TW",
+            "ticker": "6274.TWO",
             "market": "TW",
             "stage": "material",
             "role": "M7/M8 级高速 CCL，已取得 800G 基础设施认证、接近满载",

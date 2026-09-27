@@ -167,6 +167,22 @@ class PipelineTests(unittest.TestCase):
             C.confirm(self.conn, nocat["id"])
         self.assertTrue(C.confirm(self.conn, nocat["id"], category="order")["ok"])
 
+    def test_relevance_triage(self):
+        src = {"type": "cninfo_announcement"}
+        self.assertEqual(news.relevance_of(src, "关于持股5%以上股东减持股份计划的预披露公告", None, []), 0)
+        self.assertEqual(news.relevance_of(src, "2026年第三次临时股东大会决议公告", None, []), 0)
+        self.assertEqual(news.relevance_of(src, "关于泰国二期 1.6T 硅光模块产线投产的公告", "capex", []), 1)
+        self.assertEqual(news.relevance_of(src, "投资者关系活动记录表", None, []), 1)
+        self.assertEqual(news.relevance_of({"type": "rss"}, "anything from a vertical feed", None, []), 1)
+        routine = {"id": news.cand_id("https://t/r1"), "date": "2026-09-09", "title": "关于股份质押的公告", "url": "https://t/r1", "summary": "",
+                   "source": "巨潮资讯 · 公告", "source_type": "cninfo_announcement", "tier": 0, "weight": 1.0, "evidence": "verified", "category": None,
+                   "companies": [{"companyId": "cn.300308", "name": "中际旭创"}], "part_ids": [], "also_reported_by": [], "relevance": 0}
+        news.store(self.conn, [routine])
+        self.assertNotIn(routine["id"], [c["id"] for c in C.list_candidates(self.conn)])
+        self.assertIn(routine["id"], [c["id"] for c in C.list_candidates(self.conn, relevant=None)])
+        self.assertGreaterEqual(C.counts(self.conn)["pending_routine"], 1)
+        self.assertEqual(news.retriage(self.conn)["routine"] >= 1, True)
+
     def test_status_and_todo(self):
         st = runner.status(self.conn)
         self.assertGreaterEqual(st["with_bars"], 5)

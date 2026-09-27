@@ -71,7 +71,8 @@ CREATE TABLE IF NOT EXISTS candidates (
   event_id      TEXT,                         -- 确认后对应的 events.id
   decided_at    TEXT,
   decided_note  TEXT,
-  fetched_at    TEXT NOT NULL
+  fetched_at    TEXT NOT NULL,
+  relevance     INTEGER NOT NULL DEFAULT 1    -- 1 值得看 / 0 例行公告（减持、质押、会议……），收件箱默认不显示
 );
 CREATE INDEX IF NOT EXISTS ix_cand_status ON candidates(status, date);
 
@@ -101,6 +102,13 @@ CREATE TABLE IF NOT EXISTS ingest_todo (
 """
 
 
+MIGRATIONS = [("candidates", "relevance", "INTEGER NOT NULL DEFAULT 1")]
+
+
 def ensure_schema(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
+    for table, col, decl in MIGRATIONS:                     # 已有库上补列
+        cols = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
+        if col not in cols:
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {decl}")
     conn.commit()

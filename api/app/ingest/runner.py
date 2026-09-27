@@ -122,7 +122,9 @@ def job_recompute(conn: sqlite3.Connection, log=print) -> dict:
 
 
 def job_news(conn: sqlite3.Connection, only: str | None = None, log=print) -> dict:
-    return news.run_news(conn, only=only, log=log)
+    out = news.run_news(conn, only=only, log=log)
+    out["triage"] = news.retriage(conn)        # 规则可能改过：给整个池子重算一遍「值得看 / 例行」
+    return out
 
 
 def job_probe(conn: sqlite3.Connection, log=print) -> dict:
@@ -204,7 +206,8 @@ def status(conn: sqlite3.Connection) -> dict:
         "with_margin": q("SELECT COUNT(DISTINCT company_id) AS n FROM margin")["n"],
         "with_valuation": q("SELECT COUNT(*) AS n FROM valuation WHERE is_sample=0")["n"],
         "events": {"real": events_real, "sample": events_sample},
-        "candidates": {r["status"]: r["n"] for r in conn.execute("SELECT status, COUNT(*) AS n FROM candidates GROUP BY status")},
+        "candidates": {**{r["status"]: r["n"] for r in conn.execute("SELECT status, COUNT(*) AS n FROM candidates GROUP BY status")},
+                       "pending_relevant": q("SELECT COUNT(*) AS n FROM candidates WHERE status='pending' AND relevance=1")["n"]},
         "last_news_fetch": last_news,
         "todo_open": q("SELECT COUNT(*) AS n FROM ingest_todo WHERE status='open'")["n"],
         "runs": runs,

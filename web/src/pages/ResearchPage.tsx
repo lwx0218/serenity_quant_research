@@ -56,15 +56,16 @@ function CompanyEvents({ company }: { company: string }) {
 function InboxPage({ navigate }: { navigate: (to: string) => void }) {
   const [ib, setIb] = useState<Inbox | null>(null);
   const [cands, setCands] = useState<CandidatesResponse | null>(null);
+  const [allCands, setAllCands] = useState(false);
   const [ingest, setIngest] = useState<IngestStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
   const load = useCallback(() => {
     mkt.inbox(WINDOW_DAYS).then(setIb).catch((e) => setError(String(e)));
-    mkt.candidates("pending").then(setCands).catch(() => setCands({ counts: {}, items: [] }));
+    mkt.candidates("pending", 200, allCands ? "all" : "1").then(setCands).catch(() => setCands({ counts: {}, items: [] }));
     mkt.ingestStatus().then(setIngest).catch(() => setIngest(null));
-  }, []);
+  }, [allCands]);
   useEffect(() => { load(); }, [load]);
 
   const act = async (d: Decision, a: Decision["actions"][number]) => {
@@ -96,7 +97,7 @@ function InboxPage({ navigate }: { navigate: (to: string) => void }) {
                     <span>行情截至 <b>{ingest.last_bar_date ? md(ingest.last_bar_date) : "—"}</b></span>
                     <span>有行情 <b>{ingest.with_bars}</b> / 可取 {ingest.quotable} / 公司 {ingest.companies}</span>
                     <span>事件 <b>{ingest.events.real}</b> 真 · {ingest.events.sample} 示例</span>
-                    <span>候选待确认 <b>{ingest.candidates.pending ?? 0}</b>{ingest.last_news_fetch ? ` · 上次抓取 ${ingest.last_news_fetch.slice(5, 16).replace("T", " ")}` : ""}</span>
+                    <span>候选待确认 <b>{ingest.candidates.pending_relevant ?? ingest.candidates.pending ?? 0}</b>{ingest.last_news_fetch ? ` · 上次抓取 ${ingest.last_news_fetch.slice(5, 16).replace("T", " ")}` : ""}</span>
                     {ingest.todo_open > 0 && <span>交给 AI 补 <b>{ingest.todo_open}</b></span>}
                   </p>
                 )}
@@ -124,8 +125,13 @@ function InboxPage({ navigate }: { navigate: (to: string) => void }) {
 
               <section className="rows">
                 <div className="rows-head">
-                  <span className="eyebrow">候选 · {cands?.items.length ?? 0}</span>
-                  <span className="small muted">自动抓取 · 确认后才是事件，来源随事件走{cands ? ` · ${candidateNote(cands.counts)}` : ""}</span>
+                  <span className="eyebrow">候选 · {cands?.counts.pending_relevant ?? cands?.items.length ?? 0} 值得看{cands?.counts.pending_routine ? ` · ${cands.counts.pending_routine} 例行` : ""}</span>
+                  <span className="small muted">
+                    自动抓取 · 确认后才是事件，来源随事件走{cands ? ` · ${candidateNote(cands.counts)}` : ""}
+                    {(cands?.counts.pending_routine ?? 0) > 0 && (
+                      <>{" · "}<button type="button" className="btn-quiet" style={{ font: "inherit" }} onClick={() => setAllCands((v) => !v)}>{allCands ? "只看值得看的" : "连例行公告一起看"}</button></>
+                    )}
+                  </span>
                 </div>
                 {cands && <CandidateRows items={cands.items} onChange={() => { invalidatePending(); load(); }} />}
               </section>

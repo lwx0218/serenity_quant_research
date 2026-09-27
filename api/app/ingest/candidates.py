@@ -34,15 +34,18 @@ def public(conn: sqlite3.Connection, r: dict) -> dict:
         "company": company, "companies": comps, "parts": parts,
         "part": PH.part_for_event(conn, r.get("company_id"), r.get("category")),
         "also_reported_by": json.loads(r.get("also_reported_by") or "[]"),
-        "status": r["status"], "event_id": r.get("event_id"), "decided_at": r.get("decided_at"), "decided_note": r.get("decided_note"),
+        "relevance": r.get("relevance", 1), "status": r["status"], "event_id": r.get("event_id"), "decided_at": r.get("decided_at"), "decided_note": r.get("decided_note"),
         "fetched_at": r["fetched_at"],
     }
 
 
-def list_candidates(conn: sqlite3.Connection, status: str = "pending", limit: int = 100, company: str | None = None) -> list[dict]:
+def list_candidates(conn: sqlite3.Connection, status: str = "pending", limit: int = 100, company: str | None = None,
+                    relevant: bool | None = True) -> list[dict]:
     q, args = "SELECT * FROM candidates WHERE 1=1", []
     if status and status != "all":
         q += " AND status=?"; args.append(status)
+    if relevant is not None:
+        q += " AND relevance=?"; args.append(1 if relevant else 0)
     if company:
         q += " AND company_id=?"; args.append(company)
     q += " ORDER BY COALESCE(date,'') DESC, tier ASC, fetched_at DESC LIMIT ?"; args.append(limit)
@@ -50,7 +53,10 @@ def list_candidates(conn: sqlite3.Connection, status: str = "pending", limit: in
 
 
 def counts(conn: sqlite3.Connection) -> dict:
-    return {r["status"]: r["n"] for r in conn.execute("SELECT status, COUNT(*) AS n FROM candidates GROUP BY status")}
+    out = {r["status"]: r["n"] for r in conn.execute("SELECT status, COUNT(*) AS n FROM candidates GROUP BY status")}
+    out["pending_relevant"] = conn.execute("SELECT COUNT(*) FROM candidates WHERE status='pending' AND relevance=1").fetchone()[0]
+    out["pending_routine"] = conn.execute("SELECT COUNT(*) FROM candidates WHERE status='pending' AND relevance=0").fetchone()[0]
+    return out
 
 
 def confirm(conn: sqlite3.Connection, cand_id: str, *, company_id: str | None = None, category: str | None = None,

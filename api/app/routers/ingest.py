@@ -103,9 +103,19 @@ def upload(body: UploadIn, conn: Conn):
 # ------------------------------------------------------------------ 候选事件
 @router.get("/candidates")
 def list_candidates(conn: Conn, status: str = Query("pending", pattern="^(pending|confirmed|rejected|all)$"),
-                    company: str | None = None, limit: int = Query(100, ge=1, le=500)):
+                    company: str | None = None, limit: int = Query(200, ge=1, le=1000),
+                    relevant: str = Query("1", pattern="^(1|0|all)$", description="1 值得看（默认）· 0 例行公告 · all 全部")):
     ensure_schema(conn)
-    return {"counts": C.counts(conn), "items": C.list_candidates(conn, status=status, limit=limit, company=company)}
+    rel = None if relevant == "all" else relevant == "1"
+    return {"counts": C.counts(conn), "items": C.list_candidates(conn, status=status, limit=limit, company=company, relevant=rel)}
+
+
+@router.post("/candidates/retriage")
+def retriage(conn: Conn):
+    """规则改了之后给库里的候选重算 relevance。"""
+    from ..ingest.news import retriage as do
+    ensure_schema(conn)
+    return do(conn)
 
 
 class ConfirmIn(BaseModel):

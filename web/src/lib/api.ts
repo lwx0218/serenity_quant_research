@@ -325,13 +325,13 @@ export interface Candidate {
   source: string; source_type: "rss" | "cninfo_announcement" | "cninfo_irm" | "upload"; source_label: string; tier: number; evidence: PhysEvidence;
   category: string | null; category_label: string | null; company: CompanyBrief | null; companies: { companyId: string; name: string }[];
   parts: { id: string; name: string }[]; part: EventPart | null; also_reported_by: string[];
-  status: CandidateStatus; event_id: string | null; decided_at: string | null; decided_note: string | null; fetched_at: string;
+  relevance: 0 | 1; status: CandidateStatus; event_id: string | null; decided_at: string | null; decided_note: string | null; fetched_at: string;
 }
-export interface CandidatesResponse { counts: Partial<Record<CandidateStatus, number>>; items: Candidate[] }
+export interface CandidatesResponse { counts: Partial<Record<CandidateStatus | "pending_relevant" | "pending_routine", number>>; items: Candidate[] }
 export interface IngestRun { id: number; job: string; started_at: string; finished_at: string | null; ok: 0 | 1 | null; summary: Record<string, unknown> | null; error: string | null }
 export interface IngestStatus {
   as_of: string | null; sample: boolean; companies: number; quotable: number; with_bars: number; last_bar_date: string | null;
-  with_margin: number; with_valuation: number; events: { real: number; sample: number }; candidates: Partial<Record<CandidateStatus, number>>;
+  with_margin: number; with_valuation: number; events: { real: number; sample: number }; candidates: Partial<Record<CandidateStatus | "pending_relevant", number>>;
   last_news_fetch: string | null; todo_open: number; runs: IngestRun[];
 }
 export const CATEGORY_OPTIONS: [string, string][] = [["capex", "扩产"], ["order", "订单合同"], ["qualification", "认证导入"], ["supply", "供需"], ["price", "涨价"], ["roadmap", "技术路线"]];
@@ -366,7 +366,8 @@ export const mkt = {
   inbox: (days = 7) => get<Inbox>(`/api/research/inbox?days=${days}`),
   verify: (body: { action: string; event_id?: string | null; exposure_id?: number | null }) => send<{ ok: boolean }>("POST", `/api/verifications`, body),
   suggest: (q: string) => get<LinkSuggestion[]>(`/api/links/suggest?q=${encodeURIComponent(q)}`),
-  candidates: (status: CandidateStatus | "all" = "pending", limit = 100) => get<CandidatesResponse>(`/api/candidates?status=${status}&limit=${limit}`),
+  candidates: (status: CandidateStatus | "all" = "pending", limit = 200, relevant: "1" | "0" | "all" = "1") =>
+    get<CandidatesResponse>(`/api/candidates?status=${status}&limit=${limit}&relevant=${relevant}`),
   confirmCandidate: (id: string, body: { company_id?: string | null; category?: string | null; date?: string | null; note?: string | null } = {}) =>
     send<{ ok: boolean; event_id: string }>("POST", `/api/candidates/${encodeURIComponent(id)}/confirm`, body),
   rejectCandidate: (id: string, note?: string) => send<{ ok: boolean }>("POST", `/api/candidates/${encodeURIComponent(id)}/reject`, { note: note ?? null }),

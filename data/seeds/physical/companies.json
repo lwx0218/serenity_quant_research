@@ -522,16 +522,6 @@
       "coveragePriority": "physical"
     },
     {
-      "id": "cn.837821",
-      "name": "深圳市则成电子股份有限公司",
-      "shortName": "则成电子",
-      "ticker": "837821",
-      "exchange": "BSE",
-      "countryRegion": "中国",
-      "universeLayer": "a_share_focus",
-      "coveragePriority": "physical"
-    },
-    {
       "id": "cn.920045",
       "name": "蘅东光通讯技术(深圳)股份有限公司",
       "shortName": "蘅东光",
@@ -556,6 +546,16 @@
       "name": "北京凯德石英股份有限公司",
       "shortName": "凯德石英",
       "ticker": "920179",
+      "exchange": "BSE",
+      "countryRegion": "中国",
+      "universeLayer": "a_share_focus",
+      "coveragePriority": "physical"
+    },
+    {
+      "id": "cn.920821",
+      "name": "深圳市则成电子股份有限公司",
+      "shortName": "则成电子",
+      "ticker": "920821",
       "exchange": "BSE",
       "countryRegion": "中国",
       "universeLayer": "a_share_focus",
@@ -1086,7 +1086,7 @@
       "name": "Taiwan Union Technology Corporation",
       "shortName": "台燿 TUC",
       "ticker": "6274",
-      "exchange": "TWSE",
+      "exchange": "TPEx",
       "countryRegion": "中国台湾",
       "universeLayer": "global_anchor",
       "coveragePriority": "physical"

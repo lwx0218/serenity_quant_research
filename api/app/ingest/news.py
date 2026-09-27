@@ -23,6 +23,14 @@ SOURCES = REPO_ROOT / "data" / "sources" / "news_sources.json"
 TIER_EVIDENCE = {0: "verified", 1: "consensus", 2: "candidate", 3: "candidate"}
 TRACK_PARAMS = {"utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "spm", "from", "ref", "share_token"}
 GENERIC_ACRONYMS = {"PCB", "DSP", "MCU", "EMI", "TIM", "IHS", "EEPROM", "COB", "MZM", "PAM4"}   # 半导体新闻里到处都是，不能单靠它们入池
+MAX_CONSECUTIVE_FAILS = 5   # 按公司逐家查的源：连续失败这么多家就停，别把 74 家都试一遍
+# 公告标题里的例行事项：不是卡口事件，进池但标为不相关，收件箱默认不显示
+ROUTINE_ANNOUNCEMENT = re.compile(
+    r"股东大会|减持|增持计划|质押|解除质押|冻结|独立董事|监事|审计|会计|更正|补充|提示性公告|关联交易|担保|理财|募集资金存放|"
+    r"限售股|解禁|期权|激励|换届|辞职|聘任|选举|章程|自查|问询函|监管函|警示函|简式权益|详式权益|可转债|转股|付息|评级|"
+    r"回购进展|回购股份|摘要|意见书|法律意见|核查意见|保荐|持续督导|年度报告|半年度报告|季度报告|业绩预告|业绩快报|分红|派息|"
+    r"停牌|复牌|异常波动|风险提示|投资者关系活动记录")
+STRONG_TERMS = re.compile(r"1\.6T|3\.2T|硅光|光模块|CPO|LPO|CW\s*光源|CW\s*激光|EML|DR8|OSFP|光引擎|FAU|MPO|光芯片|投产|扩产|中标|框架协议|供货协议|1\.6t|silicon photonics|transceiver", re.I)
 SOURCE_KIND = {"cninfo_announcement": "announcement", "cninfo_irm": "irm", "rss": "news", "upload": "news"}
 
 
@@ -132,13 +140,18 @@ def fetch_cninfo_announcements(src: dict, cfg: dict, companies: dict, log=print)
     """巨潮全文检索：按 A 股公司简称逐家查（GET；返回 JSON announcements[]）"""
     out, seen = [], set()
     since = (datetime.now() - timedelta(days=cfg["recent_days"])).strftime("%Y-%m-%d")
+    fails = 0
     for name, rec in a_share_names(companies).items():
         try:
             data = http.get_json(src["url"], {"searchkey": name, "sdate": since, "edate": "", "isfulltext": "false",
                                               "sortName": "pubdate", "sortType": "desc", "pageNum": 1}, timeout=cfg["timeout"],
                                  headers={"Referer": "http://www.cninfo.com.cn/"}, retries=1)
+            fails = 0
         except Exception as e:  # noqa: BLE001
             log(f"  cninfo {name}: {e}")
+            fails += 1
+            if fails >= MAX_CONSECUTIVE_FAILS:
+                log(f"  cninfo: 连续 {fails} 家失败，这个源本轮停止"); break
             continue
         for a in data.get("announcements") or []:
             aid = a.get("announcementId")
@@ -155,11 +168,16 @@ def fetch_cninfo_announcements(src: dict, cfg: dict, companies: dict, log=print)
 def fetch_cninfo_irm(src: dict, cfg: dict, companies: dict, log=print) -> list[dict]:
     """互动易搜索（POST JSON）；接口偶有变动，失败只记日志。"""
     out = []
+    fails = 0
     for name, rec in a_share_names(companies).items():
         try:
             data = http.post_json(src["url"], {"pageNo": 1, "pageSize": 20, "searchTypes": "11,1", "keyWord": name}, timeout=cfg["timeout"], retries=1)
+            fails = 0
         except Exception as e:  # noqa: BLE001
             log(f"  irm {name}: {e}")
+            fails += 1
+            if fails >= MAX_CONSECUTIVE_FAILS:
+                log(f"  irm: 连续 {fails} 家失败（多半是接口变了），这个源本轮停止"); break
             continue
         for r in (data.get("results") or data.get("data") or []):
             out.append({"title": (r.get("mainContent") or r.get("content") or "")[:120],
@@ -207,6 +225,18 @@ def parse_date(s: str) -> str | None:
     return f"{m.group(1)}-{int(m.group(2)):02d}-{int(m.group(3)):02d}" if m else None
 
 
+def relevance_of(src: dict, text: str, cat: str | None, parts_hit: list) -> int:
+    """1 = 值得看（有类别 / 命中部件 / 强关键词），0 = 例行（公告里的减持、质押、会议……），默认不进收件箱。
+    投资者关系活动记录表例外：它常常藏着送样 / 供货的口径，算相关。"""
+    if "投资者关系活动记录" in text:
+        return 1
+    if src["type"] == "cninfo_announcement" and ROUTINE_ANNOUNCEMENT.search(text) and not STRONG_TERMS.search(text):
+        return 0
+    if cat or parts_hit or STRONG_TERMS.search(text):
+        return 1
+    return 0 if src["type"] == "cninfo_announcement" else 1
+
+
 def cand_id(url: str) -> str:
     return "cand." + hashlib.sha1(norm_url(url).encode()).hexdigest()[:12]
 
@@ -216,6 +246,8 @@ def probe(spec: dict | None = None, log=print) -> list[dict]:
     spec = spec or load_spec()
     out = []
     for s in spec["sources"]:
+        if not s.get("enabled", True):
+            out.append({"name": s["name"], "ok": None, "note": f"已停用：{s.get('disabled_reason', '')}"}); continue
         if s["type"] != "rss":
             out.append({"name": s["name"], "ok": None, "note": f"{s['type']}：按公司查询，跳过探测"}); continue
         try:
@@ -233,7 +265,7 @@ def collect(conn: sqlite3.Connection, only: str | None = None, spec: dict | None
     spec = spec or load_spec()
     cfg = spec["fetch"]
     companies, parts = build_vocab(conn)
-    sources = [s for s in spec["sources"] if not only or s["type"] == only]
+    sources = [s for s in spec["sources"] if s.get("enabled", True) and (not only or s["type"] == only)]
     log(f"词表：{len(companies)} 个公司别名，{len(parts)} 个部件关键词；信息源 {len(sources)} 个")
     raw: list[tuple[dict, dict]] = []
 
@@ -276,7 +308,9 @@ def collect(conn: sqlite3.Connection, only: str | None = None, spec: dict | None
         cat = categorize(text, spec["categories"])
         if src["tier"] >= 2 and not cat:
             continue
+        relevance = relevance_of(src, text, cat, ps)
         cands.append({
+            "relevance": relevance,
             "id": cand_id(it.get("url", "")), "date": d, "title": (it.get("title") or "").strip(), "url": it.get("url", ""),
             "summary": re.sub(r"\s+", " ", it.get("summary") or "")[:240],
             "source": src["name"], "source_type": src["type"], "tier": src["tier"], "weight": src.get("weight", 0.5),
@@ -319,11 +353,12 @@ def store(conn: sqlite3.Connection, items: list[dict], source_type_override: str
         cid = (c.get("companies") or [{}])[0].get("companyId")
         conn.execute(
             """INSERT INTO candidates (id, date, title, url, summary, source, source_type, tier, evidence, category, company_id, companies,
-                                       part_ids, also_reported_by, status, fetched_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,'pending',?)""",
+                                       part_ids, also_reported_by, status, fetched_at, relevance)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,'pending',?,?)""",
             (c["id"], c.get("date"), c["title"], c["url"], c.get("summary"), c["source"], source_type_override or c["source_type"], c["tier"],
              c["evidence"], c.get("category"), cid, json.dumps(c.get("companies") or [], ensure_ascii=False),
-             json.dumps(c.get("part_ids") or [], ensure_ascii=False), json.dumps(c.get("also_reported_by") or [], ensure_ascii=False), now))
+             json.dumps(c.get("part_ids") or [], ensure_ascii=False), json.dumps(c.get("also_reported_by") or [], ensure_ascii=False), now,
+             int(c.get("relevance", 1))))
         new += 1
     conn.commit()
     return {"new": new, "merged": merged, "seen": len(items)}
@@ -332,3 +367,18 @@ def store(conn: sqlite3.Connection, items: list[dict], source_type_override: str
 def run_news(conn: sqlite3.Connection, only: str | None = None, log=print) -> dict:
     items = collect(conn, only=only, log=log)
     return store(conn, items)
+
+
+def retriage(conn: sqlite3.Connection, spec: dict | None = None) -> dict:
+    """给库里已有的候选重算 relevance（规则改了之后跑一次）。"""
+    spec = spec or load_spec()
+    companies, parts = build_vocab(conn)
+    n = {0: 0, 1: 0}
+    for r in conn.execute("SELECT id, title, summary, source_type, category, part_ids FROM candidates").fetchall():
+        text = f"{r['title']} {r['summary'] or ''}"
+        _, ps = match_entities(text, companies, parts)
+        rel = relevance_of({"type": r["source_type"]}, text, r["category"], ps or json.loads(r["part_ids"] or "[]"))
+        conn.execute("UPDATE candidates SET relevance=? WHERE id=?", (rel, r["id"]))
+        n[rel] += 1
+    conn.commit()
+    return {"relevant": n[1], "routine": n[0]}

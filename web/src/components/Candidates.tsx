@@ -44,7 +44,7 @@ export function CandidateRows({ items, onChange }: { items: Candidate[]; onChang
         const companyId = p.company_id ?? c.company?.id ?? c.companies[0]?.companyId ?? "";
         const canConfirm = Boolean(category && companyId && c.date);
         return (
-          <div key={c.id} className={`row cand-row${busy === c.id ? " is-busy" : ""}`}>
+          <div key={c.id} className={`row cand-row${busy === c.id ? " is-busy" : ""}${c.relevance === 0 ? " is-routine" : ""}`}>
             <span className="row-meta">{md(c.date) || "—"}</span>
             <span className="cand-src">
               <span className={`cand-ev ${EV_CLASS[c.evidence] ?? ""}`} title={`${c.source}${c.also_reported_by.length ? " · 另见 " + c.also_reported_by.join("、") : ""}`}>{PHYS_EVIDENCE_LABEL[c.evidence]}</span>

@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import io
 import sqlite3
+import time
 from datetime import date, datetime, timedelta, timezone
 
 from . import http
@@ -15,6 +16,8 @@ YAHOO_CHART = "https://query1.finance.yahoo.com/v8/finance/chart/{sym}"
 STOOQ_CSV = "https://stooq.com/q/d/l/"
 HISTORY_DAYS = 800          # 首次拉两年多，够算 250 日分位
 OVERLAP_DAYS = 10           # 增量时往回多拉几天，覆盖复权 / 补数
+EM_CHUNK_DAYS = 120         # 东财一次只要 4 个月，长窗口在服务器上会断连
+EM_PAUSE = 1.5              # 段间歇（秒）
 
 
 def _f(x) -> float | None:
@@ -26,12 +29,12 @@ def _f(x) -> float | None:
 
 
 # ------------------------------------------------------------------ fetchers
-def fetch_eastmoney(secid: str, since: date) -> list[dict]:
+def _em_chunk(secid: str, beg: date, end: date) -> tuple[list[dict], bool]:
     d = http.get_json(EM_KLINE, {
         "secid": secid, "fields1": "f1,f2,f3,f4,f5,f6",
         "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61",
-        "klt": 101, "fqt": 1, "beg": since.strftime("%Y%m%d"), "end": "20500101", "lmt": 10000,
-    }, headers={"Referer": "https://quote.eastmoney.com/"})
+        "klt": 101, "fqt": 1, "beg": beg.strftime("%Y%m%d"), "end": end.strftime("%Y%m%d"), "lmt": 10000,
+    }, headers={"Referer": "https://quote.eastmoney.com/"}, timeout=12, retries=1)
     data = (d or {}).get("data") or {}
     rows = []
     for line in data.get("klines") or []:
@@ -41,8 +44,24 @@ def fetch_eastmoney(secid: str, since: date) -> list[dict]:
         # 日期,开,收,高,低,成交量(手),成交额,振幅,涨跌幅,涨跌额,换手率
         rows.append({"date": p[0], "open": _f(p[1]), "close": _f(p[2]), "high": _f(p[3]), "low": _f(p[4]),
                      "volume": (_f(p[5]) or 0) * 100, "amount": _f(p[6]), "turnover_pct": _f(p[10]), "source": "eastmoney"})
-    if not rows and not data:
-        raise http.FetchError(f"eastmoney kline empty for {secid}: {str(d)[:120]}")
+    return rows, bool(data)
+
+
+def fetch_eastmoney(secid: str, since: date, chunk_days: int = EM_CHUNK_DAYS) -> list[dict]:
+    """长窗口分段拉（服务器上长窗口经常在响应前断连，短窗口能过），段间歇一下。
+    某一段失败就抛，让上层退到下一条路；已拿到的段不浪费——上层按 date 去重写库。"""
+    rows: list[dict] = []
+    beg = since
+    today = date.today()
+    while beg <= today:
+        end = min(beg + timedelta(days=chunk_days), today)
+        part, ok = _em_chunk(secid, beg, end)
+        if not ok and not rows:
+            raise http.FetchError(f"eastmoney kline empty for {secid} ({beg}~{end})")
+        rows.extend(part)
+        beg = end + timedelta(days=1)
+        if beg <= today:
+            time.sleep(EM_PAUSE)
     return rows
 
 
