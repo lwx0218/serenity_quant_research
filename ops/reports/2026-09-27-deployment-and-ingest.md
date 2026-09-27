@@ -2,7 +2,7 @@
 
 记录日期：2026-09-27；时区：Asia/Shanghai。
 
-本记录按 Owner 要求提交 Git，汇总 2026-09-25—2026-09-27 的部署和只读排查。它不是新增数据源、修改解析器或后续补数的授权。原始证据仍保存在服务器本地，未随本提交上传。
+本记录按 Owner 要求提交 Git，汇总 2026-09-25—2026-09-27 的部署、只读排查及授权重算。第 1—8 节保留截至 09-27 19:10 的历史记录；后续部署和重算见第 9 节，不将历史状态作为当前状态。它不是新增数据源、修改解析器或后续补数的授权。原始证据仍保存在服务器本地，未随本提交上传。
 
 ## 1. 代码与部署
 
@@ -169,3 +169,93 @@ Owner 随后明确授权安装，覆盖此前“不安装该包”的限制：
 | `artifacts/akshare-test-20260927/20260927T190022/results.json` | 实际 AKShare 请求及代理核验记录 |
 
 本提交只归档上述执行情况，不等同于备份运行数据库或把服务器环境打包到云端。
+
+## 9. 后续部署与重新计算（09-27 23:32 快照）
+
+### 9.1 代码与生产部署
+
+按 Owner 要求再次拉取 `physical-first`，从 `abf3df2` 快进至 `a0d7ce1`，没有本地业务源码修改。此前当晚已经部署 `da223ce`（42 项 API 测试通过）和 `abf3df2`（43 项通过）。
+
+最新版本将实物页作为正式首页，集成按部件的资金投票、部件详情和卡口事件；原层视图保留在 `/layers`。此前 `abf3df2` 的独立方向稿不等同于生产集成，本次正式前端已完成集成。
+
+部署验证：
+
+- API：`cd api && .venv/bin/python -m unittest -q`，57 项测试通过，耗时 7.022 秒；存在 Starlette/httpx 弃用提示，不影响通过。
+- Web：`cd web && npm run build`，TypeScript 检查及 Vite 生产构建通过。
+- 23:32:27 重启 `teardown-api.service`，检查为 active/running，`/api/health` 返回 HTTP 200。
+- 浏览器验证正式首页及选中部件详情，资金投票读数可见，控制台无错误或警告。
+- 仍发现 1280px 视口选中部件后页面宽度为 1440px，右栏存在横向溢出；本次没有修改布局。
+
+### 9.2 备份与授权重算
+
+使用 cron 共用锁 `artifacts/runtime/ingest.lock` 防止作业重叠。先以 SQLite 只读源连接执行 backup，保存 `pre-recompute.sqlite`，完整性检查为 `ok`；随后在 API 虚拟环境执行 Owner 指定的命令：
+
+```bash
+python -m app.ingest recompute
+```
+
+运行记录：run ID **24**，09-27 **23:32:13—23:32:15**，`ok=1`、`error=null`。
+
+```json
+{
+  "instruments": 163,
+  "points": 86476,
+  "product_members": 70,
+  "reactions": 0,
+  "valuation": 73,
+  "as_of": "2026-09-25",
+  "crowding": 163
+}
+```
+
+重算前后检查以下原始表行数一致：
+
+| 表 | 重算前 | 重算后 |
+|---|---:|---:|
+| bars | 73,035 | 73,035 |
+| companies | 165 | 165 |
+| candidates | 324 | 324 |
+| events | 0 | 0 |
+
+本次没有执行 seed 重建、抓取新行情、人工上传、候选确认或直接 SQL 写业务库。重算结果由已有真实数据生成；真实事件仍为 0，因此 `reactions=0` 不表示重算失败。新的部件篮子规则要求至少 3 家有行情公司，篮子组成随新版规则重新计算，不能将序列数量变化直接视为原始行情丢失。
+
+### 9.3 重算后的数据快照
+
+以下为 23:32 部署检查时的 `/api/ingest/status` 摘录，不代表后续 cron 执行后的实时状态：
+
+```json
+{
+  "as_of": "2026-09-25",
+  "sample": false,
+  "companies": 165,
+  "quotable": 144,
+  "with_bars": 139,
+  "last_bar_date": "2026-09-25",
+  "with_margin": 71,
+  "with_valuation": 73,
+  "events": {"real": 0, "sample": 0},
+  "candidates": {"pending": 324, "pending_relevant": 25},
+  "last_news_fetch": "2026-09-27T21:17:46",
+  "todo_open": 5
+}
+```
+
+五家行情缺口仍未补齐。远端代码已包含证券映射种子修正及抓取容错更新，但种子变动没有自动迁移到现有业务库，本次未重建数据库或迁移公司 ID。第 5 节描述的是首轮抓取行为，不是对新版数据源健康状况的重新验证。
+
+### 9.4 本地证据与提交范围
+
+原始证据目录为 `artifacts/redeploy-20260927-2331/`：
+
+| 文件 | 内容 |
+|---|---|
+| `pre-recompute.sqlite` | 重算前数据库备份，仅服务器本地 |
+| `counts-before.json` | 原始表重算前行数；运行时另核验重算后相等 |
+| `recompute.log` | CLI 完整输出 |
+| `recompute-run.json` | run 24 的状态、时间与汇总 |
+| `status.json` | 重算后接口状态快照 |
+| `tests.log` | 57 项 API 测试结果 |
+| `build.log` | TypeScript 检查与生产构建结果 |
+
+此前两次部署证据分别位于 `artifacts/redeploy-20260927-2007/` 和 `artifacts/redeploy-20260927-2051/`。
+
+按 Owner 要求，本次仅将部署和重算结果补入此文档并提交推送；数据库、派生数据、构建产物、私密环境、虚拟环境、安装元数据及原始 artifacts 不随 Git 上传。
