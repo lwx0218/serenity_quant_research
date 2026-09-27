@@ -33,6 +33,11 @@ def _subject(e: dict) -> str:
     return _short(e["company"]) if e.get("company") else (e.get("node") or {}).get("name", "")
 
 
+def _pad(name: str) -> str:
+    """嵌进中文句子的名字:边上是英文 / 数字时补一个空格(「给 CW 激光器这一段」「对 DSP 形成」)。"""
+    return (" " if name[:1].isascii() and name[:1].isalnum() else "") + name + (" " if name[-1:].isascii() and name[-1:].isalnum() else "")
+
+
 # ------------------------------------------------------------------- overview
 def overview(activity: list[dict], events: list[dict], days: int) -> dict:
     """首页第一行:资金本周在给谁投票。"""
@@ -72,6 +77,7 @@ def overview(activity: list[dict], events: list[dict], days: int) -> dict:
 # --------------------------------------------------------------------- events
 def layer_events(events: list[dict], layer_name: str) -> dict:
     """选中一层 · 最近事件:资金在给这一层的哪一段投票。"""
+    layer_name = _pad(layer_name)
     if not events:
         return {"direction": "neu", "text": f"窗口内没有触及{layer_name}的卡口事件。"}
     with_t1 = [e for e in events if e["reaction"]["t1"] is not None]
@@ -82,6 +88,10 @@ def layer_events(events: list[dict], layer_name: str) -> dict:
     cn = [e for e in pos if e.get("company") and (e["company"].get("country_region") or "").startswith("中")]
     heavy = [e for e in pos if (e.get("volume_ratio") or 0) >= 1.5]
     n = len(with_t1)
+    if n == 1:                  # 一条谈不上「方向分散」,也不成趋势
+        e = with_t1[0]
+        how = "被买入" if e in pos else "被卖出" if e in neg else "没有反应"
+        return {"direction": "neu", "text": f"只有 1 条:{_subject(e)}的{e['category_label']}{how}({pct(e['reaction']['t1'])}),一条不成趋势。"}
     if len(pos) >= max(2, n // 2 + 1):
         d = "pos"
         who = "、".join(_subject(e) for e in pos[:3])

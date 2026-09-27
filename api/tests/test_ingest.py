@@ -189,6 +189,13 @@ class PipelineTests(unittest.TestCase):
         finally:
             C.reopen(self.conn, item["id"])
 
+    def test_single_event_is_not_called_dispersed(self):
+        one = [{"company": {"short_name": "Marvell"}, "category_label": "技术路线", "reaction": {"t1": -0.031}}]
+        c = insights.layer_events(one, "DSP")
+        self.assertEqual(c["direction"], "neu")
+        self.assertNotIn("分散", c["text"])
+        self.assertIn("被卖出", c["text"])
+
     def test_relevance_triage(self):
         src = {"type": "cninfo_announcement"}
         self.assertEqual(news.relevance_of(src, "关于持股5%以上股东减持股份计划的预披露公告", None, []), 0)
