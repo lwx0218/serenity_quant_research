@@ -194,6 +194,7 @@ export function PhysicalPage({ id = DEFAULT_OBJECT, part = null }: { id?: string
                 <button type="button" className={dir === "tx" ? "on" : undefined} onClick={() => setDir("tx")}>发送 TX</button>
                 <button type="button" className={dir === "rx" ? "on" : undefined} onClick={() => setDir("rx")}>接收 RX</button>
               </div>
+              <div className="ph-legend-row"><Link to="/layers" className="row-meta">按产业链分层看 · 九个模块 →</Link></div>
             </div>
 
             <div className={`ph-stations-head ph-fade${selected ? " is-hidden" : ""}`}>

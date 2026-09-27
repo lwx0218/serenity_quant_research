@@ -34,7 +34,7 @@ export function CompaniesPage() {
   const current = chainId ? chain.find((c) => c.id === chainId) : undefined;
   const title = node ? `${node.node.name} 相关公司` : current ? (current.display_name ?? current.name) : "公司池";
   const crumbs = node
-    ? [{ label: "CPO 光模块", to: "/" }, { label: node.node.name, to: `/explore/${node.node.id}` }, { label: "公司" }]
+    ? [{ label: "产业链分层", to: "/layers" }, { label: node.node.name, to: `/explore/${node.node.id}` }, { label: "公司" }]
     : [{ label: "公司" }, ...(current ? [{ label: current.display_name ?? current.name }] : [])];
 
   const levels = items ? Array.from(new Set(items.map((c) => c.evidence_level).filter(Boolean))) : [];

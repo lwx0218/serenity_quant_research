@@ -110,7 +110,7 @@ export function JudgementPage({ subject }: { subject: string }) {
 
   const crumbs = isCompany
     ? [{ label: "公司", to: "/companies" }, { label: draft?.title ?? "…", to: back }, { label: review ? "回顾判断" : "编辑判断" }]
-    : [{ label: product?.name ?? "CPO 光模块", to: "/" }, { label: draft?.title ?? "…", to: back }, { label: review ? "回顾判断" : "编辑判断" }];
+    : [{ label: product?.name ?? "CPO 光模块", to: "/layers" }, { label: draft?.title ?? "…", to: back }, { label: review ? "回顾判断" : "编辑判断" }];
 
   return (
     <Shell crumbs={crumbs} footer={<Footer note="判断以 Markdown 保存在 data/notes/,可直接用 Obsidian 打开;带阈值的指标会每天用行情重算。" />}>

@@ -121,7 +121,7 @@ export function BasketPage({ nodeId }: { nodeId: string }) {
               <section className="rows">
                 <div className="rows-head">
                   <span className="eyebrow">其他环节 · 3M · 拥挤</span>
-                  <span className="head-right"><AsOf date={b.as_of} horizon="3M · 拥挤 20 日" /><Link to="/" className="small">回到整机 →</Link></span>
+                  <span className="head-right"><AsOf date={b.as_of} horizon="3M · 拥挤 20 日" /><Link to="/layers" className="small">回到整机 →</Link></span>
                 </div>
                 {b.others.map((o) => (
                   <button key={o.node_id} type="button" className="row oth-row" onClick={() => navigate(`/baskets/${o.node_id}`)} style={{ textAlign: "left" }}>

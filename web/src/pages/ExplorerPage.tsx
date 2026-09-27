@@ -39,7 +39,7 @@ export function ExplorerPage({ nodeId }: { nodeId?: string }) {
   // Esc returns to the whole device
   useEffect(() => {
     if (!nodeId) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") navigate("/"); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") navigate("/layers"); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [nodeId, navigate]);
@@ -63,7 +63,7 @@ export function ExplorerPage({ nodeId }: { nodeId?: string }) {
   const anchors = stackAnchors(layers, selectedModuleId);
   const pos = focused ? FOCUSED : OVERVIEW;
 
-  const crumbs: Crumb[] = focusedCrumbs(Boolean(nodeId), product?.name);
+  const crumbs: Crumb[] = focusedCrumbs(Boolean(nodeId));
   if (detail && nodeId) {
     for (const a of detail.ancestors) if (a.kind !== "product") crumbs.push({ label: a.name, to: `/explore/${a.id}` });
     crumbs.push({ label: detail.node.name });
@@ -85,16 +85,17 @@ export function ExplorerPage({ nodeId }: { nodeId?: string }) {
           if (!focused) return;
           const t = e.target as HTMLElement;
           if (t.closest("a, button, input, textarea, [data-layer], .focus, .hint")) return;
-          navigate("/");
+          navigate("/layers");
         }}
       >
         {error && <p className="quiet" style={{ paddingTop: 40 }}>加载失败:{error}</p>}
         <section className={`hero${focused ? " is-selected" : ""}`}>
           {/* title + what changed (overview only) */}
           <div className="hero-title">
-            <span className="eyebrow">{product?.eyebrow ?? ""}</span>
+            <span className="eyebrow">产业链分类 · 九个模块 · 不是正在出货的模块</span>
             <h1 className="display">{product?.name ?? ""}</h1>
             <p className="lead" style={{ maxWidth: 600 }}>{product?.summary ?? ""}</p>
+            <Link to="/" className="small">正在出货的是 1.6T OSFP DR8 硅光模块:看实物 →</Link>
             {overview && <WhatChanged o={overview} />}
           </div>
 
@@ -212,8 +213,11 @@ export function ExplorerPage({ nodeId }: { nodeId?: string }) {
   );
 }
 
-function focusedCrumbs(focused: boolean, name?: string): Crumb[] {
-  return focused ? [{ label: name ?? "CPO 光模块", to: "/" }] : [];
+/** 产业链分层是「光模块」下的次级页:面包屑从实物(首页)开始。 */
+function focusedCrumbs(focused: boolean): Crumb[] {
+  return focused
+    ? [{ label: "1.6T 光模块", to: "/" }, { label: "产业链分层", to: "/layers" }]
+    : [{ label: "1.6T 光模块", to: "/" }, { label: "产业链分层" }];
 }
 
 /* ------------------------------------------------------------- what changed */
@@ -221,9 +225,9 @@ function WhatChanged({ o }: { o: Overview }) {
   const c = o.counts;
   return (
     <div className="changed">
-      <Conclusion c={o.conclusion} lead />
+      {/* 「资金本周在给谁投票」按部件读,只在首页(实物)出现;这里只留计数 */}
       <div className="changed-meta">
-        <AsOf date={o.as_of} horizon={`过去 ${o.window_days} 天`} extra="反应 = T+1 相对同环节其他公司" />
+        <AsOf date={o.as_of} horizon={`过去 ${o.window_days} 天`} extra="反应 = T+1 相对部件篮子" />
         <Link to="/research">{c.events} 条卡口事件</Link>
         <span className="faint">·</span>
         <span>已反应 <span className="ink">{c.reacted}</span> · 未反应 <span className="ink">{c.unreacted}</span>{c.pending > 0 && <> · 待收盘 <span className="ink">{c.pending}</span></>}</span>

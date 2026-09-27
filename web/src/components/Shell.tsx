@@ -33,7 +33,8 @@ export function invalidatePending() {
 export function Shell({ crumbs = [], children, footer }: { crumbs?: Crumb[]; children: ReactNode; footer?: ReactNode }) {
   const { route } = useRouter();
   const p = route.path;
-  const area = p.startsWith("/physical") ? "physical" : p.startsWith("/companies") || p.startsWith("/baskets") ? "companies" : p.startsWith("/research") || p.startsWith("/judgement") ? "research" : "explore";
+  // 实物是首页;产业链分层(/layers、/explore)是它下面的次级页,同属「实物」
+  const area = p.startsWith("/companies") || p.startsWith("/baskets") ? "companies" : p.startsWith("/research") || p.startsWith("/judgement") ? "research" : "physical";
   const [pending, setPending] = useState(0);
   useEffect(() => {
     let live = true;
@@ -64,11 +65,8 @@ export function Shell({ crumbs = [], children, footer }: { crumbs?: Crumb[]; chi
           )}
         </div>
         <nav className="top-nav" aria-label="主导航">
-          <Link to="/physical" className={area === "physical" ? "is-active" : undefined}>
+          <Link to="/" className={area === "physical" ? "is-active" : undefined}>
             实物
-          </Link>
-          <Link to="/" className={area === "explore" ? "is-active" : undefined}>
-            光模块
           </Link>
           <Link to="/companies" className={area === "companies" ? "is-active" : undefined}>
             公司

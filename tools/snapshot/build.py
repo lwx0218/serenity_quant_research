@@ -81,11 +81,13 @@ def crawl(api: str) -> dict[str, str]:
         chains = [r[0] for r in conn.execute("SELECT id FROM chain_nodes")]
         events = [r[0] for r in conn.execute("SELECT id FROM events WHERE status!='ignored'")]
         objects = [r[0] for r in conn.execute("SELECT id FROM physical_objects")]
+        parts = [(r[0], r[1]) for r in conn.execute("SELECT object_id, id FROM physical_parts")]
     notes = [p.stem for p in (REPO / "data" / "notes").glob("*.md")]
     urls = ["/api/overview/cpo?days=7", "/api/products/cpo", "/api/chain", "/api/companies", "/api/baskets", "/api/notes",
             "/api/research/inbox?days=7", "/api/physical", "/api/links/suggest?q=", "/api/ingest/status",
             "/api/candidates?status=pending&limit=200&relevant=1", "/api/candidates?status=pending&limit=200&relevant=all"]
-    urls += [f"/api/physical/{o}" for o in objects]
+    urls += [f"/api/physical/{o}" for o in objects] + [f"/api/physical/{o}/market?days=7" for o in objects]
+    urls += [f"/api/physical/{o}/parts/{p}/market?months=3" for o, p in parts]
     urls += [f"/api/nodes/{n}" for n in nodes] + [f"/api/nodes/{n}/market?days=7" for n in nodes]
     urls += [f"/api/chain/{c}" for c in chains] + [f"/api/companies?chain={c}" for c in chains] + [f"/api/companies?node={n}" for n in nodes]
     urls += [f"/api/companies/{c}" for c in companies] + [f"/api/companies/{c}/market?months=6" for c in companies] + [f"/api/companies/{c}/physical" for c in companies]

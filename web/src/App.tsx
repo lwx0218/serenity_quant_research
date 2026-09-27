@@ -12,7 +12,8 @@ export function App() {
   const p = route.path;
 
   let m: Record<string, string> | null;
-  if (p === "/" || p === "") return <ExplorerPage />;
+  if (p === "/" || p === "") return <PhysicalPage part={route.params.get("part")} />;   // 首页:从实物出发
+  if (p === "/layers") return <ExplorerPage />;                    // 产业链分层(九个模块),光模块下的次级页
   if ((m = match("/explore/:id", p))) return <ExplorerPage nodeId={m.id} />;
   if (p === "/physical") return <PhysicalPage />;
   if ((m = match("/physical/:id", p))) return <PhysicalPage id={m.id} part={route.params.get("part")} />;
@@ -21,5 +22,5 @@ export function App() {
   if ((m = match("/baskets/:id", p))) return <BasketPage nodeId={m.id} />;
   if (p === "/research") return <ResearchPage />;
   if ((m = match("/judgement/:subject", p))) return <JudgementPage subject={m.subject} />;
-  return <ExplorerPage />;
+  return <PhysicalPage />;
 }

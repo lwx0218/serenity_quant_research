@@ -28,7 +28,9 @@ physical/
 
 ## 在 web/ 上落的三处
 
-1. **/physical · /physical/:id**（`web/src/pages/PhysicalPage.tsx`）：等距揭盖图 + 发/收站点 + 部件详情 + 该部件上的公司（按阶段分组，证据级可点开来源）。`?part=` 记住选中。
+1. **首页 `/`（与 /physical · /physical/:id 同一页）**（`web/src/pages/PhysicalPage.tsx`）：等距揭盖图 + 发/收站点 + 部件详情 + 该部件上的公司（按阶段分组，证据级可点开来源）。`?part=` 记住选中。
+   九站下面是「资金投票 · 按部件」（`GET /api/physical/{id}/market`）；选中部件右栏：说明 → 上游材料 → 资金投票 → 卡口事件 30 天（`GET /api/physical/{id}/parts/{part}/market`）。
+   部件篮子：已核验 / 行业图示、有行情的公司等权，≥ 3 家才成篮子，模块 / 客户阶段只在整模块进；反应、共振、偏离的参照都是它。九模块层视图在 `/layers`（产业链分类，次级页）。
 2. **公司页「在实物里的位置」**（`CompanyPage.tsx`）：这家公司站在哪几个部件上、什么阶段、证据级与来源，缩略图亮着它的部件。
 3. **研究收件箱「→ 部件」列**（`Research.tsx`）：事件按类别落到公司最相关的那个部件（`api/app/physical.py::part_for_event`）。
 

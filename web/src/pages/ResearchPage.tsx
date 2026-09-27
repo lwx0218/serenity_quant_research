@@ -42,7 +42,7 @@ function CompanyEvents({ company }: { company: string }) {
               <span className="eyebrow">Events · 12 个月</span>
               <h1 className="h1">{name} · 公告与新闻</h1>
               <Conclusion c={r.conclusion} lead />
-              <AsOf date={r.as_of} horizon="12 个月" extra="T+1 相对同环节其他公司" />
+              <AsOf date={r.as_of} horizon="12 个月" extra="T+1 相对部件篮子" />
             </header>
             <EventsWide items={r.items} who="source" />
             <Link to={`/companies/${company}`} className="btn">← 回到 {name}</Link>
