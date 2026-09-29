@@ -17,7 +17,7 @@ import json
 import sqlite3
 from pathlib import Path
 
-from .config import DB_PATH, SEED_DIR
+from .config import DB_PATH, REPO_ROOT, SEED_DIR
 from .db import connect, init_schema
 from .market_seed import import_market
 from .physical import import_physical
@@ -178,6 +178,35 @@ def import_seed(conn: sqlite3.Connection, seed_dir: Path = SEED_DIR, include_sam
 
 
 INGEST_TABLES = ("bars", "margin", "holders", "valuation_daily", "candidates", "ingest_runs", "ingest_todo")
+COMPANY_TABLES = ("bars", "margin", "holders", "valuation_daily", "candidates", "ingest_todo")     # 带 company_id 的
+RENAMES = REPO_ROOT / "data" / "seeds" / "physical" / "company-renames.json"
+
+
+def company_renames() -> dict[str, str]:
+    if not RENAMES.exists():
+        return {}
+    return json.loads(RENAMES.read_text(encoding="utf-8")).get("renames", {})
+
+
+def _restore_ingest(conn: sqlite3.Connection) -> dict[str, int]:
+    """把 keep 库里的接入层数据倒回新库:旧公司 id 先换成新 id;仍然对不上任何公司的行跳过并计数,不让整次重建失败。"""
+    out = {"ingest_renamed": 0, "ingest_orphans": 0}
+    for old, new in company_renames().items():
+        for t in COMPANY_TABLES:
+            cur = conn.execute(f"UPDATE OR IGNORE keep.{t} SET company_id=? WHERE company_id=?", (new, old))
+            out["ingest_renamed"] += cur.rowcount
+            conn.execute(f"DELETE FROM keep.{t} WHERE company_id=?", (old,))        # 新旧两个 id 撞主键时留新的
+        conn.execute("UPDATE keep.candidates SET companies=REPLACE(companies, ?, ?) WHERE companies LIKE ?",
+                     (f'"{old}"', f'"{new}"', f'%"{old}"%'))
+    for t in INGEST_TABLES:
+        if t in COMPANY_TABLES and t != "ingest_todo":
+            orphans = "company_id IS NOT NULL AND company_id NOT IN (SELECT id FROM companies)"
+            out["ingest_orphans"] += conn.execute(f"SELECT COUNT(*) FROM keep.{t} WHERE {orphans}").fetchone()[0]
+            conn.execute(f"INSERT OR IGNORE INTO {t} SELECT * FROM keep.{t} WHERE NOT ({orphans})")
+        else:
+            conn.execute(f"INSERT OR IGNORE INTO {t} SELECT * FROM keep.{t}")
+    conn.commit()
+    return out
 
 
 def rebuild(db_path: Path = DB_PATH, seed_dir: Path = SEED_DIR, include_sample: bool = True) -> dict[str, int]:
@@ -210,9 +239,7 @@ def rebuild(db_path: Path = DB_PATH, seed_dir: Path = SEED_DIR, include_sample: 
         counts = import_seed(conn, seed_dir, include_sample=include_sample)
         if kept:
             conn.execute("ATTACH DATABASE ? AS keep", (str(keep),))
-            for t in INGEST_TABLES:
-                conn.execute(f"INSERT OR IGNORE INTO {t} SELECT * FROM keep.{t}")
-            conn.commit()
+            counts.update(_restore_ingest(conn))
             conn.execute("DETACH DATABASE keep")
             keep.unlink()
             n_bars = conn.execute("SELECT COUNT(*) FROM bars").fetchone()[0]

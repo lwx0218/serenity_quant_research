@@ -234,5 +234,35 @@ class PipelineTests(unittest.TestCase):
         conn.close()
 
 
+class RebuildRenameTests(unittest.TestCase):
+    """服务器库是旧种子建的(则成电子还是 cn.837821):重建时接入层数据要跟着改名走,对不上的行跳过而不是让重建失败。"""
+
+    def test_rebuild_carries_renamed_company_and_skips_orphans(self):
+        db = Path(tempfile.mkdtemp()) / "old.sqlite"
+        rebuild(db, include_sample=False)
+        c = connect(db)
+        for cid, name in (("cn.837821", "则成电子"), ("cn.999999", "已从种子里删掉的公司")):
+            c.execute("INSERT INTO companies (id, name, short_name, ticker, exchange) VALUES (?,?,?,?,?)", (cid, name, name, cid[3:], "BSE"))
+        c.execute("""INSERT INTO candidates (id,date,title,url,source,source_type,tier,evidence,company_id,companies,status,fetched_at)
+                     VALUES ('cand.zc','2026-09-20','则成电子公告','https://t/zc','巨潮','cninfo_announcement',0,'verified','cn.837821',
+                             '[{"companyId": "cn.837821", "name": "则成电子"}]','pending','2026-09-27')""")
+        c.execute("INSERT INTO margin (company_id,date,rz_balance,source) VALUES ('cn.837821','2026-09-20',1,'t')")
+        c.execute("INSERT INTO margin (company_id,date,rz_balance,source) VALUES ('cn.999999','2026-09-20',1,'t')")
+        c.commit(); c.close()
+        counts = rebuild(db, include_sample=False)
+        self.assertEqual(counts["ingest_orphans"], 1)
+        self.assertGreaterEqual(counts["ingest_renamed"], 2)
+        c = connect(db)
+        try:
+            r = c.execute("SELECT company_id, companies FROM candidates WHERE id='cand.zc'").fetchone()
+            self.assertEqual(r["company_id"], "cn.920821")
+            self.assertIn('"cn.920821"', r["companies"])
+            self.assertEqual(c.execute("SELECT company_id FROM margin").fetchall()[0][0], "cn.920821")
+            self.assertEqual(c.execute("SELECT COUNT(*) FROM margin").fetchone()[0], 1)
+            self.assertFalse(db.with_name("old.ingest-keep.sqlite").exists())
+        finally:
+            c.close()
+
+
 if __name__ == "__main__":
     unittest.main()

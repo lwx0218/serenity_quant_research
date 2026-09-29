@@ -1,0 +1,6 @@
+{
+  "$comment": "公司稳定 id 的改名记录(旧 id → 新 id)。seed --rebuild 把接入层数据(行情、融资、估值、候选、待办)倒回新库时,先把旧 id 换成新 id。physical/seam.py 不写这个文件。",
+  "renames": {
+    "cn.837821": "cn.920821"
+  }
+}
