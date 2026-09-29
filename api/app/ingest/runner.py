@@ -20,6 +20,7 @@ from ..db import connect
 from . import crowding as CR
 from . import accounting, eastmoney, news, quotes, recompute
 from .schema import ensure_schema
+from .progress import log as progress_log
 from .symbols import is_a_share, quotable
 
 JOBS = ("quotes", "crowding", "valuation", "news", "triage", "backfill", "recompute", "daily", "probe")
@@ -58,8 +59,8 @@ def job_quotes(conn: sqlite3.Connection, full: bool = False, log=print) -> dict:
         if not quotable(c):
             skip += 1
             continue
+        log(f"  quotes 开始 {c['id']}")
         r = quotes.ingest_company(conn, c, full=full)
-        conn.commit()
         if r["rows"]:
             ok += 1; rows += r["rows"]
             close_todo(conn, "bars", c["id"])
@@ -69,7 +70,8 @@ def job_quotes(conn: sqlite3.Connection, full: bool = False, log=print) -> dict:
             fail += 1
             add_todo(conn, "bars", c["id"], _hint_bars(c), " | ".join(r["errors"])[:400])
             log(f"  ERR {c['id']}: {r['errors'][0][:120]}")
-    conn.commit()
+        conn.commit()  # 行情与该公司的待办一起提交，下一家公司出网前释放写锁
+        log(f"  quotes 已提交 {c['id']} rows={r['rows']} source={r['source']}")
     return {"companies_ok": ok, "companies_failed": fail, "unquotable": skip, "rows": rows}
 
 
@@ -78,7 +80,8 @@ def job_crowding_inputs(conn: sqlite3.Connection, log=print) -> dict:
     for c in companies(conn):
         if not is_a_share(c):
             continue
-        r = CR.ingest_margin_holders(conn, c)
+        log(f"  crowding 开始 {c['id']}")
+        r = CR.ingest_margin_holders(conn, c, log=log)
         if r["errors"]:
             fail += 1
             add_todo(conn, "margin", c["id"],
@@ -89,7 +92,8 @@ def job_crowding_inputs(conn: sqlite3.Connection, log=print) -> dict:
         else:
             ok += 1
             close_todo(conn, "margin", c["id"])
-    conn.commit()
+        conn.commit()
+        log(f"  crowding 已提交 {c['id']} margin={r['margin']} holders={r['holders']}")
     return {"companies_ok": ok, "companies_failed": fail}
 
 
@@ -98,28 +102,34 @@ def job_valuation(conn: sqlite3.Connection, log=print) -> dict:
     for c in companies(conn):
         if not is_a_share(c):
             continue
+        log(f"  valuation 开始 {c['id']}")
+        last = conn.execute("SELECT MAX(date) AS d FROM valuation_daily WHERE company_id=?", (c["id"],)).fetchone()["d"]
         try:
-            last = conn.execute("SELECT MAX(date) AS d FROM valuation_daily WHERE company_id=?", (c["id"],)).fetchone()["d"]
             since = (date.fromisoformat(last) - timedelta(days=10)) if last else None
             rows = eastmoney.fetch_valuation(c["ticker"], since)
-            conn.executemany("INSERT OR REPLACE INTO valuation_daily (company_id, date, pe_ttm, pb, market_cap, source) VALUES (?,?,?,?,?,?)",
-                             [(c["id"], r["date"], r["pe_ttm"], r["pb"], r["market_cap"], r["source"]) for r in rows])
-            conn.commit()
-            ok += 1
-            close_todo(conn, "valuation", c["id"])
         except Exception as e:  # noqa: BLE001
             fail += 1
             add_todo(conn, "valuation", c["id"],
                      f"到东方财富「估值分析」页或理杏仁取 {c.get('short_name')}（{c['ticker']}）近 5 年 PE(TTM) 日序列，POST /api/ingest/upload {{kind:'valuation', company_id:'{c['id']}', rows:[{{date, pe_ttm, pb, market_cap}}]}}",
                      str(e)[:400])
             log(f"  ERR {c['id']}: {str(e)[:120]}")
-    conn.commit()
+        else:
+            # 写入失败必须终止作业，由 run 回滚，不得伪装成数据源失败。
+            conn.executemany("INSERT OR REPLACE INTO valuation_daily (company_id, date, pe_ttm, pb, market_cap, source) VALUES (?,?,?,?,?,?)",
+                             [(c["id"], r["date"], r["pe_ttm"], r["pb"], r["market_cap"], r["source"]) for r in rows])
+            ok += 1
+            close_todo(conn, "valuation", c["id"])
+        conn.commit()
+        log(f"  valuation 已提交 {c['id']} ok={ok} failed={fail}")
     return {"companies_ok": ok, "companies_failed": fail}
 
 
 def job_recompute(conn: sqlite3.Connection, log=print) -> dict:
+    log("recompute 开始 series / reactions / valuation")
     out = recompute.recompute_all(conn)
+    log("recompute 开始 crowding")
     out.update(CR.rebuild_crowding(conn))
+    log("recompute 完成")
     return out
 
 
@@ -187,7 +197,7 @@ def job_daily(conn: sqlite3.Connection, full: bool = False, log=print) -> dict:
 
 # ------------------------------------------------------------------ run with log
 def run(job: str, *, db_path=None, full: bool = False, only: str | None = None, since: str | None = None,
-        until: str | None = None, log=print) -> dict:
+        until: str | None = None, log=progress_log) -> dict:
     if job not in JOBS:
         raise ValueError(f"unknown job {job!r}; one of {JOBS}")
     conn = connect(db_path or config.DB_PATH)
@@ -203,15 +213,23 @@ def run(job: str, *, db_path=None, full: bool = False, only: str | None = None, 
               "backfill": lambda: job_backfill(conn, since=since, until=until, log=log),
               "recompute": lambda: job_recompute(conn, log=log), "daily": lambda: job_daily(conn, full=full, log=log),
               "probe": lambda: job_probe(conn, log=log)}[job]
+        log(f"run {run_id} {job} 开始")
         summary = fn()
-        conn.execute("UPDATE ingest_runs SET finished_at=?, ok=1, summary=? WHERE id=?",
-                     (datetime.now().isoformat(timespec="seconds"), json.dumps(summary, ensure_ascii=False), run_id))
+        complete = summary.get("fetch", {}).get("complete", True)
+        error = None if complete else "回填不完整；已提交页保留，请查看 summary.fetch 和日志后重跑"
+        conn.execute("UPDATE ingest_runs SET finished_at=?, ok=?, summary=?, error=? WHERE id=?",
+                     (datetime.now().isoformat(timespec="seconds"), int(complete), json.dumps(summary, ensure_ascii=False), error, run_id))
         conn.commit()
-        return {"run_id": run_id, "job": job, "ok": True, "summary": summary}
-    except Exception as e:  # noqa: BLE001
+        log(f"run {run_id} {job} 完成 ok={complete}")
+        return {"run_id": run_id, "job": job, "ok": complete, "summary": summary, "error": error}
+    except BaseException as e:
+        conn.rollback()  # 只撤回尚未提交的单元，不能把半页/半家公司随失败记录提交
         err = f"{type(e).__name__}: {e}\n{traceback.format_exc()[-1500:]}"
         conn.execute("UPDATE ingest_runs SET finished_at=?, ok=0, error=? WHERE id=?", (datetime.now().isoformat(timespec="seconds"), err, run_id))
         conn.commit()
+        log(f"run {run_id} {job} 失败: {type(e).__name__}: {e}")
+        if not isinstance(e, Exception):
+            raise  # KeyboardInterrupt / SystemExit: 记录自己的 run，然后保留中断语义
         return {"run_id": run_id, "job": job, "ok": False, "error": err}
     finally:
         conn.close()

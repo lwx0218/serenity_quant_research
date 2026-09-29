@@ -19,6 +19,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from ..config import REPO_ROOT
 from . import http
+from .progress import log as progress_log
 
 SOURCES = REPO_ROOT / "data" / "sources" / "news_sources.json"
 TIER_EVIDENCE = {0: "verified", 1: "consensus", 2: "candidate", 3: "candidate"}
@@ -231,7 +232,7 @@ def fetch_cninfo_announcements(src: dict, cfg: dict, companies: dict, log=print,
     fails = 0
     for name, rec in a_share_names(companies).items():
         try:
-            items = _cninfo_pages(src, cfg, name, rec, since, edate, max_pages)
+            items = _cninfo_pages(src, cfg, name, rec, since, edate, max_pages, log=log)
             fails = 0
         except Exception as e:  # noqa: BLE001
             log(f"  cninfo {name}: {e}")
@@ -246,12 +247,15 @@ def fetch_cninfo_announcements(src: dict, cfg: dict, companies: dict, log=print,
     return out
 
 
-def _cninfo_pages(src: dict, cfg: dict, name: str, rec: dict, sdate: str, edate: str, max_pages: int) -> list[tuple]:
+def _cninfo_pages(src: dict, cfg: dict, name: str, rec: dict, sdate: str, edate: str, max_pages: int, log=progress_log) -> list[tuple]:
     """一家公司一个时间段:翻页到空(或 hasMore=false / 到 totalpages / 到 max_pages)。→ [(announcementId, 条目)]"""
     out = []
     for page in range(1, max_pages + 1):
+        started = time.monotonic()
+        log(f"  cninfo 请求 {name} {sdate}~{edate} 页 {page}")
         data = cninfo_page(src, cfg, name, sdate, edate, page)
         anns = data.get("announcements") or []
+        log(f"  cninfo 返回 {name} 页 {page} rows={len(anns)} {time.monotonic() - started:.1f}s（尚未提交）")
         for a in anns:
             it = _cninfo_item(a, rec)
             if it:
@@ -407,6 +411,7 @@ def collect(conn: sqlite3.Connection, only: str | None = None, spec: dict | None
     raw: list[tuple[dict, dict]] = []
 
     def run(src):
+        log(f"  请求源 {src['name']}")
         if src["type"] == "rss":
             return src, fetch_rss(src, cfg)
         if src["type"] == "cninfo_announcement":
@@ -528,50 +533,109 @@ def backfill_companies(conn: sqlite3.Connection) -> list[dict]:
              "ticker": r["ticker"] if re.fullmatch(r"\d{6}", r["ticker"] or "") else None} for r in rows]
 
 
-def backfill(conn: sqlite3.Connection, since: str, until: str, spec: dict | None = None, log=print,
+def backfill(conn: sqlite3.Connection, since: str, until: str, spec: dict | None = None, log=progress_log,
              pause: float | None = None) -> dict:
-    """巨潮公告回填:实物层上的 A 股公司 × 按月分段 × 翻页到空,入候选池(origin=backfill)。
-    沿用连续 5 家失败即停的熔断(一家的所有段都失败才算这家失败)。只入池,不判;判由 accounting.account 做。"""
+    """每页原子入池；中断保留已提交页。重跑从头扫描、按 URL 幂等，不是持久游标续传。
+    只在本次运行保留去重 ID，不累积公告正文。连续 5 家所有月份均失败时熔断。"""
     spec = spec or load_spec()
     cfg = spec["fetch"]
     pause = BACKFILL_PAUSE if pause is None else pause
     src = next((s for s in spec["sources"] if s["type"] == "cninfo_announcement"), None)
     if not src:
-        return {"skipped": "没有巨潮公告源"}
+        return {"skipped": "没有巨潮公告源", "complete": False}
     companies, parts = build_vocab(conn)
     targets = backfill_companies(conn)
     segs = month_segments(since, until)
     log(f"回填 {since} → {until}:{len(targets)} 家 × {len(segs)} 段")
-    raw, seen = [], set()
+    seen = set()
+    out = {"new": 0, "merged": 0, "seen": 0, "fetched": 0, "tagged": 0, "pages": 0,
+           "segments_ok": 0, "segments_failed": 0, "last_position": None, "failures": []}
     ok = failed = fails = 0
     stopped = False
-    for rec in targets:
+    for index, rec in enumerate(targets, 1):
         seg_ok = 0
         for sdate, edate in segs:
-            try:
-                items = _cninfo_pages(src, cfg, rec["name"], rec, sdate, edate, CNINFO_MAX_PAGES)
-                seg_ok += 1
-            except Exception as e:  # noqa: BLE001
-                log(f"  cninfo {rec['name']} {sdate}: {e}")
-                items = []
-            for aid, it in items:
-                if aid not in seen:
-                    seen.add(aid); raw.append(it)
+            for page in range(1, CNINFO_MAX_PAGES + 1):
+                position = {"company_id": rec["companyId"], "company": rec["name"],
+                            "since": sdate, "until": edate, "page": page}
+                out["last_position"] = position
+                label = f"cninfo {index}/{len(targets)} {rec['name']} {sdate}~{edate} 页 {page}"
+                started = time.monotonic()
+                log(f"  请求 {label}")
+                try:
+                    data = cninfo_page(src, cfg, rec["name"], sdate, edate, page)
+                    if not isinstance(data, dict) or "announcements" not in data:
+                        raise http.FetchError("missing announcements in response")
+                    anns = data["announcements"]
+                    if anns is None and data.get("totalAnnouncement") == 0:
+                        anns = []
+                    if not isinstance(anns, list) or any(
+                        not isinstance(a, dict) or not a.get("adjunctUrl") or not a.get("announcementTitle")
+                        for a in anns
+                    ):
+                        raise http.FetchError("invalid announcements in response")
+                    if not anns and (data.get("hasMore") is True or not (
+                        data.get("hasMore") is False or data.get("totalAnnouncement") == 0
+                    )):
+                        raise http.FetchError("empty page without confirmed end of results")
+                except Exception as e:  # 网络/响应错误；转换和存储异常不能在这里被吞掉
+                    out["segments_failed"] += 1
+                    out["failures"].append({**position, "error": f"{type(e).__name__}: {e}"[:300]})
+                    log(f"  ERR {label} {time.monotonic() - started:.1f}s: {e}")
+                    break
+                raw = []
+                page_ids = set()
+                for a in anns:
+                    aid = a.get("announcementId") or a.get("adjunctUrl")
+                    if aid in seen or aid in page_ids:
+                        continue
+                    it = _cninfo_item(a, rec)
+                    if it:
+                        page_ids.add(aid); raw.append(it)
+                cands = [c for c in (tag(src, it, companies, parts, spec) for it in raw) if c]
+                for c in cands:
+                    c["origin"] = "backfill"
+                kept = dedupe(cands, len(raw), log=lambda *_: None, fuzzy=False)
+                try:
+                    stored = store(conn, kept)  # 每页提交，包括空页；已判候选的状态不动
+                except BaseException:
+                    conn.rollback()
+                    raise
+                seen.update(page_ids)
+                for key in ("new", "merged", "seen"):
+                    out[key] += stored[key]
+                out["fetched"] += len(raw)
+                out["tagged"] += len(kept)
+                out["pages"] += 1
+                log(f"  已提交 {label} 返回 {len(anns)} · fetched {len(raw)} · tagged {len(kept)}"
+                    f" · new {stored['new']} · merged {stored['merged']} · 累计 new {out['new']}"
+                    f" · {time.monotonic() - started:.1f}s")
+                total = data.get("totalpages")
+                if not anns or data.get("hasMore") is False or (
+                    data.get("hasMore") is not True and isinstance(total, int) and total > 0 and page >= total
+                ):
+                    seg_ok += 1; out["segments_ok"] += 1
+                    break
+                if page == CNINFO_MAX_PAGES:
+                    out["segments_failed"] += 1
+                    out["failures"].append({**position, "error": "达到页数上限，月份未完整抓取"})
+                    log(f"  ERR {label}: 达到页数上限，月份未完整抓取")
             if pause:
                 time.sleep(pause)
         if seg_ok:
-            ok += 1; fails = 0
+            fails = 0
         else:
-            failed += 1; fails += 1
-            if fails >= MAX_CONSECUTIVE_FAILS:
-                log(f"  cninfo: 连续 {fails} 家失败，回填停止"); stopped = True; break
-    cands = [c for c in (tag(src, it, companies, parts, spec) for it in raw) if c]
-    for c in cands:
-        c["origin"] = "backfill"
-    kept = dedupe(cands, len(raw), log, fuzzy=False)
-    out = store(conn, kept)
-    out.update({"since": since, "until": until, "companies": len(targets), "segments": len(segs), "companies_ok": ok,
-                "companies_failed": failed, "stopped": stopped, "fetched": len(raw), "tagged": len(kept)})
+            fails += 1
+        if seg_ok == len(segs):
+            ok += 1
+        else:
+            failed += 1
+        if fails >= MAX_CONSECUTIVE_FAILS:
+            log(f"  cninfo: 连续 {fails} 家失败，回填停止"); stopped = True; break
+    out.update({"since": since, "until": until, "companies": len(targets), "segments": len(segs),
+                "companies_ok": ok, "companies_failed": failed, "stopped": stopped,
+                "complete": not stopped and out["segments_failed"] == 0})
+    log(f"回填结束 complete={out['complete']} fetched={out['fetched']} tagged={out['tagged']} new={out['new']}")
     return out
 
 

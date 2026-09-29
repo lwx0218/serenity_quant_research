@@ -96,6 +96,12 @@ curl -X POST http://localhost:8000/api/candidates/judge -H 'content-type: applic
 5. 读 `GET /api/ingest/todo?status=open`（kind=`candidate_triage`）判候选，`POST /api/candidates/judge` 交回
 6. `python -m app.ingest recompute`
 7. 出快照（`python3 tools/snapshot/build.py --api http://127.0.0.1:8000`）推上来，执行记录写 `ops/reports/YYYY-MM-DD-*.md`
+
+回填可靠性：每页独立提交候选（尚不代表事件入账），日志在请求前和提交后输出公司 / 月份 / 页码 / 耗时，重定向也立即刷新。
+后页失败或进程中断不会撤销已提交页；存储失败直接终止，不伪装成网络失败。`fetch.complete=false` 表示某些月份失败、熔断或达到页数上限，
+作业 `ok=false`，具体位置在 `fetch.failures` / `last_position`。`fetched` / `tagged` 是本次扫描去重后的计数，`new` 才是新增入库数；重跑可能 fetched 非零而 new 为零。
+恢复时用原区间重跑，按 URL 幂等去重并保留既有判定；**这是幂等重扫，不是持久游标断点续传**。异常中断后的候选可先执行 `triage`，再恢复抓取。
+CLI 的 Ctrl-C / SIGTERM 会收尾自己的作业记录；SIGKILL、断电仍可能留下未完成记录，不能据此认定仍在运行，也不能把其他未完成作业一律标死。
 - 建库不带 `--no-sample` 时，样例事件仍在但标着示例；真行情一进来 series / 拥挤度 / 估值就全换成真的（`sample=0`），页脚「示例」自动消失。
 
 ## 表
