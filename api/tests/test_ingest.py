@@ -259,7 +259,73 @@ class RebuildRenameTests(unittest.TestCase):
             self.assertIn('"cn.920821"', r["companies"])
             self.assertEqual(c.execute("SELECT company_id FROM margin").fetchall()[0][0], "cn.920821")
             self.assertEqual(c.execute("SELECT COUNT(*) FROM margin").fetchone()[0], 1)
-            self.assertFalse(db.with_name("old.ingest-keep.sqlite").exists())
+            self.assertEqual(list(db.parent.glob("old.ingest-keep*.sqlite")), [])
+        finally:
+            c.close()
+
+
+class RebuildLeftoverKeepTests(unittest.TestCase):
+    """服务器的真实处境:上一次重建在倒回时失败,库里没有接入数据,接入数据只在 data/<库名>.ingest-keep.sqlite 里。
+    再跑一次重建不能先把这个 keep 删掉(那样数据就没了),要把它当作来源倒回。"""
+
+    def _db_with_facts(self) -> Path:
+        db = Path(tempfile.mkdtemp()) / "sqr.sqlite"
+        rebuild(db, include_sample=False)
+        c = connect(db)
+        upload(c, "bars", "cn.300308", [{"date": f"2026-09-{d:02d}", "close": 100 + d} for d in (21, 22, 23, 24, 25)])
+        c.execute("""INSERT INTO candidates (id,date,title,url,source,source_type,tier,evidence,company_id,status,fetched_at)
+                     VALUES ('cand.a','2026-09-20','旧状态','https://t/a','巨潮','cninfo_announcement',0,'verified','cn.300308','pending','2026-09-27')""")
+        c.commit(); c.close()
+        return db
+
+    def _leave_keep_and_empty_db(self, db: Path, name: str = "sqr.ingest-keep.sqlite", drop_col: str | None = None) -> None:
+        c = connect(db)
+        keep = db.with_name(name)
+        c.execute("ATTACH DATABASE ? AS keep", (str(keep),))
+        for t in ("bars", "margin", "holders", "valuation_daily", "candidates", "ingest_runs", "ingest_todo"):
+            c.execute(f"CREATE TABLE keep.{t} AS SELECT * FROM {t}")
+            c.execute(f"DELETE FROM {t}")                       # 库里没有接入数据了
+        if drop_col:                                            # 旧版 keep:少一列
+            c.execute(f"ALTER TABLE keep.candidates DROP COLUMN {drop_col}")
+        c.commit(); c.execute("DETACH DATABASE keep"); c.close()
+
+    def test_leftover_keep_is_restored_not_deleted(self):
+        db = self._db_with_facts()
+        self._leave_keep_and_empty_db(db)
+        counts = rebuild(db, include_sample=False)
+        self.assertEqual(counts["ingest_leftover_keep_files"], 1)
+        self.assertEqual(counts["ingest_restored_bars"], 5)
+        c = connect(db)
+        try:
+            self.assertEqual(c.execute("SELECT COUNT(*) FROM candidates").fetchone()[0], 1)
+        finally:
+            c.close()
+        self.assertEqual(list(db.parent.glob("sqr.ingest-keep*.sqlite")), [])      # 都倒回之后才删
+
+    def test_newer_rows_in_db_win_over_leftover(self):
+        db = self._db_with_facts()
+        self._leave_keep_and_empty_db(db)
+        c = connect(db)                                          # 失败之后 cron 又写进来的
+        upload(c, "bars", "cn.300308", [{"date": "2026-09-28", "close": 130}])
+        c.execute("""INSERT INTO candidates (id,date,title,url,source,source_type,tier,evidence,company_id,status,fetched_at)
+                     VALUES ('cand.a','2026-09-20','新状态','https://t/a','巨潮','cninfo_announcement',0,'verified','cn.300308','rejected','2026-09-28')""")
+        c.commit(); c.close()
+        counts = rebuild(db, include_sample=False)
+        self.assertEqual(counts["ingest_keep_files"], 2)
+        self.assertEqual(counts["ingest_restored_bars"], 6)
+        c = connect(db)
+        try:
+            self.assertEqual(c.execute("SELECT status, title FROM candidates WHERE id='cand.a'").fetchone()[:], ("rejected", "新状态"))
+        finally:
+            c.close()
+
+    def test_old_keep_missing_a_column(self):
+        db = self._db_with_facts()
+        self._leave_keep_and_empty_db(db, drop_col="relevance")
+        rebuild(db, include_sample=False)
+        c = connect(db)
+        try:
+            self.assertEqual(c.execute("SELECT relevance FROM candidates WHERE id='cand.a'").fetchone()[0], 1)   # 取默认值
         finally:
             c.close()
 

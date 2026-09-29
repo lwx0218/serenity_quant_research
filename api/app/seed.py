@@ -188,60 +188,84 @@ def company_renames() -> dict[str, str]:
     return json.loads(RENAMES.read_text(encoding="utf-8")).get("renames", {})
 
 
-def _restore_ingest(conn: sqlite3.Connection) -> dict[str, int]:
-    """把 keep 库里的接入层数据倒回新库:旧公司 id 先换成新 id;仍然对不上任何公司的行跳过并计数,不让整次重建失败。"""
+def _cols(conn: sqlite3.Connection, schema: str, table: str) -> list[str]:
+    return [r[1] for r in conn.execute(f"PRAGMA {schema}.table_info({table})")]
+
+
+def _restore_ingest(conn: sqlite3.Connection, src: str) -> dict[str, int]:
+    """把附加库 src 里的接入层数据倒回新库:旧公司 id 先换成新 id;仍然对不上任何公司的行跳过并计数,
+    不让整次重建失败。按两边都有的列插入(旧版 keep 少列也倒得回来);主键已有的行不覆盖(先倒的为准)。"""
     out = {"ingest_renamed": 0, "ingest_orphans": 0}
+    tables = [t for t in INGEST_TABLES if _cols(conn, src, t)]
     for old, new in company_renames().items():
-        for t in COMPANY_TABLES:
-            cur = conn.execute(f"UPDATE OR IGNORE keep.{t} SET company_id=? WHERE company_id=?", (new, old))
+        for t in (t for t in COMPANY_TABLES if t in tables):
+            cur = conn.execute(f"UPDATE OR IGNORE {src}.{t} SET company_id=? WHERE company_id=?", (new, old))
             out["ingest_renamed"] += cur.rowcount
-            conn.execute(f"DELETE FROM keep.{t} WHERE company_id=?", (old,))        # 新旧两个 id 撞主键时留新的
-        conn.execute("UPDATE keep.candidates SET companies=REPLACE(companies, ?, ?) WHERE companies LIKE ?",
-                     (f'"{old}"', f'"{new}"', f'%"{old}"%'))
-    for t in INGEST_TABLES:
-        if t in COMPANY_TABLES and t != "ingest_todo":
-            orphans = "company_id IS NOT NULL AND company_id NOT IN (SELECT id FROM companies)"
-            out["ingest_orphans"] += conn.execute(f"SELECT COUNT(*) FROM keep.{t} WHERE {orphans}").fetchone()[0]
-            conn.execute(f"INSERT OR IGNORE INTO {t} SELECT * FROM keep.{t} WHERE NOT ({orphans})")
-        else:
-            conn.execute(f"INSERT OR IGNORE INTO {t} SELECT * FROM keep.{t}")
+            conn.execute(f"DELETE FROM {src}.{t} WHERE company_id=?", (old,))        # 新旧两个 id 撞主键时留新的
+        if "candidates" in tables and "companies" in _cols(conn, src, "candidates"):
+            conn.execute(f"UPDATE {src}.candidates SET companies=REPLACE(companies, ?, ?) WHERE companies LIKE ?",
+                         (f'"{old}"', f'"{new}"', f'%"{old}"%'))
+    for t in tables:
+        cols = ", ".join(c for c in _cols(conn, src, t) if c in set(_cols(conn, "main", t)))
+        where = ""
+        if t in COMPANY_TABLES and t != "ingest_todo":       # 这些表的 company_id 有外键
+            orphans = "company_id IS NOT NULL AND company_id NOT IN (SELECT id FROM main.companies)"
+            out["ingest_orphans"] += conn.execute(f"SELECT COUNT(*) FROM {src}.{t} WHERE {orphans}").fetchone()[0]
+            where = f" WHERE NOT ({orphans})"
+        conn.execute(f"INSERT OR IGNORE INTO main.{t} ({cols}) SELECT {cols} FROM {src}.{t}{where}")
     conn.commit()
     return out
 
 
+def keep_files(db_path: Path) -> list[Path]:
+    """已有的 keep 文件(上一次重建中途失败时,接入数据可能只在这里),新的在前。"""
+    return sorted(db_path.parent.glob(db_path.stem + ".ingest-keep*.sqlite"), key=lambda p: p.stat().st_mtime, reverse=True)
+
+
 def rebuild(db_path: Path = DB_PATH, seed_dir: Path = SEED_DIR, include_sample: bool = True) -> dict[str, int]:
     """Drop and recreate from the seeds. Ingested facts (bars, candidates, …) are
-    carried over: they are not seeds, they are what was fetched."""
+    carried over: they are not seeds, they are what was fetched.
+
+    接入数据先存进一个带时间戳的 keep 文件,新库建好再倒回;全部倒回成功才删 keep。
+    已经存在的 keep 文件是上一次失败留下的,不删,当作第二来源一起倒回(当前库的在前,同一主键以它为准)。"""
+    from datetime import datetime
+
     from .ingest.schema import ensure_schema as ensure_ingest_schema
     db_path = Path(db_path)
-    keep = db_path.with_name(db_path.stem + ".ingest-keep.sqlite")
-    kept = False
+    leftovers = keep_files(db_path)
+    snapshot = None
     if db_path.exists():
+        snapshot = db_path.with_name(f"{db_path.stem}.ingest-keep.{datetime.now():%Y%m%dT%H%M%S%f}.sqlite")
         conn = connect(db_path)
         try:
             ensure_ingest_schema(conn)
-            if keep.exists():
-                keep.unlink()
-            conn.execute("ATTACH DATABASE ? AS keep", (str(keep),))
+            conn.execute("ATTACH DATABASE ? AS keep", (str(snapshot),))
             for t in INGEST_TABLES:
                 conn.execute(f"CREATE TABLE keep.{t} AS SELECT * FROM {t}")
             conn.commit()
             conn.execute("DETACH DATABASE keep")
-            kept = True
         finally:
             conn.close()
         db_path.unlink()
+    sources = ([snapshot] if snapshot else []) + leftovers
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = connect(db_path)
     try:
         init_schema(conn)
         ensure_ingest_schema(conn)
         counts = import_seed(conn, seed_dir, include_sample=include_sample)
-        if kept:
-            conn.execute("ATTACH DATABASE ? AS keep", (str(keep),))
-            counts.update(_restore_ingest(conn))
-            conn.execute("DETACH DATABASE keep")
-            keep.unlink()
+        if sources:
+            restored = {"ingest_renamed": 0, "ingest_orphans": 0}
+            for i, src in enumerate(sources):
+                conn.execute("ATTACH DATABASE ? AS ?", (str(src), f"keep{i}"))
+                for k, v in _restore_ingest(conn, f"keep{i}").items():
+                    restored[k] += v
+                conn.execute(f"DETACH DATABASE keep{i}")
+            counts.update(restored)
+            counts["ingest_keep_files"] = len(sources)
+            counts["ingest_leftover_keep_files"] = len(leftovers)
+            for src in sources:                   # 全部倒回之后才删
+                src.unlink()
             n_bars = conn.execute("SELECT COUNT(*) FROM bars").fetchone()[0]
             counts["ingest_restored_bars"] = n_bars
             if n_bars:
