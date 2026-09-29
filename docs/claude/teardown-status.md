@@ -14,7 +14,10 @@
 - **Cowork**：评审（代码、真数据、设计层）、画布方向稿、写规格；不能 push，规格以 `docs/claude/*.md` 交给 CC。
 
 ## 当前基线
-- GitHub `physical-first`：入账 v2.1（见下）+ 预审 C 剩余 + AGENTS.md 换成 09-29 版（愿景 / 验收标准 / 刚刚好）。main 留着 tag `v1.0-teardown-reboot`，未分叉；合并到 main 要 Faye 点头。
+- GitHub `physical-first`：入账 v2.1（见下）+ 预审 C 剩余 + AGENTS.md 换成 09-29 版（愿景 / 验收标准 / 刚刚好）
+  + 合并 `pi/backfill-fixes`（de76110：回填逐页提交、CLI 的 Ctrl-C / SIGTERM 收尾自己的 run、`tests/__init__.py` 测试隔离；
+  CC 验证：`SQR_DB_PATH` 指向一个「生产」库跑全套 pytest / unittest，库文件哈希不变）。
+  PI 的 v2.1 执行记录：`ops/reports/2026-09-29-accounting-v2.1.md`（真事件 7 条；回填新增候选 8943，规则入账 1 · 例行 8940 · 交 AI 2）。main 留着 tag `v1.0-teardown-reboot`，未分叉；合并到 main 要 Faye 点头。
 - 服务器（09-29 16:45）：行情 140 / 144 家，截至 09-29；融资 72、估值 73；序列 164 条（含部件篮子）；候选 423 = 规则入账 12 · 例行 365 · 交 AI 46；事件 12（全是噪声，见下）。4 家行情缺口（北交所 920045 / 920060 / 920179 + 台燿 6274.TWO）。
 - 证据层：17 部件、211 条映射、158 家公司、244 条来源（verified 158 · consensus 38 · candidate 15）；反向扫描全集 200 家在 `physical/data/coverage-1.6t-dr8-siph.json`。
 - 已知问题：互动易 405（源停用）、9 个 RSS 停用（`news_sources.json` enabled:false）、东财长窗口断连（已分段）、run 41 中断未收尾（runner 启动时应把上一条 NULL 的 run 标 failed）。
