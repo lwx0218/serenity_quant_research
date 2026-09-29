@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ExplodedStack, stackAnchors, type StackLayer } from "../components/ExplodedStack";
 import { Backlinks, EventsNarrow, ThesisBlock } from "../components/Research";
 import { Footer, Shell, type Crumb } from "../components/Shell";
 import { AsOf, Conclusion, Fresh, Head, Sig } from "../components/Signal";
 import { api, EVIDENCE_LABEL, market, md, mkt, pad2, pct, statusLabel, type ModuleWithParts, type NodeDetail, type NodeMarket, type Overview, type Product, type Thesis } from "../lib/api";
+import { useFitZoom } from "../lib/fit";
 import { Link, useRouter } from "../lib/router";
 import "./explorer.css";
 
@@ -60,6 +61,8 @@ export function ExplorerPage({ nodeId }: { nodeId?: string }) {
   }, [nodeId, product, modules]);
 
   const focused = Boolean(nodeId);
+  const heroRef = useRef<HTMLElement>(null);
+  const zoom = useFitZoom(heroRef);                  // 同物理页:按 1280 内容宽排的固定坐标,窄视口等比缩小
   const anchors = stackAnchors(layers, selectedModuleId);
   const pos = focused ? FOCUSED : OVERVIEW;
 
@@ -89,7 +92,7 @@ export function ExplorerPage({ nodeId }: { nodeId?: string }) {
         }}
       >
         {error && <p className="quiet" style={{ paddingTop: 40 }}>加载失败:{error}</p>}
-        <section className={`hero${focused ? " is-selected" : ""}`}>
+        <section ref={heroRef} className={`hero${focused ? " is-selected" : ""}`} style={{ zoom }}>
           {/* title + what changed (overview only) */}
           <div className="hero-title">
             <span className="eyebrow">产业链分类 · 九个模块 · 不是正在出货的模块</span>

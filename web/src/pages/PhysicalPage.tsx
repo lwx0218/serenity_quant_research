@@ -5,6 +5,7 @@ import { CROWD_RULE, CrowdingReadings, EventsNarrow } from "../components/Resear
 import { LineChart } from "../components/LineChart";
 import { api, md, mkt as marketApi, type PartActivity, type PartMarket, type PhysDrawing, type PhysLink, type PhysMarket, type PhysObject, type PhysPart, type PhysStep } from "../lib/api";
 import { Evidence } from "../components/Evidence";
+import { useFitZoom } from "../lib/fit";
 import { Link, useRouter } from "../lib/router";
 import "./physical.css";
 
@@ -92,6 +93,7 @@ export function PhysicalPage({ id = DEFAULT_OBJECT, part = null }: { id?: string
     return () => { live = false; };
   }, [id, part]);
 
+  const zoom = useFitZoom(stageRef, obj);           // 视口不足 1440 时整块等比缩小,不出横向滚动;舞台等 obj 到了才挂上
   const parts = useMemo(() => Object.fromEntries((obj?.parts ?? []).map((p) => [p.id, p])), [obj]);
   const seq: PhysStep[] = useMemo(() => {
     if (!obj) return [];
@@ -159,7 +161,7 @@ export function PhysicalPage({ id = DEFAULT_OBJECT, part = null }: { id?: string
         {error && <p className="quiet" style={{ paddingTop: 40 }}>加载失败:{error}</p>}
         {!obj && !error && <p className="quiet" style={{ paddingTop: 40 }}>加载中…</p>}
         {obj && (
-          <div ref={stageRef} className={`ph-stage${selected ? " is-sel" : ""}`} style={{ height: stageH }} onClick={onStageClick} onMouseMove={onStageMove} onMouseLeave={() => setHover(null)}>
+          <div ref={stageRef} className={`ph-stage${selected ? " is-sel" : ""}`} style={{ height: stageH, zoom }} onClick={onStageClick} onMouseMove={onStageMove} onMouseLeave={() => setHover(null)}>
             <div className="ph-hero ph-fade">
               <div className="ph-hero-title">
                 <span className="eyebrow">{crumbs[0].label} · {obj.form_factor?.split("（")[0] ?? ""} · 1.6T DR8 · 硅光</span>
