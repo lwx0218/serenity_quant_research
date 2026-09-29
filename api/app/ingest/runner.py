@@ -2,7 +2,9 @@
 每次运行记 ingest_runs；抓不到的公司记 ingest_todo，交给 AI 去网页端取。
 
     python -m app.ingest daily            # 收盘后：行情 → 拥挤度输入 → 估值 → 重算
-    python -m app.ingest news             # 每几小时：候选池
+    python -m app.ingest news             # 每几小时：候选池 → 入账规则 → 超期待办作废
+    python -m app.ingest triage           # 对现有候选重跑入账规则（规则换版后第一次会把上一版规则入账的重开重判）
+    python -m app.ingest backfill --since 2025-10-01 --until 2026-09-14   # 巨潮公告历史回填 → 入账规则
     python -m app.ingest quotes --full    # 首次或修数：全量拉两年
     python -m app.ingest probe            # 每条路各试一家，看服务器出网情况
 """
@@ -20,7 +22,7 @@ from . import accounting, eastmoney, news, quotes, recompute
 from .schema import ensure_schema
 from .symbols import is_a_share, quotable
 
-JOBS = ("quotes", "crowding", "valuation", "news", "triage", "recompute", "daily", "probe")
+JOBS = ("quotes", "crowding", "valuation", "news", "triage", "backfill", "recompute", "daily", "probe")
 
 
 def companies(conn: sqlite3.Connection) -> list[dict]:
@@ -125,14 +127,34 @@ def job_news(conn: sqlite3.Connection, only: str | None = None, log=print) -> di
     out = news.run_news(conn, only=only, log=log)
     out["triage"] = news.retriage(conn)        # 规则可能改过：给整个池子重算一遍「值得看 / 例行」
     out["accounting"] = accounting.account(conn)   # 新候选按规则入账 / 不算 / 交给 AI
+    out["expired"] = accounting.expire_triage(conn)   # 交给 AI 7 天没判的待办作废，候选保持 pending
     return out
 
 
 def job_triage(conn: sqlite3.Connection, log=print) -> dict:
-    """对库里所有还没人判过的候选跑一遍入账规则（上线时对现有候选跑一次；之后 news 作业每次都跑）。"""
-    out = {"relevance": news.retriage(conn), **accounting.account(conn)}
+    """对库里所有还没人判过的候选跑一遍入账规则（上线时对现有候选跑一次；之后 news 作业每次都跑）。
+    规则换版后第一次跑时，上一版规则自动入账的先重开，按这一版重判（人判过的不动）。"""
+    rejudged = accounting.rejudge(conn)
+    out = {"rejudged": rejudged, "relevance": news.retriage(conn), **accounting.account(conn)}
     out["summary"] = accounting.summary(conn)
-    log(f"  入账 {out['auto']} · 例行 {out['routine']} · 交给 AI {out['triage']}")
+    log(f"  重判 {rejudged} · 入账 {out['auto']} · 例行 {out['routine']} · 交给 AI {out['triage']}")
+    return out
+
+
+def job_backfill(conn: sqlite3.Connection, since: str | None = None, until: str | None = None, log=print) -> dict:
+    """巨潮公告历史回填（origin=backfill）→ 入账规则。默认回填过去一年到今天。"""
+    until = until or date.today().isoformat()
+    since = since or (date.fromisoformat(until) - timedelta(days=365)).isoformat()
+    if since > until:
+        raise ValueError(f"since {since} 晚于 until {until}")
+    out = {"fetch": news.backfill(conn, since, until, log=log)}
+    out["relevance"] = news.retriage(conn)
+    out["accounting"] = accounting.account(conn)
+    out["backfill"] = {r["status"]: r["n"] for r in conn.execute(
+        "SELECT status, COUNT(*) AS n FROM candidates WHERE origin='backfill' GROUP BY status")}
+    out["summary"] = accounting.summary(conn)
+    a = out["accounting"]
+    log(f"  回填 {out['fetch'].get('new', 0)} 条新候选 · 入账 {a['auto']} · 例行 {a['routine']} · 交给 AI {a['triage']}")
     return out
 
 
@@ -164,7 +186,8 @@ def job_daily(conn: sqlite3.Connection, full: bool = False, log=print) -> dict:
 
 
 # ------------------------------------------------------------------ run with log
-def run(job: str, *, db_path=None, full: bool = False, only: str | None = None, log=print) -> dict:
+def run(job: str, *, db_path=None, full: bool = False, only: str | None = None, since: str | None = None,
+        until: str | None = None, log=print) -> dict:
     if job not in JOBS:
         raise ValueError(f"unknown job {job!r}; one of {JOBS}")
     conn = connect(db_path or config.DB_PATH)
@@ -177,6 +200,7 @@ def run(job: str, *, db_path=None, full: bool = False, only: str | None = None, 
         fn = {"quotes": lambda: job_quotes(conn, full=full, log=log), "crowding": lambda: job_crowding_inputs(conn, log=log),
               "valuation": lambda: job_valuation(conn, log=log), "news": lambda: job_news(conn, only=only, log=log),
               "triage": lambda: job_triage(conn, log=log),
+              "backfill": lambda: job_backfill(conn, since=since, until=until, log=log),
               "recompute": lambda: job_recompute(conn, log=log), "daily": lambda: job_daily(conn, full=full, log=log),
               "probe": lambda: job_probe(conn, log=log)}[job]
         summary = fn()

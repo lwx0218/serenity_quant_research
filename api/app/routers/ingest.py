@@ -35,6 +35,8 @@ def runs(conn: Conn, limit: int = Query(20, ge=1, le=200)):
 class RunIn(BaseModel):
     full: bool = False
     only: str | None = Field(None, pattern="^(rss|cninfo_announcement|cninfo_irm)$")
+    since: str | None = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$", description="backfill:起")
+    until: str | None = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$", description="backfill:止")
 
 
 @router.post("/ingest/run/{job}")
@@ -47,7 +49,7 @@ def run_job(job: str, body: RunIn | None = None):
 
     def work():
         try:
-            runner.run(job, full=body.full, only=body.only, log=lambda *_: None)
+            runner.run(job, full=body.full, only=body.only, since=body.since, until=body.until, log=lambda *_: None)
         finally:
             _lock.release()
 
@@ -65,7 +67,8 @@ def todo(conn: Conn, status: str = Query("open", pattern="^(open|done|dropped|al
     q += " ORDER BY created_at DESC"
     items = [dict(r) for r in conn.execute(q, args)]
     return {"count": len(items), "items": items,
-            "how": "逐条按 hint 去网页端取数，整理成 rows 后 POST /api/ingest/upload；bars/margin/holders/valuation 传完再 POST /api/ingest/run/recompute。"}
+            "how": "逐条按 hint 去网页端取数，整理成 rows 后 POST /api/ingest/upload；bars/margin/holders/valuation 传完再 POST /api/ingest/run/recompute。"
+                   "kind=candidate_triage 是交给你判的候选：读原文，按 hint 判定后 POST /api/candidates/judge 批量交回（一批最多 200 条）。"}
 
 
 class TodoPatch(BaseModel):
@@ -147,6 +150,20 @@ def retriage(conn: Conn):
     return do(conn)
 
 
+class JudgeIn(BaseModel):
+    by: str = Field("ai", pattern="^(ai|human)$")
+    items: list[dict[str, Any]] = Field(min_length=1, max_length=C.JUDGE_MAX)
+
+
+@router.post("/candidates/judge")
+def judge(body: JudgeIn, conn: Conn):
+    """AI 批量交回判定(交给 AI 的待办的 hint 里有格式)。每条:
+    {id, is_chokepoint:true, part_id, category, date, thesis, confidence 1–5, reason, company_id?} → 入账;
+    {id, is_chokepoint:false, reason} → 不算。每条各自成败,返回每条的结果或错误;处理完统一重算一次反应。"""
+    ensure_schema(conn)
+    return C.judge(conn, body.items, by=body.by)
+
+
 class ConfirmIn(BaseModel):
     company_id: str | None = None
     category: str | None = Field(None, pattern="^(capex|order|qualification|supply|price|roadmap|buyback|other)$")
@@ -155,6 +172,9 @@ class ConfirmIn(BaseModel):
     summary: str | None = None
     note: str | None = None
     by: str = Field("ai", pattern="^(rule|ai|human)$", description="谁判的;接口默认是服务器上的 AI")
+    part_id: str | None = None
+    thesis: str | None = None
+    confidence: int | None = Field(None, ge=1, le=5)
 
 
 @router.post("/candidates/{cand_id}/confirm")
@@ -163,7 +183,8 @@ def confirm(cand_id: str, body: ConfirmIn | None, conn: Conn):
     body = body or ConfirmIn()
     try:
         return C.confirm(conn, cand_id, company_id=body.company_id, category=body.category, event_date=body.date,
-                         title=body.title, summary=body.summary, note=body.note, by=body.by)
+                         title=body.title, summary=body.summary, note=body.note, by=body.by,
+                         part_id=body.part_id, thesis=body.thesis, confidence=body.confidence)
     except LookupError as e:
         raise HTTPException(404, str(e))
     except ValueError as e:

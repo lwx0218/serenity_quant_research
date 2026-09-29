@@ -123,12 +123,12 @@ def _load(conn: sqlite3.Connection, inst: str) -> A.Series:
 
 
 def reference_for(conn: sqlite3.Connection, ev: dict, cache: dict) -> A.Series | None:
-    """公司事件的参照:事件落到的那个部件(physical.part_for_event)的篮子,去掉自己。
+    """公司事件的参照:事件落到的那个部件(physical.part_for_event;AI 归位过的以 events.part_id 为准)的篮子,去掉自己。
     部件不成篮子(成员不足 3 家)时没有篮子参照,反应读整机;层级事件本来就读整机。"""
     cid = ev.get("company_id")
     if not cid:
         return None
-    part = PH.part_for_event(conn, cid, ev.get("category"))
+    part = PH.part_for_event(conn, cid, ev.get("category"), ev.get("part_id"))
     if not part:
         return None
     have = {k[len("company:"):] for k in cache if k.startswith("company:")}

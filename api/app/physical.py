@@ -179,14 +179,24 @@ def company_parts(conn: sqlite3.Connection, company_id: str) -> list[dict]:
     return out
 
 
-def part_for_event(conn: sqlite3.Connection, company_id: str | None, category: str | None) -> dict | None:
+def part_for_event(conn: sqlite3.Connection, company_id: str | None, category: str | None,
+                   part_id: str | None = None) -> dict | None:
     """The one part an event most likely lands on. The company's parts are ranked
     by evidence first (已核验 before 行业图示 before 候选 — a candidate-only link
     never outranks a verified one), then by how close their stage is to the event
-    category, then by signal order. None when the company is not on any object."""
-    if not company_id:
-        return None
-    parts = company_parts(conn, company_id)
+    category, then by signal order. None when the company is not on any object.
+
+    part_id: the part the event was placed on when it was judged (events.part_id /
+    candidates.part_id, AI 归位过的). It wins over the ranking when it exists."""
+    parts = company_parts(conn, company_id) if company_id else []
+    if part_id:
+        r = conn.execute("""SELECT p.id, p.name, p.sort, p.object_id, o.name AS object_name FROM physical_parts p
+                            JOIN physical_objects o ON o.id = p.object_id WHERE p.id=?""", (part_id,)).fetchone()
+        if r:
+            mine = next((p for p in parts if p["part_id"] == part_id), None)
+            return {"object_id": r["object_id"], "object_name": r["object_name"], "part_id": r["id"], "part_name": r["name"],
+                    "step": r["sort"] + 1 if r["sort"] < 100 else None, "stage": mine["stage"] if mine else None,
+                    "others": len(parts) - (1 if mine else 0)}
     if not parts:
         return None
     pref = CATEGORY_STAGES.get(category or "", STAGE_RANK)

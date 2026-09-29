@@ -16,6 +16,7 @@ python -m app.ingest probe                                # 每条路各试一�
 python -m app.ingest daily --full                         # 首次全量：两年多日线 → 融资 / 股东户数 → 估值 → 重算 series / 反应 / 拥挤度
 python -m app.ingest news                                 # 候选池（跑完自动按规则入账）
 python -m app.ingest triage                               # 对库里还没判过的候选跑一遍入账规则（上线时对现有候选跑一次）
+python -m app.ingest backfill --since 2025-10-01 --until 2026-09-14   # 巨潮公告历史回填（实物层上的 A 股公司 × 按月 × 翻页到空）
 uvicorn app.main:app --host 0.0.0.0 --port 8000           # web/dist 存在时同时提供前端
 ```
 
@@ -53,20 +54,40 @@ curl http://localhost:8000/api/ingest/status        # 行情截至、多少家�
 > 全部传完 `POST /api/ingest/run/recompute`。取不到的 `PATCH /api/ingest/todo/{id} {"status":"dropped"}` 并说明原因。
 
 `kind` 还可以是 `margin`（date, rz_balance, rq_balance, rz_to_float_pct）、`holders`（end_date, holder_num, change_pct, avg_cap）、
-`valuation`（date, pe_ttm, pb, market_cap）、`candidates`（date, title, url, summary, source, tier, category, company_id）——最后这个是让 AI 从
-讯石 / 光纤在线 / 财联社这类 RSS 打不开的站点把新闻直接喂进候选池。
+`valuation`（date, pe_ttm, pb, market_cap）、`candidates`（date, title, url, summary, source, tier, category, company_id, origin）——最后这个是让 AI 从
+讯石 / 光纤在线 / 财联社这类 RSS 打不开的站点把新闻直接喂进候选池；进池后立刻按入账规则分流。
+媒体回填（DIGITIMES / 讯石 / C114 / 光纤在线近 6 个月的光模块栏目）每行带 `"origin": "backfill"`、`"tier": 1`。
 
 ## 页面上怎么体现
 
 - 研究页头部一行「行情截至 · 有行情 x / 可取 y / 公司 z · 事件 真 / 示例 · 交给 AI 补」。
-- 「候选」是一行状态：入账（规则 / AI）· 交给 AI 判 · 例行 · 不算。规则在 `api/app/ingest/accounting.py::classify`：
-  值得看、只命中一家公司、有类别与日期，且来源是公告 / 互动易，或行业媒体且另有一家来源报道 → 入账（events，is_sample=0）；
-  例行公告 → 不算；其余 → `ingest_todo`（kind=`candidate_triage`，company_id 列放候选 id）交给 AI。
+- 「候选」是一行状态：入账（规则 / AI）· 交给 AI 判 · 例行 · 不算。规则 v2 在 `api/app/ingest/accounting.py::classify`
+  （规格 `docs/claude/teardown-accounting-v2.md` §1）：**规则只挡与归位，判定交 AI**。
+  挡：例行公告 / 募资安排 / 发行上市 / 定期报告 / 盘面汇总（`news.py::ROUTINE_ANNOUNCEMENT`，英文源另有 `ROUTINE_EN`）→ 不算；
+  归位：公司不在这只模块的任何部件上（Meta / 微软 / 需求侧）→ 不算，否则给一个部件初判（`candidates.part_id`）；
+  强命中（公告 / 互动易 + 部件词或强产品词 + 标题有类别动词 + 类别与日期）→ 入账（decided_by=rule，confidence=3，类别取动词的）；
+  其余 → `ingest_todo`（kind=`candidate_triage`，company_id 列放候选 id）交给 AI；综合媒体标题没有部件 / 产品词的、回填没有部件 / 产品词的直接不算。
+  交给 AI 7 天没判的待办作废（`news` 作业末尾），候选保持 pending。
+- 规则换版后第一次 `triage` 会把上一版规则自动入账的候选重开重判（人判过的不动），版本记在 `settings.accounting_rules`。
 - 人工只剩「不算」：研究页卡口事件行悬停出现，`POST /api/events/{id}/dismiss`，可撤回（`/restore`）。
-- `seed --rebuild` 不倒回事件表，按已入账的候选重新写出来（人判的「不算」不会回来）。
+- `seed --rebuild` 不倒回事件表，按已入账的候选重新写出来（人判的「不算」不会回来；部件 / thesis / confidence 跟着回来）。
 
-给 PI 的候选判定：读 `GET /api/ingest/todo`，kind=`candidate_triage` 的每条按 hint 打开原文判断——
-算：`POST /api/candidates/{id}/confirm {"company_id", "category", "date"}`（缺什么补什么）；不算：`POST /api/candidates/{id}/reject {"note": "原因"}`。待办随之关闭。
+给 PI 的候选判定：读 `GET /api/ingest/todo?status=open`，kind=`candidate_triage` 的每条 hint 是一个结构化任务
+（「判断这条候选是不是『公司 在 部件 上的卡口事件』…」），打开原文判断后**批量**交回（一批最多 200 条，每条各自成败）：
+
+```bash
+curl -X POST http://localhost:8000/api/candidates/judge -H 'content-type: application/json' -d '{"by": "ai", "items": [
+  {"id": "cand.xxxx", "is_chokepoint": true, "part_id": "part.cw-laser", "category": "qualification", "date": "2026-09-21",
+   "thesis": "一句话：这件事对这个部件意味着什么", "confidence": 4, "reason": "原文依据"},
+  {"id": "cand.yyyy", "is_chokepoint": false, "reason": "募集资金用途变更，与产线无关"}]}'
+```
+
+`is_chokepoint=true` 要给 `thesis` 与 `confidence`（1–5）；`category` / `date` / `part_id` 不给就用候选上的；候选命中多家公司时要给 `company_id`。
+规则判过的以 AI 为准（会重开再判）；人判过的不改。单条 `/confirm`、`/reject` 仍可用，也接收 `part_id / thesis / confidence`。
+活动记录表的正文：装了 `pypdf` 时抓取会把正文前 600 字补进摘要，没装就在 hint 里的原文链接读。
+
+**v2 上线步骤**（pull 之后）：build → 重启 → `python -m app.ingest triage`（重判现有）→ `python -m app.ingest backfill --since 2025-10-01 --until 2026-09-14`
+→ 判 `candidate_triage` 待办（`/api/candidates/judge`）→ 媒体回填（upload，`origin: backfill`）→ 再判 → `python -m app.ingest recompute` → 出快照推上来。
 - 建库不带 `--no-sample` 时，样例事件仍在但标着示例；真行情一进来 series / 拥挤度 / 估值就全换成真的（`sample=0`），页脚「示例」自动消失。
 
 ## 表

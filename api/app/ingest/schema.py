@@ -73,7 +73,11 @@ CREATE TABLE IF NOT EXISTS candidates (
   decided_note  TEXT,
   fetched_at    TEXT NOT NULL,
   relevance     INTEGER NOT NULL DEFAULT 1,   -- 1 值得看 / 0 例行公告（减持、质押、会议……），收件箱默认不显示
-  decided_by    TEXT                          -- 谁判的：rule（自动入账规则）/ ai（服务器上的 AI）/ human（只剩「不算」）
+  decided_by    TEXT,                         -- 谁判的：rule（自动入账规则）/ ai（服务器上的 AI）/ human（只剩「不算」）
+  part_id       TEXT,                         -- 归到哪个部件：规则初判，AI 判定时可改（以它为准）
+  thesis        TEXT,                         -- 一句话：这件事对这个部件意味着什么（规则入账时是标题）
+  confidence    INTEGER,                      -- 1–5：对「是卡口事件且归位正确」的把握（规则入账为 3）
+  origin        TEXT NOT NULL DEFAULT 'live'  -- live（定时抓取）/ backfill（历史回填）
 );
 CREATE INDEX IF NOT EXISTS ix_cand_status ON candidates(status, date);
 
@@ -89,7 +93,8 @@ CREATE TABLE IF NOT EXISTS ingest_runs (
 );
 
 -- 抓不到的，交给 AI（PI + web-access）去网页端取，再 POST /api/ingest/upload 交回。
--- kind=candidate_triage：规则拿不准的候选交给 AI 判，company_id 列放的是候选 id；AI 用 /api/candidates/{id}/confirm 或 reject 交回
+-- kind=candidate_triage：规则拿不准的候选交给 AI 判，company_id 列放的是候选 id；AI 用 POST /api/candidates/judge 批量交回。
+--   7 天没判的自动 dropped（候选保持 pending）
 CREATE TABLE IF NOT EXISTS ingest_todo (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   kind        TEXT NOT NULL,                  -- bars | margin | holders | valuation | candidates | candidate_triage
@@ -105,13 +110,22 @@ CREATE TABLE IF NOT EXISTS ingest_todo (
 
 
 MIGRATIONS = [("candidates", "relevance", "INTEGER NOT NULL DEFAULT 1"),
-              ("candidates", "decided_by", "TEXT")]            # rule(自动入账规则)/ ai / human
+              ("candidates", "decided_by", "TEXT"),             # rule(自动入账规则)/ ai / human
+              ("candidates", "part_id", "TEXT"),
+              ("candidates", "thesis", "TEXT"),
+              ("candidates", "confidence", "INTEGER"),
+              ("candidates", "origin", "TEXT NOT NULL DEFAULT 'live'"),
+              # events 是 main 的表(db.py):入账时把判定一起带过去,part_id 是 AI 归位过的部件(以它为准)
+              ("events", "thesis", "TEXT"),
+              ("events", "confidence", "INTEGER"),
+              ("events", "decided_by", "TEXT"),
+              ("events", "part_id", "TEXT")]
 
 
 def ensure_schema(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
     for table, col, decl in MIGRATIONS:                     # 已有库上补列
         cols = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
-        if col not in cols:
+        if cols and col not in cols:                        # 表还没建(空库)就不补,建表时再来
             conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {decl}")
     conn.commit()
