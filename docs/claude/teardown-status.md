@@ -14,7 +14,7 @@
 - **Cowork**：评审（代码、真数据、设计层）、画布方向稿、写规格；不能 push，规格以 `docs/claude/*.md` 交给 CC。
 
 ## 当前基线
-- GitHub `physical-first` @ d2c39cc（首页结论反例只取 lead 部件事件）。main 留着 tag `v1.0-teardown-reboot`，未分叉；合并到 main 要 Faye 点头。
+- GitHub `physical-first` @ 1664645（入账 v2 + 预审 C 剩余；前一基线 d2c39cc 首页结论反例只取 lead 部件事件）。main 留着 tag `v1.0-teardown-reboot`，未分叉；合并到 main 要 Faye 点头。
 - 服务器（09-29 16:45）：行情 140 / 144 家，截至 09-29；融资 72、估值 73；序列 164 条（含部件篮子）；候选 423 = 规则入账 12 · 例行 365 · 交 AI 46；事件 12（全是噪声，见下）。4 家行情缺口（北交所 920045 / 920060 / 920179 + 台燿 6274.TWO）。
 - 证据层：17 部件、211 条映射、158 家公司、244 条来源（verified 158 · consensus 38 · candidate 15）；反向扫描全集 200 家在 `physical/data/coverage-1.6t-dr8-siph.json`。
 - 已知问题：互动易 405（源停用）、9 个 RSS 停用（`news_sources.json` enabled:false）、东财长窗口断连（已分段）、run 41 中断未收尾（runner 启动时应把上一条 NULL 的 run 标 failed）。
@@ -29,7 +29,10 @@
 - 候选自动入账框架（6cb4f58）：`accounting.py::classify`、`candidate_triage` 待办、「不算」override、收件箱状态行、`python -m app.ingest triage`。
 
 ## 待做（顺序）
-1. **CC**：`teardown-accounting-v2.md` §1–§3（规则 v2、`/api/candidates/judge`、历史回填）→ 预审 C 剩余。
+1. ~~**CC**：`teardown-accounting-v2.md` §1–§3（规则 v2、`/api/candidates/judge`、历史回填）→ 预审 C 剩余。~~ 已做（959fe9c、1664645）。
+   与规格的出入：NVIDIA 回购那条标题有 buyback，被 §1.1 英文例行词先挡成例行（另一条 NVIDIA 进 triage）；回填对象按「站在任何部件上」算是 72 家 A 股（规格估 42）；
+   自动入账的类别取标题动词的类别（「投资建设…产线」→ 扩产）；回填里没取到正文的活动记录表照旧交 AI；活动记录表正文要服务器装 `pypdf`（可选，没装就交 AI 读原文）；
+   综合媒体标题门槛会把「亨通光电定增66.36亿，抢滩算力底座」挡成例行（CPO 只在摘要里）。
 2. **PI**：pull → build → 重启 → `triage`（重判现有）→ `backfill` → 判 triage 待办（`/judge`）→ `recompute` → 出快照推上来。
 3. **CC**：回填出 50 条以上真事件后做 `teardown-accounting-v2.md` §4（效力到部件级 + 部件篮子页）→ 预审 D → 预审 A。
 4. **Cowork**：拿到新快照后再做一次真数据评审，回答「够不够直接」。
