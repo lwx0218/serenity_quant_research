@@ -65,11 +65,13 @@ def overview(activity: list[dict], events: list[dict], days: int, unit: str = "�
     if followers:
         f = max(followers, key=lambda a: abs(a["basket_excess"]))
         parts.append(f"{f['name']}跟随 {pct(f['basket_excess'])}")
-    sold = [e for e in events if e["reaction"]["t1"] is not None and e["reaction"]["t1"] <= -A.REACTION_THRESHOLD]
-    unre = [e for e in events if e["freshness"]["state"] in ("unreacted", "expired")]
-    if sold:
-        u = min(sold, key=lambda e: e["reaction"]["t1"])
-        parts.append(f"{_subject(u)}的{u['category_label']}{'传闻' if u['source_kind'] == 'news' else ''}被卖出 {pct(u['reaction']['t1'])}")
+    # 反例只从 lead 那一段自己的事件里取,且要跟结论方向相反:投票时取被卖出的,离开时取被买入的;都没有才说没反应的
+    sign = 1 if direction == "pos" else -1
+    against = [e for e in lead_events if e["reaction"]["t1"] is not None and e["reaction"]["t1"] * sign <= -A.REACTION_THRESHOLD]
+    unre = [e for e in lead_events if e["freshness"]["state"] in ("unreacted", "expired")]
+    if against:
+        u = max(against, key=lambda e: abs(e["reaction"]["t1"]))
+        parts.append(f"{_subject(u)}的{u['category_label']}{'传闻' if u['source_kind'] == 'news' else ''}{'被卖出' if sign > 0 else '被买入'} {pct(u['reaction']['t1'])}")
     elif unre:
         u = unre[0]
         parts.append(f"{_subject(u)}的{u['category_label']}{'传闻' if u['source_kind'] == 'news' else ''}没有反应({pct(u['reaction']['t1'])})")

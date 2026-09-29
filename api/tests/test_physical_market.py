@@ -160,6 +160,30 @@ class EmptyDatabaseTests(unittest.TestCase):
             conn.close()
 
 
+class OverviewCounterExampleTests(unittest.TestCase):
+    """首页结论的反例只取 lead 部件自己的事件,并且方向要与结论相反(真数据评审 C)。"""
+
+    @staticmethod
+    def ev(company: str, part: str, t1: float | None, state: str = "window") -> dict:
+        return {"company": {"short_name": company}, "category_label": "扩产", "source_kind": "announcement", "date": "2026-09-25",
+                "reaction": {"t1": t1}, "freshness": {"state": state}, "part_ids": [part]}
+
+    def test_counter_example_comes_from_the_lead_part_only(self):
+        act = [{"id": "p.cage", "name": "主机侧笼子", "events": 2, "basket_excess": -0.019},
+               {"id": "p.pcb", "name": "主 PCB", "events": 1, "basket_excess": 0.003}]
+        evs = [self.ev("NVIDIA", "p.cage", 0.052), self.ev("NVIDIA", "p.cage", 0.002, "unreacted"), self.ev("方正科技", "p.pcb", -0.051)]
+        t = insights.overview(act, evs, 7, unit="部件", scope="part_ids")["text"]
+        self.assertTrue(t.startswith("资金本周在离开 主机侧笼子"), t)
+        self.assertNotIn("方正科技", t)                         # 别的部件上的事件不当反例
+        self.assertIn("NVIDIA的扩产被买入 +5.2%", t)            # 离开时,反例是被买入的
+
+    def test_pos_lead_uses_a_sold_event_in_the_same_part(self):
+        act = [{"id": "p.cw", "name": "CW 激光器", "events": 2, "basket_excess": 0.046}]
+        evs = [self.ev("源杰科技", "p.cw", 0.055), self.ev("仕佳光子", "p.cw", -0.021)]
+        t = insights.overview(act, evs, 7, unit="部件", scope="part_ids")["text"]
+        self.assertIn("仕佳光子的扩产被卖出 −2.1%", t)
+
+
 class UnitWordingTests(unittest.TestCase):
     def test_layer_events_unit(self):
         self.assertEqual(insights.layer_events([], "DSP")["text"], "窗口内没有落在 DSP 上的卡口事件。")
