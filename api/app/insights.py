@@ -43,11 +43,12 @@ def _pad(name: str) -> str:
 def overview(activity: list[dict], events: list[dict], days: int, unit: str = "环节", scope: str = "layer_ids") -> dict:
     """资金本周在给谁投票。activity 是层或部件的读数;scope 是事件上记它属于哪些 activity 的字段
     (层:layer_ids;部件:part_ids),unit 是句子里的单位(环节 / 部件)。"""
-    active = [a for a in activity if a["events"] > 0 and a["basket_excess"] is not None]
+    # 方向由阈值决定(与同页呼吸点、表格行同一个 ±0.5%):篮子没过阈值的不进结论,+0.2% 不会写成「投票」,0.0% 不会写成「离开」
+    active = [a for a in activity if a["events"] > 0 and a["basket_excess"] is not None and a.get("direction") in ("pos", "neg")]
     if not events:
         return {"direction": "neu", "text": f"过去 {days} 天没有新的卡口事件;篮子读数按日更新。"}
     if not active:
-        return {"direction": "neu", "text": f"过去 {days} 天有 {len(events)} 条卡口事件,但没有一层的篮子给出方向。"}
+        return {"direction": "neu", "text": f"过去 {days} 天有 {len(events)} 条卡口事件,但没有一个{unit}的篮子给出方向。"}
     def score(a: dict) -> tuple:
         evs = [e for e in events if a["id"] in e[scope]]
         reacted = [e for e in evs if e["freshness"]["state"] in ("window", "priced")]
@@ -57,7 +58,7 @@ def overview(activity: list[dict], events: list[dict], days: int, unit: str = "�
     reacted = [e for e in lead_events if e["freshness"]["state"] in ("window", "priced")]
     same = [e for e in reacted if (e["reaction"]["t1"] or 0) * lead["basket_excess"] > 0]
     trigger = max(lead_events, key=lambda e: abs(e["reaction"]["t1"] or 0)) if lead_events else None
-    direction = "pos" if lead["basket_excess"] > 0 else "neg"
+    direction = lead["direction"]
     parts = [f"资金本周在给 {lead['name']} 投票" if direction == "pos" else f"资金本周在离开 {lead['name']}"]
     if trigger:
         parts[0] += f":{trigger['date'][5:]} {trigger['category_label']}后{unit}内 {len(same)}/{len(lead_events)} 同向,篮子 {days} 天相对整机 {pct(lead['basket_excess'])}"
@@ -124,8 +125,14 @@ def company_events(events: list[dict]) -> dict:
     n = len(events)
     if voted:
         v = voted[0]
-        d = "pos" if (v["reaction"]["t1"] or 0) > 0 else "neg"
-        text = f"{n} 条里只有 {v['date'][5:]} 那条被资金真正投票(有量、{'有共振' if abs(v['reaction']['t1'] or 0) >= 0.02 else '有反应'})"
+        how = "有共振" if abs(v["reaction"]["t1"] or 0) >= 0.02 else "有反应"
+        if len(voted) == 1:
+            d = "pos" if (v["reaction"]["t1"] or 0) > 0 else "neg"
+            text = f"{n} 条里只有 {v['date'][5:]} 那条被资金真正投票(有量、{how})"
+        else:                   # 不止一条:不写「只有」;方向看这几条是否同向
+            up = sum(1 for e in voted if (e["reaction"]["t1"] or 0) > 0)
+            d = "pos" if up == len(voted) else "neg" if up == 0 else "neu"
+            text = f"{n} 条里 {len(voted)} 条被资金真正投票(有量),最近是 {v['date'][5:]} 那条({how})"
         if dead:
             text += f";{dead[0]['source_label']}那条过期未反应,信息已被消化"
         return {"direction": d, "text": text + "。"}
@@ -221,14 +228,15 @@ def basket(detail: dict, unit: str = "环节") -> dict:
     months = detail.get("window_months", 6)
     trend = "pos" if (exc or 0) >= 0.02 else "neg" if (exc or 0) <= -0.02 else "neu"
     crowded = cr and cr["direction"] == "neg"
-    v = eff["validity_days"] if eff else A.DEFAULT_VALIDITY_DAYS
+    # 时效只在有事件效力统计时写;没有统计(或样本不足)时不拿默认天数冒充读数
+    v = eff["validity_days"] if eff and not eff.get("insufficient") and eff.get("validity_days") else None
     if trend == "pos" and crowded:
         d = "neu"
-        text = (f"{who}相对整机 {months} 个月 {pct(exc)},趋势偏多;但当前拥挤({sigma(cr['metrics'].get('deviation_sigma'))})且事件效力只有约 {v} 天。"
-                f"结论:不追,等回到 +1σ 以内或出现二次确认再加。")
+        text = (f"{who}相对整机 {months} 个月 {pct(exc)},趋势偏多;但当前拥挤({sigma(cr['metrics'].get('deviation_sigma'))})"
+                f"{f'且事件效力只有约 {v} 天' if v else ''}。结论:不追,等回到 +1σ 以内或出现二次确认再加。")
     elif trend == "pos":
         d = "pos"
-        text = f"{who}相对整机 {months} 个月 {pct(exc)},趋势偏多且不拥挤;按事件加,时效约 {v} 天。"
+        text = f"{who}相对整机 {months} 个月 {pct(exc)},趋势偏多且不拥挤;按事件加{f',时效约 {v} 天' if v else ''}。"
     elif trend == "neg" and cr and cr["direction"] == "pos":
         d = "pos"
         text = f"{who}相对整机 {months} 个月 {pct(exc)},但拥挤度已出清;下一条被资金确认的事件值得跟。"

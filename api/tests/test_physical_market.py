@@ -169,8 +169,8 @@ class OverviewCounterExampleTests(unittest.TestCase):
                 "reaction": {"t1": t1}, "freshness": {"state": state}, "part_ids": [part]}
 
     def test_counter_example_comes_from_the_lead_part_only(self):
-        act = [{"id": "p.cage", "name": "主机侧笼子", "events": 2, "basket_excess": -0.019},
-               {"id": "p.pcb", "name": "主 PCB", "events": 1, "basket_excess": 0.003}]
+        act = [{"id": "p.cage", "name": "主机侧笼子", "events": 2, "basket_excess": -0.019, "direction": "neg"},
+               {"id": "p.pcb", "name": "主 PCB", "events": 1, "basket_excess": 0.003, "direction": "neu"}]
         evs = [self.ev("NVIDIA", "p.cage", 0.052), self.ev("NVIDIA", "p.cage", 0.002, "unreacted"), self.ev("方正科技", "p.pcb", -0.051)]
         t = insights.overview(act, evs, 7, unit="部件", scope="part_ids")["text"]
         self.assertTrue(t.startswith("资金本周在离开 主机侧笼子"), t)
@@ -178,10 +178,56 @@ class OverviewCounterExampleTests(unittest.TestCase):
         self.assertIn("NVIDIA的扩产被买入 +5.2%", t)            # 离开时,反例是被买入的
 
     def test_pos_lead_uses_a_sold_event_in_the_same_part(self):
-        act = [{"id": "p.cw", "name": "CW 激光器", "events": 2, "basket_excess": 0.046}]
+        act = [{"id": "p.cw", "name": "CW 激光器", "events": 2, "basket_excess": 0.046, "direction": "pos"}]
         evs = [self.ev("源杰科技", "p.cw", 0.055), self.ev("仕佳光子", "p.cw", -0.021)]
         t = insights.overview(act, evs, 7, unit="部件", scope="part_ids")["text"]
         self.assertIn("仕佳光子的扩产被卖出 −2.1%", t)
+
+
+class ConclusionThresholdTests(unittest.TestCase):
+    """结论行的方向由阈值决定,措辞不拿默认值冒充读数(设计预审 C)。"""
+
+    ev = staticmethod(OverviewCounterExampleTests.ev)
+
+    def test_overview_below_threshold_is_neutral(self):
+        # +0.2% 在 ±0.5% 以内:同页表格行是 ●,结论不能是 ▲;0.0% 也不能写成「离开」
+        for exc in (0.002, 0.0, -0.004):
+            act = [{"id": "p.cw", "name": "CW 激光器", "events": 1, "basket_excess": exc, "direction": "neu"}]
+            c = insights.overview(act, [self.ev("源杰科技", "p.cw", 0.01)], 7, unit="部件", scope="part_ids")
+            self.assertEqual(c, {"direction": "neu", "text": "过去 7 天有 1 条卡口事件,但没有一个部件的篮子给出方向。"})
+        c = insights.overview([{"id": "m.dsp", "name": "DSP", "events": 1, "basket_excess": 0.001, "direction": "neu"}],
+                              [dict(self.ev("甲", "m.dsp", 0.01), layer_ids=["m.dsp"])], 7)
+        self.assertEqual(c["text"], "过去 7 天有 1 条卡口事件,但没有一个环节的篮子给出方向。")
+
+    def test_overview_direction_follows_the_row(self):
+        act = [{"id": "p.cw", "name": "CW 激光器", "events": 1, "basket_excess": 0.006, "direction": "pos"},
+               {"id": "p.pcb", "name": "主 PCB", "events": 1, "basket_excess": 0.03, "direction": "neu"}]    # 行说 ● 的不进结论
+        c = insights.overview(act, [self.ev("源杰科技", "p.cw", 0.01), self.ev("方正科技", "p.pcb", 0.03)], 7, unit="部件", scope="part_ids")
+        self.assertEqual(c["direction"], "pos")
+        self.assertTrue(c["text"].startswith("资金本周在给 CW 激光器 投票"), c["text"])
+
+    def test_basket_without_efficacy_has_no_validity_clause(self):
+        crowded = {"direction": "neg", "metrics": {"deviation_sigma": 2.3}}
+        for eff in (None, {"n": 3, "insufficient": True}):
+            for cr in (None, crowded):
+                t = insights.basket({"excess_window": 0.05, "crowding": cr, "efficacy": eff, "window_months": 3}, unit="部件")["text"]
+                self.assertNotIn("时效", t)
+                self.assertNotIn("效力", t)
+        t = insights.basket({"excess_window": 0.05, "crowding": None, "efficacy": {"validity_days": 8}, "window_months": 3}, unit="部件")["text"]
+        self.assertIn("按事件加,时效约 8 天。", t)
+        t = insights.basket({"excess_window": 0.05, "crowding": crowded, "efficacy": {"validity_days": 8}, "window_months": 3}, unit="部件")["text"]
+        self.assertIn("且事件效力只有约 8 天。", t)
+
+    def test_company_events_several_voted_is_not_only(self):
+        def e(d, t1):
+            return {"date": d, "reaction": {"t1": t1}, "volume_ratio": 2.0, "freshness": {"state": "window"}, "source_label": "公告"}
+        one = insights.company_events([e("2026-09-25", 0.03), dict(e("2026-09-20", 0.01), volume_ratio=1.0)])
+        self.assertEqual(one["direction"], "pos")
+        self.assertIn("2 条里只有 09-25 那条被资金真正投票", one["text"])
+        two = insights.company_events([e("2026-09-25", 0.03), e("2026-09-20", 0.01)])
+        self.assertNotIn("只有", two["text"])
+        self.assertEqual(two, {"direction": "pos", "text": "2 条里 2 条被资金真正投票(有量),最近是 09-25 那条(有共振)。"})
+        self.assertEqual(insights.company_events([e("2026-09-25", 0.03), e("2026-09-20", -0.01)])["direction"], "neu")
 
 
 class UnitWordingTests(unittest.TestCase):
