@@ -73,6 +73,11 @@ MORE = {
     "mpo-short": (cand("mpo-short", "MPO 连接器交期拉长", DIGITIMES, company=None, companies=[], category="supply"), "triage"),
     "ir-record": (cand("ir-record", "中际旭创：投资者关系活动记录表", category=None), "triage"),
     "rel0": (cand("rel0", "关于股份质押的公告", category=None, relevance=0), "routine"),
+    # v2.1 软组:募投 / 增资 / 调研在标题同时有产品词与类别动词时不挡
+    "mujin-line": (cand("mujin-line", "关于使用募集资金投资建设 1.6T 硅光模块产线的公告", category="roadmap"), "auto"),
+    "mujin-noverb": (cand("mujin-noverb", "关于使用募集资金向子公司增资用于硅光项目的公告"), "routine"),      # 有产品词没动词:照旧挡
+    "diaoyan": (cand("diaoyan", "机构调研：中际旭创 1.6T 光模块小批量出货", EASTMONEY, category="qualification"), "triage"),
+    "diaoyan-plain": (cand("diaoyan-plain", "9月机构调研中际旭创", EASTMONEY, category="qualification"), "routine"),
 }
 POOL = {**REAL, **MORE}
 
@@ -121,6 +126,23 @@ class AccountingV2Tests(unittest.TestCase):
         self.assertEqual(self._classify("mpo-short")[2], "part.mpo")                   # 没命中公司,部件词给初判
         self.assertIn("投资者关系活动记录", self._classify("ir-record")[1])
 
+    def test_soft_routine_words(self):
+        way, why, part = self._classify("mujin-line")
+        self.assertEqual(way, "auto")
+        self.assertEqual(self._classify("mujin-noverb")[1], "例行(「使用募集资金」),不算")
+        self.assertEqual(self._classify("diaoyan-plain")[1], "例行(「调研」),不算")
+        self.assertEqual(self._classify("sy-zengzi")[0], "routine")                  # 09-29 那条募资增资:没有产品词,照旧挡
+        ACC.account(self.conn)
+        r = self._row("mujin-line")
+        self.assertEqual((r["status"], r["decided_by"], r["category"]), ("confirmed", "rule", "capex"))
+
+    def test_categorize_english_whole_words(self):
+        cats = news.load_spec()["categories"]
+        self.assertIsNone(news.categorize("Cross-border fabric makers meet in Taipei", cats))   # 不再撞 order / fab
+        self.assertEqual(news.categorize("TSMC wins new orders", cats), "order")
+        self.assertEqual(news.categorize("Two new fabs to ramp in 2027", cats), "capex")
+        self.assertEqual(news.categorize("台积电宣布新fab", cats), "capex")                      # 紧挨中文也算整词
+
     def test_part_initial_prefers_hit_part(self):
         c = cand("hit", "中际旭创：硅光 PIC 通过客户认证", category="qualification")
         c = {**c, "companies": json.dumps(c["companies"]), "part_ids": "[]", "also_reported_by": "[]", "company_id": "cn.300308"}
@@ -168,8 +190,24 @@ class AccountingV2Tests(unittest.TestCase):
         self.assertEqual(out["rejudged"], 1)
         self.assertEqual((self._row("sy-zengzi")["status"], self._row("sy-zengzi")["decided_by"]), ("rejected", "rule"))
         self.assertEqual((self._row("fz-jiekuan")["status"], self._row("fz-jiekuan")["decided_by"]), ("rejected", "human"))
-        self.assertEqual(self.conn.execute("SELECT COUNT(*) FROM events WHERE is_sample=0 AND status!='ignored'").fetchone()[0], 1)   # 只剩 siph-line
+        n_auto = sum(1 for _, w in POOL.values() if w == "auto")
+        self.assertEqual(self.conn.execute("SELECT COUNT(*) FROM events WHERE is_sample=0 AND status!='ignored'").fetchone()[0], n_auto)   # 只剩强命中的
         self.assertEqual(runner.job_triage(self.conn, log=lambda *_: None)["rejudged"], 0)
+
+    def test_version_bump_rejudges_rule_routine_too(self):
+        ACC.account(self.conn)
+        mujin = POOL["mujin-line"][0]["id"]
+        C.reopen(self.conn, mujin)
+        C.reject(self.conn, mujin, note="例行(「使用募集资金」),不算", by="rule")       # v2 当时把它挡成了例行
+        self.conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('accounting_rules', 'v2')")
+        n_rule = self.conn.execute("SELECT COUNT(*) FROM candidates WHERE decided_by='rule'").fetchone()[0]
+        out = runner.job_triage(self.conn, log=lambda *_: None)
+        self.assertEqual(out["rejudged"], n_rule)                                   # 入账的和例行的都重开
+        r = self._row("mujin-line")
+        self.assertEqual((r["status"], r["decided_by"], r["category"]), ("confirmed", "rule", "capex"))
+        self.assertEqual(self._row("sy-zengzi")["status"], "rejected")                 # 其余照旧
+        self.assertEqual(self.conn.execute("SELECT value FROM settings WHERE key='accounting_rules'").fetchone()[0], ACC.RULES_VERSION)
+        self.assertEqual(ACC.RULES_VERSION, "v2.1")
 
     # ---------------------------------------------------------------- §2 AI 交回
     def test_judge_batch_true_false_error(self):
@@ -239,7 +277,7 @@ class AccountingV2Tests(unittest.TestCase):
         self.conn.close()
         counts = rebuild(self.db, include_sample=False)
         self.conn = connect(self.db)
-        self.assertEqual(counts["events_replayed"], 2)
+        self.assertEqual(counts["events_replayed"], 1 + sum(1 for _, w in POOL.values() if w == "auto"))
         after = {r["id"]: (r["thesis"], r["confidence"], r["decided_by"], r["part_id"])
                  for r in self.conn.execute("SELECT * FROM events WHERE is_sample=0")}
         self.assertEqual(after, before)

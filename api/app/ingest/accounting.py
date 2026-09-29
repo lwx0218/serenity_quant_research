@@ -2,7 +2,8 @@
 
 规格:docs/claude/teardown-accounting-v2.md §1。每条还没人判过的候选按下面的顺序走,前一步命中即返回:
 
-  1.1 挡     relevance=0,或标题命中例行正则(募资安排 / 发行上市 / 定期报告 / 盘面汇总;英文源另有一组)→ 例行,不算。
+  1.1 挡     relevance=0,或标题命中例行正则 → 例行,不算。硬组(发行上市 / 定期报告 / 盘面汇总 / 募资置换 …;英文源另有一组)
+             命中就挡;软组(使用募集资金 / 增资 / 借款 / 投资进展 / 土地使用权 / 出让合同 / 调研)在标题同时有产品词与类别动词时不挡。
              投资者关系活动记录表不挡(标题没信息,交给 AI 读正文)。
   1.2 归位   命中的公司都不站在这只模块的任何部件上(Meta / 微软 / 需求侧)→ 例行。
              只命中一家时给一个部件初判:标题 / 摘要命中的部件词里有它站着的部件就取它,否则取 physical.part_for_event。
@@ -14,7 +15,8 @@
              7 天没判的待办作废(dropped),候选保持 pending。
 
 规则只动还没人判过的候选(pending 且 decided_by 为空);AI 或人判过的不再改。
-v1 规则自动入账的候选在第一次跑 v2 的 triage 时重开重判(rejudge);人工「不算」过的不动。
+规则换版(RULES_VERSION,现为 v2.1)后第一次跑 triage 时,上一版规则判过的(入账与例行)重开重判(rejudge);
+人工「不算」过的、AI 判过的不动。
 人工只剩「不算」:对已入账的事件说不算(POST /api/events/{id}/dismiss),可撤回。"""
 from __future__ import annotations
 
@@ -30,7 +32,7 @@ from .recompute import latest_bar_date, rebuild_reactions
 
 EVENT_CATEGORIES = C.EVENT_CATEGORIES     # 卡口事件的六类
 OFFICIAL_TIER = 0          # 公告 / 互动易
-RULES_VERSION = "v2"       # settings.accounting_rules:库里的候选按哪一版规则判过
+RULES_VERSION = "v2.1"     # settings.accounting_rules:库里的候选按哪一版规则判过(v2.1:例行正则分硬 / 软两组)
 TRIAGE_TTL_DAYS = 7        # 交给 AI 的待办,这么多天没判就作废
 RULE_CONFIDENCE = 3
 
@@ -68,7 +70,7 @@ def classify(conn: sqlite3.Connection, c: dict, vocab: tuple[dict, dict] | None 
     # 1.1 挡
     if not c.get("relevance", 1):
         return "routine", "例行公告,不算", None
-    hit = news.routine_hit(title, c.get("source_type"))
+    hit = news.routine_hit(title, c.get("source_type"), vocab[1] if vocab else None)
     if hit:
         return "routine", f"例行(「{hit}」),不算", None
     # 1.2 归位
@@ -187,17 +189,24 @@ def expire_triage(conn: sqlite3.Connection, days: int = TRIAGE_TTL_DAYS, now: da
 
 
 def rejudge(conn: sqlite3.Connection) -> int:
-    """规则换版后第一次跑:上一版规则自动入账的候选全部重开(事件随之删掉),交给这一版重判。
-    人判过的(不算 / 撤回)与 AI 判过的不动。版本记在 settings.accounting_rules,同一版只做一次。"""
+    """规则换版后第一次跑:上一版规则判过的候选全部重开,交给这一版重判——自动入账的(事件随之删掉)
+    和判成例行的(新版可能不再挡)都算。人判过的(不算 / 撤回)与 AI 判过的不动。
+    版本记在 settings.accounting_rules,同一版只做一次。→ 重开的条数。"""
     r = conn.execute("SELECT value FROM settings WHERE key='accounting_rules'").fetchone()
     if r and r["value"] == RULES_VERSION:
         return 0
     ids = [x["id"] for x in conn.execute("SELECT id FROM candidates WHERE status='confirmed' AND decided_by='rule'")]
     for cid in ids:
         C.reopen(conn, cid)
+    # 判成例行的没有事件:整批改回 pending(几千条回填也是一条语句)
+    n_routine = conn.execute("""UPDATE candidates SET status='pending', event_id=NULL, decided_at=NULL, decided_note=NULL, decided_by=NULL,
+                                                      part_id=NULL, thesis=NULL, confidence=NULL
+                                WHERE status='rejected' AND decided_by='rule'""").rowcount
+    conn.execute("""DELETE FROM ingest_todo WHERE kind='candidate_triage' AND company_id IN
+                    (SELECT id FROM candidates WHERE status='pending' AND decided_by IS NULL) AND status='done'""")
     conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('accounting_rules', ?)", (RULES_VERSION,))
     conn.commit()
-    return len(ids)
+    return len(ids) + n_routine
 
 
 def summary(conn: sqlite3.Connection) -> dict:

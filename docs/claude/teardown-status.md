@@ -14,7 +14,7 @@
 - **Cowork**：评审（代码、真数据、设计层）、画布方向稿、写规格；不能 push，规格以 `docs/claude/*.md` 交给 CC。
 
 ## 当前基线
-- GitHub `physical-first` @ 1664645（入账 v2 + 预审 C 剩余；前一基线 d2c39cc 首页结论反例只取 lead 部件事件）。main 留着 tag `v1.0-teardown-reboot`，未分叉；合并到 main 要 Faye 点头。
+- GitHub `physical-first`：入账 v2.1（见下）+ 预审 C 剩余 + AGENTS.md 换成 09-29 版（愿景 / 验收标准 / 刚刚好）。main 留着 tag `v1.0-teardown-reboot`，未分叉；合并到 main 要 Faye 点头。
 - 服务器（09-29 16:45）：行情 140 / 144 家，截至 09-29；融资 72、估值 73；序列 164 条（含部件篮子）；候选 423 = 规则入账 12 · 例行 365 · 交 AI 46；事件 12（全是噪声，见下）。4 家行情缺口（北交所 920045 / 920060 / 920179 + 台燿 6274.TWO）。
 - 证据层：17 部件、211 条映射、158 家公司、244 条来源（verified 158 · consensus 38 · candidate 15）；反向扫描全集 200 家在 `physical/data/coverage-1.6t-dr8-siph.json`。
 - 已知问题：互动易 405（源停用）、9 个 RSS 停用（`news_sources.json` enabled:false）、东财长窗口断连（已分段）、run 41 中断未收尾（runner 启动时应把上一条 NULL 的 run 标 failed）。
@@ -33,7 +33,12 @@
    与规格的出入：NVIDIA 回购那条标题有 buyback，被 §1.1 英文例行词先挡成例行（另一条 NVIDIA 进 triage）；回填对象按「站在任何部件上」算是 72 家 A 股（规格估 42）；
    自动入账的类别取标题动词的类别（「投资建设…产线」→ 扩产）；回填里没取到正文的活动记录表照旧交 AI；活动记录表正文要服务器装 `pypdf`（可选，没装就交 AI 读原文）；
    综合媒体标题门槛会把「亨通光电定增66.36亿，抢滩算力底座」挡成例行（CPO 只在摘要里）。
-2. **PI**：pull → build → 重启 → `triage`（重判现有）→ `backfill` → 判 triage 待办（`/judge`）→ `recompute` → 出快照推上来。
+   **入账 v2.1（09-29，`RULES_VERSION = "v2.1"`）**：例行正则拆成硬 / 软两组，软组（使用募集资金 / 增资 / 借款 / 投资进展 / 土地使用权 / 出让合同 / 调研，
+   另把「使用部分募集资金」一并算软组）在标题同时有产品词（强产品词或部件词）与类别动词时不挡——「关于使用募集资金投资建设 1.6T 硅光模块产线的公告」→ 自动入账 · 扩产；
+   换版时 `rejudge` 把规则判成例行的（`status='rejected' AND decided_by='rule'`）也重开重跑；`categorize()` 英文关键词按整词匹配（`\b` + ASCII，带可选复数 s），
+   fab / order 不再撞 fabric / border。对 09-29 那 46 条交 AI 的真候选分流不变（例行 25 · 交 AI 21）；东财 14 条原先靠英文子串拿到类别的会在下次抓取时失去类别（多为噪声）。
+2. **PI**：pull → build → 重启 → `pip install pypdf`（可选）→ `triage`（第一次会把 v1 入账的 12 条重开重判）→ `backfill --since 2025-10-01 --until 2026-09-29`
+   → 读 `/api/ingest/todo` 判候选，`POST /api/candidates/judge` 交回 → `recompute` → 出快照、写 `ops/reports/`。（`ops/README.md` 有逐条命令）
 3. **CC**：回填出 50 条以上真事件后做 `teardown-accounting-v2.md` §4（效力到部件级 + 部件篮子页）→ 预审 D → 预审 A。
 4. **Cowork**：拿到新快照后再做一次真数据评审，回答「够不够直接」。
 5. 互动易接口换新；4 家行情缺口（PI 从网页端 upload）。

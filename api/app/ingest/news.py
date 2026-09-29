@@ -25,16 +25,19 @@ TIER_EVIDENCE = {0: "verified", 1: "consensus", 2: "candidate", 3: "candidate"}
 TRACK_PARAMS = {"utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "spm", "from", "ref", "share_token"}
 GENERIC_ACRONYMS = {"PCB", "DSP", "MCU", "EMI", "TIM", "IHS", "EEPROM", "COB", "MZM", "PAM4"}   # 半导体新闻里到处都是，不能单靠它们入池
 MAX_CONSECUTIVE_FAILS = 5   # 按公司逐家查的源：连续失败这么多家就停，别把 74 家都试一遍
-# 公告标题里的例行事项：不是卡口事件，进池但标为不相关，收件箱默认不显示
-ROUTINE_ANNOUNCEMENT = re.compile(
+# 公告标题里的例行事项：不是卡口事件，进池但标为不相关，收件箱默认不显示。
+# 硬组:命中就挡。软组:募投 / 增资 / 借款 / 土地 / 调研——标题里同时有产品词(强产品词或部件词)与类别动词时不挡
+# (「关于使用募集资金投资建设 1.6T 硅光模块产线的公告」是扩产,不是募资安排)。
+ROUTINE_HARD = re.compile(
     r"股东大会|减持|增持计划|质押|解除质押|冻结|独立董事|监事|审计|会计|更正|补充|提示性公告|关联交易|担保|理财|募集资金存放|"
     r"限售股|解禁|期权|激励|换届|辞职|聘任|选举|章程|自查|问询函|监管函|警示函|简式权益|详式权益|可转债|转股|付息|评级|"
     r"回购进展|回购股份|摘要|意见书|法律意见|核查意见|保荐|持续督导|年度报告|半年度报告|季度报告|业绩预告|业绩快报|分红|派息|"
     r"停牌|复牌|异常波动|风险提示|投资者关系活动记录|"
-    # v2 追加:募资安排、发行上市、定期报告,以及财经媒体的盘面 / 汇总稿(「募投」不是扩产,「出让合同」不是订单)
-    r"募集资金置换|募集资金专户|使用部分募集资金|使用募集资金|自筹资金|增资|借款|土地使用权|出让合同|投资进展|"
+    # v2 追加:募资安排、发行上市、定期报告,以及财经媒体的盘面 / 汇总稿
+    r"募集资金置换|募集资金专户|自筹资金|"
     r"中签|发行价|IPO|上市公告书|招股|询价|三季报|半年报|年报|预约披露|财经早餐|利好消息一览|公告最新快递|重大事项公告|晚间公告|"
-    r"涨停|跌停|市值|回购|调研|机构密集|一览|名单|早盘|午盘|收评")
+    r"涨停|跌停|市值|回购|机构密集|一览|名单|早盘|午盘|收评")
+ROUTINE_SOFT = re.compile(r"使用部分募集资金|使用募集资金|增资|借款|投资进展|土地使用权|出让合同|调研")
 # 英文源(rss / upload)标题里的例行与泛科技
 ROUTINE_EN = re.compile(r"(?<![A-Za-z])(?:buybacks?|share price|market cap|glasses|VR|smartphones?|earnings call|dividends?|layoffs?|lawsuits?)(?![A-Za-z])", re.I)
 IR_RECORD = "投资者关系活动记录"     # 标题本身没信息,不挡,交给 AI 读正文
@@ -122,11 +125,17 @@ def parts_in_order(text: str, parts: dict) -> list[str]:
     return sorted(first, key=first.get)
 
 
+def _en_word(kw: str) -> re.Pattern:
+    """英文关键词按整词匹配(可带复数 s):fab 不撞 fabric,order 不撞 border。
+    re.ASCII:「\\b」只看 ASCII 字母数字,紧挨中文也算边界(「台积电新fab」)。"""
+    return re.compile(r"\b" + re.escape(kw.lower()) + r"s?\b", re.ASCII)
+
+
 def categorize(text: str, categories: dict) -> str | None:
     tl = (text or "").lower()
     best, score = None, 0
     for key, spec in categories.items():
-        n = sum(1 for kw in spec["zh"] if kw.lower() in tl) + sum(1 for kw in spec["en"] if kw.lower() in tl)
+        n = sum(1 for kw in spec["zh"] if kw.lower() in tl) + sum(1 for kw in spec["en"] if _en_word(kw).search(tl))
         if n > score:
             best, score = key, n
     return best
@@ -330,20 +339,27 @@ def relevance_of(src: dict, text: str, cat: str | None, parts_hit: list) -> int:
     投资者关系活动记录表例外：它常常藏着送样 / 供货的口径，算相关。"""
     if "投资者关系活动记录" in text:
         return 1
-    if src["type"] == "cninfo_announcement" and ROUTINE_ANNOUNCEMENT.search(text) and not STRONG_TERMS.search(text):
+    routine = ROUTINE_HARD.search(text) or (ROUTINE_SOFT.search(text) and not parts_hit)
+    if src["type"] == "cninfo_announcement" and routine and not STRONG_TERMS.search(text):
         return 0
     if cat or parts_hit or STRONG_TERMS.search(text):
         return 1
     return 0 if src["type"] == "cninfo_announcement" else 1
 
 
-def routine_hit(title: str, source_type: str | None) -> str | None:
-    """标题命中例行正则 → 命中的词(入账规则 §1.1 挡);投资者关系活动记录表不挡。"""
+def routine_hit(title: str, source_type: str | None, parts: dict | None = None) -> str | None:
+    """标题命中例行正则 → 命中的词(入账规则 §1.1 挡);投资者关系活动记录表不挡。
+    软组的词在标题同时有产品词(强产品词,或 parts 词表里的部件词)与类别动词时不挡。"""
     t = title or ""
     if IR_RECORD in t:
         return None
-    m = ROUTINE_ANNOUNCEMENT.search(t) or (ROUTINE_EN.search(t) if source_type in ("rss", "upload") else None)
-    return m.group(0) if m else None
+    m = ROUTINE_HARD.search(t) or (ROUTINE_EN.search(t) if source_type in ("rss", "upload") else None)
+    if m:
+        return m.group(0)
+    m = ROUTINE_SOFT.search(t)
+    if m and not ((product_hit(t) or (parts and parts_in_order(t, parts))) and category_verb(t)):
+        return m.group(0)
+    return None
 
 
 def category_verb(title: str) -> tuple[str, str] | None:

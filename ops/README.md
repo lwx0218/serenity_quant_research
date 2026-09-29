@@ -16,7 +16,7 @@ python -m app.ingest probe                                # 每条路各试一�
 python -m app.ingest daily --full                         # 首次全量：两年多日线 → 融资 / 股东户数 → 估值 → 重算 series / 反应 / 拥挤度
 python -m app.ingest news                                 # 候选池（跑完自动按规则入账）
 python -m app.ingest triage                               # 对库里还没判过的候选跑一遍入账规则（上线时对现有候选跑一次）
-python -m app.ingest backfill --since 2025-10-01 --until 2026-09-14   # 巨潮公告历史回填（实物层上的 A 股公司 × 按月 × 翻页到空）
+python -m app.ingest backfill --since 2025-10-01 --until 2026-09-29   # 巨潮公告历史回填（实物层上的 A 股公司 × 按月 × 翻页到空）
 uvicorn app.main:app --host 0.0.0.0 --port 8000           # web/dist 存在时同时提供前端
 ```
 
@@ -63,12 +63,14 @@ curl http://localhost:8000/api/ingest/status        # 行情截至、多少家�
 - 研究页头部一行「行情截至 · 有行情 x / 可取 y / 公司 z · 事件 真 / 示例 · 交给 AI 补」。
 - 「候选」是一行状态：入账（规则 / AI）· 交给 AI 判 · 例行 · 不算。规则 v2 在 `api/app/ingest/accounting.py::classify`
   （规格 `docs/claude/teardown-accounting-v2.md` §1）：**规则只挡与归位，判定交 AI**。
-  挡：例行公告 / 募资安排 / 发行上市 / 定期报告 / 盘面汇总（`news.py::ROUTINE_ANNOUNCEMENT`，英文源另有 `ROUTINE_EN`）→ 不算；
+  挡：例行正则分硬 / 软两组（`news.py::ROUTINE_HARD` / `ROUTINE_SOFT`，英文源另有 `ROUTINE_EN`）。硬组（发行上市 / 定期报告 / 盘面汇总 / 募资置换 …）
+  命中就不算；软组（使用募集资金 / 增资 / 借款 / 投资进展 / 土地使用权 / 出让合同 / 调研）在标题同时有产品词与类别动词时不挡；
   归位：公司不在这只模块的任何部件上（Meta / 微软 / 需求侧）→ 不算，否则给一个部件初判（`candidates.part_id`）；
   强命中（公告 / 互动易 + 部件词或强产品词 + 标题有类别动词 + 类别与日期）→ 入账（decided_by=rule，confidence=3，类别取动词的）；
   其余 → `ingest_todo`（kind=`candidate_triage`，company_id 列放候选 id）交给 AI；综合媒体标题没有部件 / 产品词的、回填没有部件 / 产品词的直接不算。
   交给 AI 7 天没判的待办作废（`news` 作业末尾），候选保持 pending。
-- 规则换版后第一次 `triage` 会把上一版规则自动入账的候选重开重判（人判过的不动），版本记在 `settings.accounting_rules`。
+- 规则换版后第一次 `triage` 会把上一版规则判过的候选（自动入账的与判成例行的）重开重判（人判过的、AI 判过的不动），
+  版本记在 `settings.accounting_rules`（当前 v2.1）。
 - 人工只剩「不算」：研究页卡口事件行悬停出现，`POST /api/events/{id}/dismiss`，可撤回（`/restore`）。
 - `seed --rebuild` 不倒回事件表，按已入账的候选重新写出来（人判的「不算」不会回来；部件 / thesis / confidence 跟着回来）。
 
@@ -86,8 +88,14 @@ curl -X POST http://localhost:8000/api/candidates/judge -H 'content-type: applic
 规则判过的以 AI 为准（会重开再判）；人判过的不改。单条 `/confirm`、`/reject` 仍可用，也接收 `part_id / thesis / confidence`。
 活动记录表的正文：装了 `pypdf` 时抓取会把正文前 600 字补进摘要，没装就在 hint 里的原文链接读。
 
-**v2 上线步骤**（pull 之后）：build → 重启 → `python -m app.ingest triage`（重判现有）→ `python -m app.ingest backfill --since 2025-10-01 --until 2026-09-14`
-→ 判 `candidate_triage` 待办（`/api/candidates/judge`）→ 媒体回填（upload，`origin: backfill`）→ 再判 → `python -m app.ingest recompute` → 出快照推上来。
+**入账 v2.1 上线步骤**（给 PI）：
+1. `git pull` → `cd web && npm run build` → 重启 uvicorn
+2. `pip install pypdf`（可选：活动记录表正文补进摘要；不装就交 AI 读原文）
+3. `python -m app.ingest triage`（第一次会把 v1 入账的 12 条和规则判成例行的重开，按 v2.1 重判）
+4. `python -m app.ingest backfill --since 2025-10-01 --until 2026-09-29`
+5. 读 `GET /api/ingest/todo?status=open`（kind=`candidate_triage`）判候选，`POST /api/candidates/judge` 交回
+6. `python -m app.ingest recompute`
+7. 出快照（`python3 tools/snapshot/build.py --api http://127.0.0.1:8000`）推上来，执行记录写 `ops/reports/YYYY-MM-DD-*.md`
 - 建库不带 `--no-sample` 时，样例事件仍在但标着示例；真行情一进来 series / 拥挤度 / 估值就全换成真的（`sample=0`），页脚「示例」自动消失。
 
 ## 表
