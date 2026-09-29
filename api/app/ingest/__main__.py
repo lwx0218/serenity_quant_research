@@ -3,9 +3,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import signal
 import sys
 
 from .runner import JOBS, run
+
+
+def _terminate(signum, frame):
+    raise SystemExit(128 + signum)
 
 
 def main() -> int:
@@ -17,7 +22,12 @@ def main() -> int:
     ap.add_argument("--until", default=None, help="backfill:止(默认今天)")
     ap.add_argument("--db", default=None)
     a = ap.parse_args()
-    r = run(a.job, db_path=a.db, full=a.full, only=a.only, since=a.since, until=a.until)
+    # CLI only: API 后台线程不注册信号；TERM 让 runner 收尾自己这一条 run。
+    previous = signal.signal(signal.SIGTERM, _terminate)
+    try:
+        r = run(a.job, db_path=a.db, full=a.full, only=a.only, since=a.since, until=a.until)
+    finally:
+        signal.signal(signal.SIGTERM, previous)
     print(json.dumps(r, ensure_ascii=False, indent=1, default=str))
     return 0 if r.get("ok") else 1
 

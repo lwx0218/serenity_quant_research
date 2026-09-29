@@ -9,6 +9,7 @@ import time
 from datetime import date, datetime, timedelta, timezone
 
 from . import http
+from .progress import log as progress_log
 from .symbols import em_secid, stooq_symbol, yahoo_symbol
 
 EM_KLINE = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
@@ -49,13 +50,17 @@ def _em_chunk(secid: str, beg: date, end: date) -> tuple[list[dict], bool]:
 
 def fetch_eastmoney(secid: str, since: date, chunk_days: int = EM_CHUNK_DAYS) -> list[dict]:
     """长窗口分段拉（服务器上长窗口经常在响应前断连，短窗口能过），段间歇一下。
-    某一段失败就抛，让上层退到下一条路；已拿到的段不浪费——上层按 date 去重写库。"""
+    某一段失败就抛，让上层退到下一条路。本来源的分段尚未入库，会丢弃：
+    不能简单把部分复权序列写入 bars，推进 MAX(date) 后可能永久跳过历史缺口。"""
     rows: list[dict] = []
     beg = since
     today = date.today()
     while beg <= today:
         end = min(beg + timedelta(days=chunk_days), today)
+        started = time.monotonic()
+        progress_log(f"  eastmoney 请求 {secid} {beg}~{end}")
         part, ok = _em_chunk(secid, beg, end)
+        progress_log(f"  eastmoney 返回 {secid} {beg}~{end} rows={len(part)} {time.monotonic() - started:.1f}s（本公司尚未提交）")
         if not ok and not rows:
             raise http.FetchError(f"eastmoney kline empty for {secid} ({beg}~{end})")
         rows.extend(part)

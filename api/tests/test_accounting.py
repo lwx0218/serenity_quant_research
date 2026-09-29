@@ -12,7 +12,7 @@ from pathlib import Path
 from unittest import mock
 
 _tmp = Path(tempfile.mkdtemp())
-os.environ.setdefault("SQR_DB_PATH", str(_tmp / "unused.sqlite"))
+os.environ["SQR_DB_PATH"] = str(_tmp / "unused.sqlite")
 
 from fastapi.testclient import TestClient  # noqa: E402
 
@@ -307,12 +307,13 @@ class AccountingV2Tests(unittest.TestCase):
 
         def fake(url, params=None, **kw):
             calls.append((params["searchkey"], params["sdate"], params["edate"], params["pageNum"]))
-            return pages.get((params["searchkey"], params["sdate"], params["pageNum"]), {"announcements": []})
+            return pages.get((params["searchkey"], params["sdate"], params["pageNum"]), {"announcements": [], "totalAnnouncement": 0})
 
         live = cand("live-a4", "中际旭创：关于硅光产品研发进展的自愿性信息披露公告", category="roadmap", date="2026-07-28",
                     url="http://static.cninfo.com.cn/finalpage/2026-07-28/a4.PDF")
         news.store(self.conn, [live])                                                  # 定时抓取先抓到的,回填不改它的 origin
-        with mock.patch.object(news.http, "get_json", side_effect=fake), mock.patch.object(news, "BACKFILL_PAUSE", 0):
+        with mock.patch.object(news.http, "get_json", side_effect=fake), mock.patch.object(news, "BACKFILL_PAUSE", 0), \
+                mock.patch.object(news, "announcement_text", return_value=None):
             out = runner.job_backfill(self.conn, since="2026-07-01", until="2026-08-31", log=lambda *_: None)
         self.assertIn(("中际旭创", "2026-07-01", "2026-07-31", 2), calls)
         self.assertNotIn(("中际旭创", "2026-07-01", "2026-07-31", 3), calls)            # hasMore=false 就停

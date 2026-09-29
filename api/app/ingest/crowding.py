@@ -13,6 +13,7 @@ from statistics import mean, pstdev
 
 from .. import physical as PH
 from . import eastmoney
+from .progress import log as progress_log
 from .symbols import is_a_share
 
 WINDOW = 20
@@ -67,27 +68,34 @@ def reference_instrument(conn: sqlite3.Connection, company_id: str, pid: str) ->
 
 
 # ------------------------------------------------------------------ inputs (A 股)
-def ingest_margin_holders(conn: sqlite3.Connection, company: dict) -> dict:
+def ingest_margin_holders(conn: sqlite3.Connection, company: dict, log=progress_log) -> dict:
     """融资余额 + 股东户数，只对 A 股。失败原因返回给 runner 记 todo。"""
     out = {"margin": 0, "holders": 0, "errors": []}
     if not is_a_share(company):
         return out
     code = company["ticker"]
+    log(f"  margin 请求 {company['id']}")
     try:
         rows = eastmoney.fetch_margin(code, date.today() - timedelta(days=400))
-        conn.executemany("INSERT OR REPLACE INTO margin (company_id, date, rz_balance, rq_balance, rz_to_float_pct, source) VALUES (?,?,?,?,?,?)",
-                         [(company["id"], r["date"], r["rz_balance"], r["rq_balance"], r["rz_to_float_pct"], r["source"]) for r in rows])
-        out["margin"] = len(rows)
     except Exception as e:  # noqa: BLE001
         out["errors"].append(f"margin: {str(e)[:200]}")
+    else:
+        with conn:
+            conn.executemany("INSERT OR REPLACE INTO margin (company_id, date, rz_balance, rq_balance, rz_to_float_pct, source) VALUES (?,?,?,?,?,?)",
+                             [(company["id"], r["date"], r["rz_balance"], r["rq_balance"], r["rz_to_float_pct"], r["source"]) for r in rows])
+        out["margin"] = len(rows)
+        log(f"  margin 已提交 {company['id']} rows={len(rows)}")
+    log(f"  holders 请求 {company['id']}")
     try:
         rows = eastmoney.fetch_holders(code)
-        conn.executemany("INSERT OR REPLACE INTO holders (company_id, end_date, holder_num, change_pct, avg_cap, source) VALUES (?,?,?,?,?,?)",
-                         [(company["id"], r["end_date"], r["holder_num"], r["change_pct"], r["avg_cap"], r["source"]) for r in rows])
-        out["holders"] = len(rows)
     except Exception as e:  # noqa: BLE001
         out["errors"].append(f"holders: {str(e)[:200]}")
-    conn.commit()
+    else:
+        with conn:
+            conn.executemany("INSERT OR REPLACE INTO holders (company_id, end_date, holder_num, change_pct, avg_cap, source) VALUES (?,?,?,?,?,?)",
+                             [(company["id"], r["end_date"], r["holder_num"], r["change_pct"], r["avg_cap"], r["source"]) for r in rows])
+        out["holders"] = len(rows)
+        log(f"  holders 已提交 {company['id']} rows={len(rows)}")
     return out
 
 
