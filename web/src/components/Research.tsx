@@ -90,19 +90,20 @@ export function EventsNarrow({ items, onPick, hotId }: { items: MarketEvent[]; o
 }
 
 /** Wide events table: 日期 · 来源/对象 · 事件 · 类别 · T+1 · 量比 · 时效；落到部件时类别与部件折到标题下一行 */
-export function EventsWide({ items, who = "source", onPick, hotId }: { items: MarketEvent[]; who?: "source" | "subject"; onPick?: (e: MarketEvent) => void; hotId?: string | null }) {
+export function EventsWide({ items, who = "source", onPick, hotId, onDismiss }: { items: MarketEvent[]; who?: "source" | "subject"; onPick?: (e: MarketEvent) => void; hotId?: string | null; onDismiss?: (e: MarketEvent) => void }) {
   const withPart = items.some((e) => e.part);   // the physical seam: which part an event lands on
+  const act = onDismiss ? " has-act" : "";      // 人工只剩「不算」:行尾一个悬停才出现的动作
   return (
     <div className="rows">
-      <div className={`row ev-wide${withPart ? " has-part" : ""} is-head`} style={{ padding: "6px 0" }}>
+      <div className={`row ev-wide${withPart ? " has-part" : ""}${act} is-head`} style={{ padding: "6px 0" }}>
         <span className="row-meta">日期</span><span className="row-meta">{who === "source" ? "来源" : "对象"}</span><span className="row-meta">{withPart ? "事件 · 类别 → 部件" : "事件"}</span>
-        {!withPart && <span className="row-meta">类别</span>}<span className="row-meta">T+1</span><span className="row-meta">量比</span><span className="row-meta">时效</span>
+        {!withPart && <span className="row-meta">类别</span>}<span className="row-meta">T+1</span><span className="row-meta">量比</span><span className="row-meta">时效</span>{onDismiss && <span />}
       </div>
       {items.map((e) => {
         const s = subjectOf(e);
         const title = <span className="ev-title">{e.source_url ? <a href={e.source_url} target="_blank" rel="noreferrer" style={{ color: "inherit" }}>{e.title}</a> : e.title}</span>;
         return (
-          <div key={e.id} className={`row ev-wide${withPart ? " has-part" : ""}${hotId === e.id ? " is-hot-row" : ""}`} onClick={onPick ? () => onPick(e) : undefined} style={onPick ? { cursor: "pointer" } : undefined}>
+          <div key={e.id} className={`row ev-wide${withPart ? " has-part" : ""}${act}${hotId === e.id ? " is-hot-row" : ""}`} onClick={onPick ? () => onPick(e) : undefined} style={onPick ? { cursor: "pointer" } : undefined}>
             <span className="row-meta">{md(e.date)}</span>
             {who === "source" ? <span className="row-meta">{e.source_label}</span> : <span style={{ fontSize: 13 }}>{s.to ? <Link to={s.to}>{s.label}</Link> : s.label}</span>}
             {withPart ? (
@@ -120,6 +121,7 @@ export function EventsWide({ items, who = "source", onPick, hotId }: { items: Ma
             <Sig v={e.reaction.t1} size={13} />
             <span className="row-meta" style={{ color: "var(--ink-2)" }}>{e.volume_ratio != null ? e.volume_ratio.toFixed(1) : "—"}</span>
             <Fresh f={e.freshness} />
+            {onDismiss && <button type="button" className="btn-quiet ev-dismiss" title="这条不算卡口事件:不再计入读数(可撤回)" onClick={(x) => { x.stopPropagation(); onDismiss(e); }}>不算</button>}
           </div>
         );
       })}

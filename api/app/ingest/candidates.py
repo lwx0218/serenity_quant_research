@@ -59,8 +59,29 @@ def counts(conn: sqlite3.Connection) -> dict:
     return out
 
 
+def _event_id(r: dict, company_id: str, category: str, d0: date) -> str:
+    return f"evt.{d0.isoformat()}.{company_id}.{category}.{r['id'][-6:]}"
+
+
+def _write_event(conn: sqlite3.Connection, r: dict, company_id: str, category: str, d0: date,
+                 title: str | None = None, summary: str | None = None) -> str:
+    eid = _event_id(r, company_id, category, d0)
+    conn.execute(
+        """INSERT OR REPLACE INTO events (id, date, company_id, node_id, chain_node_id, source_kind, source_title, source_url, category, title, summary,
+                                          volume_ratio, turnover_pct_rank, status, is_sample)
+           VALUES (?,?,?,NULL,NULL,?,?,?,?,?,?,NULL,NULL,'reviewed',0)""",
+        (eid, d0.isoformat(), company_id, SOURCE_KIND.get(r["source_type"], "news"), r["source"], r["url"], category,
+         title or r["title"], summary if summary is not None else r.get("summary")))
+    for layer in company_layers(conn, company_id):
+        conn.execute("INSERT OR IGNORE INTO event_layers (event_id, node_id) VALUES (?, ?)", (eid, layer))
+    return eid
+
+
 def confirm(conn: sqlite3.Connection, cand_id: str, *, company_id: str | None = None, category: str | None = None,
-            event_date: str | None = None, title: str | None = None, summary: str | None = None, note: str | None = None) -> dict:
+            event_date: str | None = None, title: str | None = None, summary: str | None = None, note: str | None = None,
+            by: str = "ai", recompute: bool = True) -> dict:
+    """候选 → 事件。by:rule(自动入账规则)/ ai(服务器上的 AI 判完交回)/ human。
+    recompute=False 时不重算反应(批量入账最后统一算一次)。"""
     r = _row(conn, cand_id)
     if r["status"] == "confirmed" and r.get("event_id"):
         return {"ok": True, "already": True, "event_id": r["event_id"]}
@@ -79,30 +100,25 @@ def confirm(conn: sqlite3.Connection, cand_id: str, *, company_id: str | None = 
     d0 = date.fromisoformat(d)
     if not A.is_trading_day(d0):
         d0 = A.next_trading_day(d0)
-    eid = f"evt.{d0.isoformat()}.{company_id}.{category}.{r['id'][-6:]}"
     now = datetime.now().isoformat(timespec="seconds")
-    conn.execute(
-        """INSERT OR REPLACE INTO events (id, date, company_id, node_id, chain_node_id, source_kind, source_title, source_url, category, title, summary,
-                                          volume_ratio, turnover_pct_rank, status, is_sample)
-           VALUES (?,?,?,NULL,NULL,?,?,?,?,?,?,NULL,NULL,'reviewed',0)""",
-        (eid, d0.isoformat(), company_id, SOURCE_KIND.get(r["source_type"], "news"), r["source"], r["url"], category,
-         title or r["title"], summary if summary is not None else r.get("summary")))
-    for layer in company_layers(conn, company_id):
-        conn.execute("INSERT OR IGNORE INTO event_layers (event_id, node_id) VALUES (?, ?)", (eid, layer))
-    conn.execute("UPDATE candidates SET status='confirmed', event_id=?, decided_at=?, decided_note=?, company_id=?, category=?, date=? WHERE id=?",
-                 (eid, now, note, company_id, category, d0.isoformat(), r["id"]))
+    eid = _write_event(conn, r, company_id, category, d0, title, summary)
+    conn.execute("UPDATE candidates SET status='confirmed', event_id=?, decided_at=?, decided_note=?, decided_by=?, company_id=?, category=?, date=? WHERE id=?",
+                 (eid, now, note, by, company_id, category, d0.isoformat(), r["id"]))
     conn.execute("INSERT INTO verifications (kind, event_id, exposure_id, note, created_at) VALUES ('accept', ?, NULL, ?, ?)", (eid, note or "candidate confirmed", now))
+    _close_triage(conn, r["id"])
     conn.commit()
-    when = latest_bar_date(conn)
+    when = latest_bar_date(conn) if recompute else None
     if when:
         rebuild_reactions(conn, when)
     return {"ok": True, "event_id": eid}
 
 
-def reject(conn: sqlite3.Connection, cand_id: str, note: str | None = None) -> dict:
+def reject(conn: sqlite3.Connection, cand_id: str, note: str | None = None, by: str = "ai") -> dict:
+    """不算。by:rule(例行公告)/ ai / human。"""
     _row(conn, cand_id)
-    conn.execute("UPDATE candidates SET status='rejected', decided_at=?, decided_note=? WHERE id=?",
-                 (datetime.now().isoformat(timespec="seconds"), note, cand_id))
+    conn.execute("UPDATE candidates SET status='rejected', decided_at=?, decided_note=?, decided_by=? WHERE id=?",
+                 (datetime.now().isoformat(timespec="seconds"), note, by, cand_id))
+    _close_triage(conn, cand_id)
     conn.commit()
     return {"ok": True}
 
@@ -110,10 +126,61 @@ def reject(conn: sqlite3.Connection, cand_id: str, note: str | None = None) -> d
 def reopen(conn: sqlite3.Connection, cand_id: str) -> dict:
     r = _row(conn, cand_id)
     if r["status"] == "confirmed" and r.get("event_id"):
-        conn.execute("DELETE FROM reactions WHERE event_id=?", (r["event_id"],))
-        conn.execute("DELETE FROM verifications WHERE event_id=?", (r["event_id"],))
-        conn.execute("DELETE FROM event_layers WHERE event_id=?", (r["event_id"],))
-        conn.execute("DELETE FROM events WHERE id=? AND is_sample=0", (r["event_id"],))
-    conn.execute("UPDATE candidates SET status='pending', event_id=NULL, decided_at=NULL, decided_note=NULL WHERE id=?", (cand_id,))
+        _drop_event(conn, r["event_id"])
+    conn.execute("UPDATE candidates SET status='pending', event_id=NULL, decided_at=NULL, decided_note=NULL, decided_by=NULL WHERE id=?", (cand_id,))
     conn.commit()
     return {"ok": True}
+
+
+def _drop_event(conn: sqlite3.Connection, event_id: str) -> None:
+    conn.execute("DELETE FROM reactions WHERE event_id=?", (event_id,))
+    conn.execute("DELETE FROM verifications WHERE event_id=?", (event_id,))
+    conn.execute("DELETE FROM event_layers WHERE event_id=?", (event_id,))
+    conn.execute("DELETE FROM events WHERE id=? AND is_sample=0", (event_id,))
+
+
+def _close_triage(conn: sqlite3.Connection, cand_id: str) -> None:
+    """判过了(无论谁判的),交给 AI 的那条待办就关掉。candidate_triage 的待办 company_id 列放的是候选 id。"""
+    conn.execute("UPDATE ingest_todo SET status='done', done_at=? WHERE kind='candidate_triage' AND company_id=? AND status='open'",
+                 (datetime.now().isoformat(timespec="seconds"), cand_id))
+
+
+# ------------------------------------------------------------------ 人工只剩「不算」
+def dismiss_event(conn: sqlite3.Connection, event_id: str, note: str | None = None) -> dict:
+    """人对已入账的事件说「不算」:事件不再计入(status=ignored),它的候选记为人判的不算。可撤回。"""
+    if not conn.execute("SELECT 1 FROM events WHERE id=?", (event_id,)).fetchone():
+        raise LookupError(f"event {event_id!r} not found")
+    now = datetime.now().isoformat(timespec="seconds")
+    conn.execute("UPDATE events SET status='ignored' WHERE id=?", (event_id,))
+    conn.execute("UPDATE candidates SET status='rejected', decided_at=?, decided_note=?, decided_by='human' WHERE event_id=?",
+                 (now, note or "人工:不算", event_id))
+    conn.commit()
+    return {"ok": True, "event_id": event_id, "status": "ignored"}
+
+
+def restore_event(conn: sqlite3.Connection, event_id: str) -> dict:
+    """撤回「不算」。"""
+    if not conn.execute("SELECT 1 FROM events WHERE id=?", (event_id,)).fetchone():
+        raise LookupError(f"event {event_id!r} not found")
+    conn.execute("UPDATE events SET status='reviewed' WHERE id=?", (event_id,))
+    conn.execute("UPDATE candidates SET status='confirmed', decided_at=?, decided_note='人工:撤回不算', decided_by='human' WHERE event_id=?",
+                 (datetime.now().isoformat(timespec="seconds"), event_id))
+    conn.commit()
+    return {"ok": True, "event_id": event_id, "status": "reviewed"}
+
+
+# ------------------------------------------------------------------ 重建之后
+def replay(conn: sqlite3.Connection) -> dict:
+    """seed --rebuild 只倒回候选,不倒回事件:按已入账的候选把事件重新写出来(被人判「不算」的候选是 rejected,不会回来)。"""
+    n = 0
+    for r in [dict(x) for x in conn.execute("SELECT * FROM candidates WHERE status='confirmed' AND company_id IS NOT NULL AND category IS NOT NULL AND date IS NOT NULL")]:
+        if not conn.execute("SELECT 1 FROM companies WHERE id=?", (r["company_id"],)).fetchone():
+            continue
+        eid = _write_event(conn, r, r["company_id"], r["category"], date.fromisoformat(r["date"]))
+        if eid != r.get("event_id"):
+            conn.execute("UPDATE candidates SET event_id=? WHERE id=?", (eid, r["id"]))
+        conn.execute("INSERT INTO verifications (kind, event_id, exposure_id, note, created_at) SELECT 'accept', ?, NULL, 'replayed', ? "
+                     "WHERE NOT EXISTS (SELECT 1 FROM verifications WHERE event_id=?)", (eid, datetime.now().isoformat(timespec="seconds"), eid))
+        n += 1
+    conn.commit()
+    return {"events_replayed": n}

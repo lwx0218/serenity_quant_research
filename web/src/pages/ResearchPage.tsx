@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { CandidateRows, candidateNote } from "../components/Candidates";
 import { EventsWide } from "../components/Research";
 import { Footer, Shell, invalidatePending } from "../components/Shell";
 import { AsOf, Conclusion, Dir, Head, Sig } from "../components/Signal";
-import { md, mkt, type CandidatesResponse, type Decision, type EventsResponse, type Inbox, type IngestStatus } from "../lib/api";
+import { md, mkt, type Decision, type EventsResponse, type Inbox, type IngestStatus, type MarketEvent } from "../lib/api";
 import { Link, useRouter } from "../lib/router";
 import "./research.css";
 
@@ -55,17 +54,15 @@ function CompanyEvents({ company }: { company: string }) {
 
 function InboxPage({ navigate }: { navigate: (to: string) => void }) {
   const [ib, setIb] = useState<Inbox | null>(null);
-  const [cands, setCands] = useState<CandidatesResponse | null>(null);
-  const [allCands, setAllCands] = useState(false);
+  const [undo, setUndo] = useState<MarketEvent | null>(null);        // 刚记为「不算」的那条,可撤回
   const [ingest, setIngest] = useState<IngestStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
   const load = useCallback(() => {
     mkt.inbox(WINDOW_DAYS).then(setIb).catch((e) => setError(String(e)));
-    mkt.candidates("pending", 200, allCands ? "all" : "1").then(setCands).catch(() => setCands({ counts: {}, items: [] }));
     mkt.ingestStatus().then(setIngest).catch(() => setIngest(null));
-  }, [allCands]);
+  }, []);
   useEffect(() => { load(); }, [load]);
 
   const act = async (d: Decision, a: Decision["actions"][number]) => {
@@ -78,6 +75,10 @@ function InboxPage({ navigate }: { navigate: (to: string) => void }) {
   };
 
   const decisions = (ib?.decisions ?? []).filter((d) => !dismissed.has(d.kind + d.subject));
+  // 人工只剩「不算」:事件入账是系统的事,人只对已入账的事件说不算(可撤回)
+  const notCounted = async (e: MarketEvent) => { await mkt.dismissEvent(e.id); setUndo(e); load(); };
+  const takeBack = async () => { if (!undo) return; await mkt.restoreEvent(undo.id); setUndo(null); load(); };
+  const acc = ingest?.accounting;
 
   return (
     <Shell crumbs={[{ label: "研究" }]} footer={<Footer note={ib?.sample ? "事件、反应与偏离读数为样式示例。" : undefined} />}>
@@ -97,7 +98,6 @@ function InboxPage({ navigate }: { navigate: (to: string) => void }) {
                     <span>行情截至 <b>{ingest.last_bar_date ? md(ingest.last_bar_date) : "—"}</b></span>
                     <span>有行情 <b>{ingest.with_bars}</b> / 可取 {ingest.quotable} / 公司 {ingest.companies}</span>
                     <span>事件 <b>{ingest.events.real}</b> 真 · {ingest.events.sample} 示例</span>
-                    <span>候选待确认 <b>{ingest.candidates.pending_relevant ?? ingest.candidates.pending ?? 0}</b>{ingest.last_news_fetch ? ` · 上次抓取 ${ingest.last_news_fetch.slice(5, 16).replace("T", " ")}` : ""}</span>
                     {ingest.todo_open > 0 && <span>交给 AI 补 <b>{ingest.todo_open}</b></span>}
                   </p>
                 )}
@@ -123,22 +123,29 @@ function InboxPage({ navigate }: { navigate: (to: string) => void }) {
                 ))}
               </section>
 
-              <section className="rows">
-                <div className="rows-head">
-                  <span className="eyebrow">候选 · {cands?.counts.pending_relevant ?? cands?.items.length ?? 0} 值得看{cands?.counts.pending_routine ? ` · ${cands.counts.pending_routine} 例行` : ""}</span>
-                  <span className="small muted">
-                    自动抓取 · 确认后才是事件，来源随事件走{cands ? ` · ${candidateNote(cands.counts)}` : ""}
-                    {(cands?.counts.pending_routine ?? 0) > 0 && (
-                      <>{" · "}<button type="button" className="btn-quiet" style={{ font: "inherit" }} onClick={() => setAllCands((v) => !v)}>{allCands ? "只看值得看的" : "连例行公告一起看"}</button></>
-                    )}
-                  </span>
-                </div>
-                {cands && <CandidateRows items={cands.items} onChange={() => { invalidatePending(); load(); }} />}
-              </section>
+              {acc && (
+                <section className="rows">
+                  <div className="rows-head">
+                    <span className="eyebrow">候选 · {acc.total}</span>
+                    <span className="small muted">系统按规则入账,拿不准的交给 AI 判;人只对入账的事件说「不算」</span>
+                  </div>
+                  <p className="data-line cand-line">
+                    <span>入账 <b>{acc.accounted}</b>(规则 {acc.by_rule} · AI {acc.by_ai}{acc.by_human ? ` · 人 ${acc.by_human}` : ""})</span>
+                    <span>交给 AI 判 <b>{acc.to_ai}</b></span>
+                    <span>例行 {acc.routine}</span>
+                    <span>不算 {acc.not_counted}</span>
+                    {acc.unprocessed > 0 && <span>待跑规则 {acc.unprocessed}</span>}
+                    {ingest?.last_news_fetch && <span>上次抓取 {ingest.last_news_fetch.slice(5, 16).replace("T", " ")}</span>}
+                  </p>
+                </section>
+              )}
 
               <section className="block">
                 <Head title={`卡口事件 · ${ib.window_days} 天 · ${ib.events.length} 条`} right={<AsOf date={ib.as_of} horizon="T+1 相对篮子" extra="时效按各层事件效力" />} />
-                <EventsWide items={ib.events} who="subject" />
+                {undo && (
+                  <p className="quiet" style={{ margin: 0 }}>已把「{undo.title}」记为不算,不再计入读数。<button type="button" className="btn" onClick={takeBack}>撤回</button></p>
+                )}
+                <EventsWide items={ib.events} who="subject" onDismiss={notCounted} />
               </section>
 
               <section className="rows">

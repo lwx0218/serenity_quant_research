@@ -72,7 +72,8 @@ CREATE TABLE IF NOT EXISTS candidates (
   decided_at    TEXT,
   decided_note  TEXT,
   fetched_at    TEXT NOT NULL,
-  relevance     INTEGER NOT NULL DEFAULT 1    -- 1 值得看 / 0 例行公告（减持、质押、会议……），收件箱默认不显示
+  relevance     INTEGER NOT NULL DEFAULT 1,   -- 1 值得看 / 0 例行公告（减持、质押、会议……），收件箱默认不显示
+  decided_by    TEXT                          -- 谁判的：rule（自动入账规则）/ ai（服务器上的 AI）/ human（只剩「不算」）
 );
 CREATE INDEX IF NOT EXISTS ix_cand_status ON candidates(status, date);
 
@@ -87,10 +88,11 @@ CREATE TABLE IF NOT EXISTS ingest_runs (
   error       TEXT
 );
 
--- 抓不到的，交给 AI（PI + web-access）去网页端取，再 POST /api/ingest/upload 交回
+-- 抓不到的，交给 AI（PI + web-access）去网页端取，再 POST /api/ingest/upload 交回。
+-- kind=candidate_triage：规则拿不准的候选交给 AI 判，company_id 列放的是候选 id；AI 用 /api/candidates/{id}/confirm 或 reject 交回
 CREATE TABLE IF NOT EXISTS ingest_todo (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
-  kind        TEXT NOT NULL,                  -- bars | margin | holders | valuation | candidates
+  kind        TEXT NOT NULL,                  -- bars | margin | holders | valuation | candidates | candidate_triage
   company_id  TEXT,
   hint        TEXT,                           -- 人话：去哪里取、取什么
   reason      TEXT,                           -- 自动抓取失败的原因
@@ -102,7 +104,8 @@ CREATE TABLE IF NOT EXISTS ingest_todo (
 """
 
 
-MIGRATIONS = [("candidates", "relevance", "INTEGER NOT NULL DEFAULT 1")]
+MIGRATIONS = [("candidates", "relevance", "INTEGER NOT NULL DEFAULT 1"),
+              ("candidates", "decided_by", "TEXT")]            # rule(自动入账规则)/ ai / human
 
 
 def ensure_schema(conn: sqlite3.Connection) -> None:

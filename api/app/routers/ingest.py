@@ -110,6 +110,35 @@ def list_candidates(conn: Conn, status: str = Query("pending", pattern="^(pendin
     return {"counts": C.counts(conn), "items": C.list_candidates(conn, status=status, limit=limit, company=company, relevant=rel)}
 
 
+@router.post("/candidates/account")
+def account(conn: Conn):
+    """对还没人判过的候选跑一遍自动入账规则(同 python -m app.ingest triage)。"""
+    from ..ingest import accounting
+    ensure_schema(conn)
+    out = accounting.account(conn)
+    out["summary"] = accounting.summary(conn)
+    return out
+
+
+@router.post("/events/{event_id}/dismiss")
+def dismiss_event(event_id: str, body: NoteIn | None, conn: Conn):
+    """人工只剩这一个动作:这条已入账的事件「不算」。可撤回。"""
+    ensure_schema(conn)
+    try:
+        return C.dismiss_event(conn, event_id, (body or NoteIn()).note)
+    except LookupError as e:
+        raise HTTPException(404, str(e))
+
+
+@router.post("/events/{event_id}/restore")
+def restore_event(event_id: str, conn: Conn):
+    ensure_schema(conn)
+    try:
+        return C.restore_event(conn, event_id)
+    except LookupError as e:
+        raise HTTPException(404, str(e))
+
+
 @router.post("/candidates/retriage")
 def retriage(conn: Conn):
     """规则改了之后给库里的候选重算 relevance。"""
@@ -125,6 +154,7 @@ class ConfirmIn(BaseModel):
     title: str | None = None
     summary: str | None = None
     note: str | None = None
+    by: str = Field("ai", pattern="^(rule|ai|human)$", description="谁判的;接口默认是服务器上的 AI")
 
 
 @router.post("/candidates/{cand_id}/confirm")
@@ -133,7 +163,7 @@ def confirm(cand_id: str, body: ConfirmIn | None, conn: Conn):
     body = body or ConfirmIn()
     try:
         return C.confirm(conn, cand_id, company_id=body.company_id, category=body.category, event_date=body.date,
-                         title=body.title, summary=body.summary, note=body.note)
+                         title=body.title, summary=body.summary, note=body.note, by=body.by)
     except LookupError as e:
         raise HTTPException(404, str(e))
     except ValueError as e:
@@ -142,13 +172,15 @@ def confirm(cand_id: str, body: ConfirmIn | None, conn: Conn):
 
 class NoteIn(BaseModel):
     note: str | None = None
+    by: str = Field("ai", pattern="^(rule|ai|human)$")
 
 
 @router.post("/candidates/{cand_id}/reject")
 def reject(cand_id: str, body: NoteIn | None, conn: Conn):
     ensure_schema(conn)
     try:
-        return C.reject(conn, cand_id, (body or NoteIn()).note)
+        b = body or NoteIn()
+        return C.reject(conn, cand_id, b.note, by=b.by)
     except LookupError as e:
         raise HTTPException(404, str(e))
 

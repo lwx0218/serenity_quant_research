@@ -10,7 +10,7 @@ from .runner import JOBS, run
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Teardown 数据接入")
-    ap.add_argument("job", choices=JOBS)
+    ap.add_argument("job", choices=JOBS, help="triage:对现有候选跑一遍自动入账规则")
     ap.add_argument("--full", action="store_true", help="行情全量重拉（首次或修数）")
     ap.add_argument("--only", choices=["rss", "cninfo_announcement", "cninfo_irm"], help="news：只跑一类源")
     ap.add_argument("--db", default=None)

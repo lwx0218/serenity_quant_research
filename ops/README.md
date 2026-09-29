@@ -2,7 +2,7 @@
 
 目标：页面上每个数字都有来路。行情 / 融资 / 股东户数 / 估值走免费接口（东财、Yahoo、stooq，
 都是 akshare / yfinance 底下那几个 HTTP 接口，这里用标准库直接调，不装第三方包），事件走
-巨潮公告 / 互动易 / RSS 进候选池，人在收件箱确认。接口取不到的，自动记成待办，让 AI（PI + web-access）
+巨潮公告 / 互动易 / RSS 进候选池，系统按规则自动入账（拿不准的交给 AI 判，人只对入账的事件说「不算」）。接口取不到的，自动记成待办，让 AI（PI + web-access）
 去网页端取，再 POST 回来。
 
 ## 第一次
@@ -14,7 +14,8 @@ cd api && pip install -e ".[dev]"                         # fastapi / uvicorn（
 python -m app.seed --rebuild --no-sample                  # 建库；--no-sample 不装样式示例的市场层
 python -m app.ingest probe                                # 每条路各试一家：东财 K 线 / 融资 / 股东户数 / 估值、Yahoo、stooq、RSS
 python -m app.ingest daily --full                         # 首次全量：两年多日线 → 融资 / 股东户数 → 估值 → 重算 series / 反应 / 拥挤度
-python -m app.ingest news                                 # 候选池
+python -m app.ingest news                                 # 候选池（跑完自动按规则入账）
+python -m app.ingest triage                               # 对库里还没判过的候选跑一遍入账规则（上线时对现有候选跑一次）
 uvicorn app.main:app --host 0.0.0.0 --port 8000           # web/dist 存在时同时提供前端
 ```
 
@@ -57,8 +58,15 @@ curl http://localhost:8000/api/ingest/status        # 行情截至、多少家�
 
 ## 页面上怎么体现
 
-- 研究页头部一行「行情截至 · 有行情 x / 可取 y / 公司 z · 事件 真 / 示例 · 候选待确认 · 交给 AI 补」。
-- 「候选」块：确认 → 写 events（is_sample=0，status=reviewed，来源即原文），反应按收盘重算；驳回只记状态。类别 / 公司缺的在行内补。
+- 研究页头部一行「行情截至 · 有行情 x / 可取 y / 公司 z · 事件 真 / 示例 · 交给 AI 补」。
+- 「候选」是一行状态：入账（规则 / AI）· 交给 AI 判 · 例行 · 不算。规则在 `api/app/ingest/accounting.py::classify`：
+  值得看、只命中一家公司、有类别与日期，且来源是公告 / 互动易，或行业媒体且另有一家来源报道 → 入账（events，is_sample=0）；
+  例行公告 → 不算；其余 → `ingest_todo`（kind=`candidate_triage`，company_id 列放候选 id）交给 AI。
+- 人工只剩「不算」：研究页卡口事件行悬停出现，`POST /api/events/{id}/dismiss`，可撤回（`/restore`）。
+- `seed --rebuild` 不倒回事件表，按已入账的候选重新写出来（人判的「不算」不会回来）。
+
+给 PI 的候选判定：读 `GET /api/ingest/todo`，kind=`candidate_triage` 的每条按 hint 打开原文判断——
+算：`POST /api/candidates/{id}/confirm {"company_id", "category", "date"}`（缺什么补什么）；不算：`POST /api/candidates/{id}/reject {"note": "原因"}`。待办随之关闭。
 - 建库不带 `--no-sample` 时，样例事件仍在但标着示例；真行情一进来 series / 拥挤度 / 估值就全换成真的（`sample=0`），页脚「示例」自动消失。
 
 ## 表
@@ -85,4 +93,4 @@ curl http://localhost:8000/api/ingest/status        # 行情截至、多少家�
 
 **为什么页面「看起来没变」**：变的是行情 / 拥挤度 / 估值那一层（公司页价格图、篮子页 3 个月超额、拥挤度读数、PE 分位），
 而首页「资金本周在给哪一层投票」、事件面结论、共振、时效全部是**事件驱动**的——事件表现在是空的，候选没人确认就永远是空的。
-先在收件箱把值得看的候选确认几条，事件层才会活过来。
+（2026-09-29 起候选按规则自动入账，见上文「页面上怎么体现」。）

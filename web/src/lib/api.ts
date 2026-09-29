@@ -352,7 +352,12 @@ export interface IngestRun { id: number; job: string; started_at: string; finish
 export interface IngestStatus {
   as_of: string | null; sample: boolean; companies: number; quotable: number; with_bars: number; last_bar_date: string | null;
   with_margin: number; with_valuation: number; events: { real: number; sample: number }; candidates: Partial<Record<CandidateStatus | "pending_relevant", number>>;
-  last_news_fetch: string | null; todo_open: number; runs: IngestRun[];
+  last_news_fetch: string | null; todo_open: number; runs: IngestRun[]; accounting: CandidateAccounting;
+}
+/** 候选自动入账的一行状态:系统按规则入账,拿不准的交给 AI,人只做「不算」。 */
+export interface CandidateAccounting {
+  total: number; accounted: number; by_rule: number; by_ai: number; by_human: number; to_ai: number;
+  routine: number; not_counted: number; dismissed_by_human: number; unprocessed: number;
 }
 export const CATEGORY_OPTIONS: [string, string][] = [["capex", "扩产"], ["order", "订单合同"], ["qualification", "认证导入"], ["supply", "供需"], ["price", "涨价"], ["roadmap", "技术路线"]];
 
@@ -390,9 +395,9 @@ export const mkt = {
   suggest: (q: string) => get<LinkSuggestion[]>(`/api/links/suggest?q=${encodeURIComponent(q)}`),
   candidates: (status: CandidateStatus | "all" = "pending", limit = 200, relevant: "1" | "0" | "all" = "1") =>
     get<CandidatesResponse>(`/api/candidates?status=${status}&limit=${limit}&relevant=${relevant}`),
-  confirmCandidate: (id: string, body: { company_id?: string | null; category?: string | null; date?: string | null; note?: string | null } = {}) =>
-    send<{ ok: boolean; event_id: string }>("POST", `/api/candidates/${encodeURIComponent(id)}/confirm`, body),
-  rejectCandidate: (id: string, note?: string) => send<{ ok: boolean }>("POST", `/api/candidates/${encodeURIComponent(id)}/reject`, { note: note ?? null }),
+  /** 人工只剩这一个动作:已入账的事件「不算」;可撤回 */
+  dismissEvent: (id: string, note?: string) => send<{ ok: boolean }>("POST", `/api/events/${encodeURIComponent(id)}/dismiss`, { note: note ?? null, by: "human" }),
+  restoreEvent: (id: string) => send<{ ok: boolean }>("POST", `/api/events/${encodeURIComponent(id)}/restore`, {}),
   reopenCandidate: (id: string) => send<{ ok: boolean }>("POST", `/api/candidates/${encodeURIComponent(id)}/reopen`),
   ingestStatus: () => get<IngestStatus>(`/api/ingest/status`),
   runIngest: (job: "daily" | "news" | "quotes" | "recompute" | "probe") => send<{ ok: boolean; job: string }>("POST", `/api/ingest/run/${job}`, {}),

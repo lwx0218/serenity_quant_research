@@ -16,11 +16,11 @@ from datetime import date, datetime, timedelta
 from .. import config
 from ..db import connect
 from . import crowding as CR
-from . import eastmoney, news, quotes, recompute
+from . import accounting, eastmoney, news, quotes, recompute
 from .schema import ensure_schema
 from .symbols import is_a_share, quotable
 
-JOBS = ("quotes", "crowding", "valuation", "news", "recompute", "daily", "probe")
+JOBS = ("quotes", "crowding", "valuation", "news", "triage", "recompute", "daily", "probe")
 
 
 def companies(conn: sqlite3.Connection) -> list[dict]:
@@ -124,6 +124,15 @@ def job_recompute(conn: sqlite3.Connection, log=print) -> dict:
 def job_news(conn: sqlite3.Connection, only: str | None = None, log=print) -> dict:
     out = news.run_news(conn, only=only, log=log)
     out["triage"] = news.retriage(conn)        # 规则可能改过：给整个池子重算一遍「值得看 / 例行」
+    out["accounting"] = accounting.account(conn)   # 新候选按规则入账 / 不算 / 交给 AI
+    return out
+
+
+def job_triage(conn: sqlite3.Connection, log=print) -> dict:
+    """对库里所有还没人判过的候选跑一遍入账规则（上线时对现有候选跑一次；之后 news 作业每次都跑）。"""
+    out = {"relevance": news.retriage(conn), **accounting.account(conn)}
+    out["summary"] = accounting.summary(conn)
+    log(f"  入账 {out['auto']} · 例行 {out['routine']} · 交给 AI {out['triage']}")
     return out
 
 
@@ -167,6 +176,7 @@ def run(job: str, *, db_path=None, full: bool = False, only: str | None = None, 
     try:
         fn = {"quotes": lambda: job_quotes(conn, full=full, log=log), "crowding": lambda: job_crowding_inputs(conn, log=log),
               "valuation": lambda: job_valuation(conn, log=log), "news": lambda: job_news(conn, only=only, log=log),
+              "triage": lambda: job_triage(conn, log=log),
               "recompute": lambda: job_recompute(conn, log=log), "daily": lambda: job_daily(conn, full=full, log=log),
               "probe": lambda: job_probe(conn, log=log)}[job]
         summary = fn()
@@ -208,7 +218,8 @@ def status(conn: sqlite3.Connection) -> dict:
         "events": {"real": events_real, "sample": events_sample},
         "candidates": {**{r["status"]: r["n"] for r in conn.execute("SELECT status, COUNT(*) AS n FROM candidates GROUP BY status")},
                        "pending_relevant": q("SELECT COUNT(*) AS n FROM candidates WHERE status='pending' AND relevance=1")["n"]},
+        "accounting": accounting.summary(conn),
         "last_news_fetch": last_news,
-        "todo_open": q("SELECT COUNT(*) AS n FROM ingest_todo WHERE status='open'")["n"],
+        "todo_open": q("SELECT COUNT(*) AS n FROM ingest_todo WHERE status='open' AND kind != 'candidate_triage'")["n"],   # 补数;候选判定在 accounting.to_ai
         "runs": runs,
     }

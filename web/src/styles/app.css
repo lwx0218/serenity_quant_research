@@ -202,6 +202,10 @@ a.row:hover .row-title, button.row:hover .row-title { color: var(--accent); }
 .ev-row.is-head { padding: 6px 0; }
 .ev-wide { grid-template-columns: 48px 56px minmax(0, 1fr) 64px 60px 44px 108px; padding: 11px 0; }
 .ev-wide.has-part { grid-template-columns: 48px 56px minmax(0, 1fr) 60px 44px 108px; }
+.ev-wide.has-act { grid-template-columns: 48px 56px minmax(0, 1fr) 64px 60px 44px 108px 36px; }
+.ev-wide.has-part.has-act { grid-template-columns: 48px 56px minmax(0, 1fr) 60px 44px 108px 36px; }
+.ev-dismiss { font-size: 12px; justify-self: end; opacity: 0; transition: opacity 0.15s; }
+.ev-wide:hover .ev-dismiss, .ev-dismiss:focus-visible { opacity: 1; }
 .ev-wide .ev-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .ev-wide .ev-sub { font-size: 12px; color: var(--muted); }
 .ev-wide .ev-part { color: var(--ink-2); }

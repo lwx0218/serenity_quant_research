@@ -266,6 +266,8 @@ def rebuild(db_path: Path = DB_PATH, seed_dir: Path = SEED_DIR, include_sample: 
             counts["ingest_leftover_keep_files"] = len(leftovers)
             for src in sources:                   # 全部倒回之后才删
                 src.unlink()
+            from .ingest.candidates import replay
+            counts.update(replay(conn))           # 事件不倒回:按已入账的候选重新写出来
             n_bars = conn.execute("SELECT COUNT(*) FROM bars").fetchone()[0]
             counts["ingest_restored_bars"] = n_bars
             if n_bars:
