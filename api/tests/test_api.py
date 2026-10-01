@@ -12,14 +12,16 @@ os.environ["SQR_DB_PATH"] = str(Path(_tmp) / "test.sqlite")
 
 from fastapi.testclient import TestClient  # noqa: E402
 
+from tests import IsolatedTestCase  # noqa: E402
 from app import config  # noqa: E402
 from app.main import app  # noqa: E402
 from app.seed import rebuild  # noqa: E402
 
 
-class ApiTests(unittest.TestCase):
+class ApiTests(IsolatedTestCase):
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         rebuild(config.DB_PATH, config.SEED_DIR)
         cls.client = TestClient(app)
 

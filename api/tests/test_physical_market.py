@@ -14,6 +14,7 @@ os.environ.setdefault("SQR_DB_PATH", str(_tmp / "unused.sqlite"))
 
 from fastapi.testclient import TestClient  # noqa: E402
 
+from tests import IsolatedTestCase  # noqa: E402
 from app import analytics as A  # noqa: E402
 from app import insights, market  # noqa: E402
 from app.db import connect  # noqa: E402
@@ -25,9 +26,10 @@ from app.seed import rebuild  # noqa: E402
 from tests.scenario_physical import AS_OF, OBJECT, build_demo_db  # noqa: E402
 
 
-class PartMarketTests(unittest.TestCase):
+class PartMarketTests(IsolatedTestCase):
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         cls.conn = build_demo_db(_tmp / "scenario.sqlite")
         app.dependency_overrides[get_conn] = lambda: cls.conn
         cls.client = TestClient(app)          # 不进 lifespan:不碰 config.DB_PATH
@@ -141,7 +143,7 @@ class PartMarketTests(unittest.TestCase):
         return self.conn.execute("SELECT id FROM events WHERE company_id=? ORDER BY date DESC LIMIT 1", (company_id,)).fetchone()["id"]
 
 
-class EmptyDatabaseTests(unittest.TestCase):
+class EmptyDatabaseTests(IsolatedTestCase):
     """服务器现在的样子:没有示例、事件为 0;没有行情时部件读数都是空的,首页结论是一句中性话。"""
 
     def test_no_events_no_bars(self):
@@ -160,7 +162,7 @@ class EmptyDatabaseTests(unittest.TestCase):
             conn.close()
 
 
-class OverviewCounterExampleTests(unittest.TestCase):
+class OverviewCounterExampleTests(IsolatedTestCase):
     """首页结论的反例只取 lead 部件自己的事件,并且方向要与结论相反(真数据评审 C)。"""
 
     @staticmethod
@@ -184,7 +186,7 @@ class OverviewCounterExampleTests(unittest.TestCase):
         self.assertIn("仕佳光子的扩产被卖出 −2.1%", t)
 
 
-class ConclusionThresholdTests(unittest.TestCase):
+class ConclusionThresholdTests(IsolatedTestCase):
     """结论行的方向由阈值决定,措辞不拿默认值冒充读数(设计预审 C)。"""
 
     ev = staticmethod(OverviewCounterExampleTests.ev)
@@ -230,7 +232,7 @@ class ConclusionThresholdTests(unittest.TestCase):
         self.assertEqual(insights.company_events([e("2026-09-25", 0.03), e("2026-09-20", -0.01)])["direction"], "neu")
 
 
-class UnitWordingTests(unittest.TestCase):
+class UnitWordingTests(IsolatedTestCase):
     def test_layer_events_unit(self):
         self.assertEqual(insights.layer_events([], "DSP")["text"], "窗口内没有落在 DSP 上的卡口事件。")
         self.assertEqual(insights.layer_events([], "硅光芯片", unit="层")["text"], "窗口内没有触及硅光芯片的卡口事件。")

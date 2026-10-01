@@ -61,16 +61,20 @@ curl http://localhost:8000/api/ingest/status        # 行情截至、多少家�
 ## 页面上怎么体现
 
 - 研究页头部一行「行情截至 · 有行情 x / 可取 y / 公司 z · 事件 真 / 示例 · 交给 AI 补」。
-- 「候选」是一行状态：入账（规则 / AI）· 交给 AI 判 · 例行 · 不算。规则 v2 在 `api/app/ingest/accounting.py::classify`
-  （规格 `docs/claude/teardown-accounting-v2.md` §1）：**规则只挡与归位，判定交 AI**。
+- 「候选」是一行状态：入账（规则 / AI）· 交给 AI 判 · 例行 · 不算。规则 v2.2 在 `api/app/ingest/accounting.py::classify`
+  （规格 `docs/claude/teardown-accounting-v2.md` §1，v2.2 见 `docs/claude/teardown-review-2026-09-29-real-data.md` §4）：**规则只挡与归位，判定交 AI**。
+  读正文：第 0 层巨潮公告标题像事件（类别动词，或套话标题「对外投资 / 重大合同 / 签订 / 中标 / 项目 / 自愿性信息披露 / 进展 …」，或活动记录表）
+  → 入账前读 PDF 正文前 1500 字写进 `candidates.summary`（`accounting.read_bodies`，要 `pypdf`；取不到也记 `body_at`，不每轮重抓，照旧交 AI 读原文）。
   挡：例行正则分硬 / 软两组（`news.py::ROUTINE_HARD` / `ROUTINE_SOFT`，英文源另有 `ROUTINE_EN`）。硬组（发行上市 / 定期报告 / 盘面汇总 / 募资置换 …）
   命中就不算；软组（使用募集资金 / 增资 / 借款 / 投资进展 / 土地使用权 / 出让合同 / 调研）在标题同时有产品词与类别动词时不挡；
   归位：公司不在这只模块的任何部件上（Meta / 微软 / 需求侧）→ 不算，否则给一个部件初判（`candidates.part_id`）；
-  强命中（公告 / 互动易 + 部件词或强产品词 + 标题有类别动词 + 类别与日期）→ 入账（decided_by=rule，confidence=3，类别取动词的）；
-  其余 → `ingest_todo`（kind=`candidate_triage`，company_id 列放候选 id）交给 AI；综合媒体标题没有部件 / 产品词的、回填没有部件 / 产品词的直接不算。
+  强命中（公告 / 互动易 + **标题**里有部件词或强产品词 + 标题有类别动词 + 类别与日期）→ 入账（decided_by=rule，confidence=3，类别取动词的）；
+  正文里的产品词不算强命中（「公司主营光模块」是公司简介），只决定交不交 AI；
+  其余 → `ingest_todo`（kind=`candidate_triage`，company_id 列放候选 id）交给 AI；综合媒体标题没有部件 / 产品词的、
+  第 0 层公告标题没有类别动词且标题 + 正文都没有部件 / 产品词的直接不算。
   交给 AI 7 天没判的待办作废（`news` 作业末尾），候选保持 pending。
 - 规则换版后第一次 `triage` 会把上一版规则判过的候选（自动入账的与判成例行的）重开重判（人判过的、AI 判过的不动），
-  版本记在 `settings.accounting_rules`（当前 v2.1）。
+  版本记在 `settings.accounting_rules`（当前 v2.2）。
 - 人工只剩「不算」：研究页卡口事件行悬停出现，`POST /api/events/{id}/dismiss`，可撤回（`/restore`）。
 - `seed --rebuild` 不倒回事件表，按已入账的候选重新写出来（人判的「不算」不会回来；部件 / thesis / confidence 跟着回来）。
 
@@ -86,9 +90,9 @@ curl -X POST http://localhost:8000/api/candidates/judge -H 'content-type: applic
 
 `is_chokepoint=true` 要给 `thesis` 与 `confidence`（1–5）；`category` / `date` / `part_id` 不给就用候选上的；候选命中多家公司时要给 `company_id`。
 规则判过的以 AI 为准（会重开再判）；人判过的不改。单条 `/confirm`、`/reject` 仍可用，也接收 `part_id / thesis / confidence`。
-活动记录表的正文：装了 `pypdf` 时抓取会把正文前 600 字补进摘要，没装就在 hint 里的原文链接读。
+公告正文：装了 `pypdf` 时入账前读正文前 1500 字进摘要（抓取时不读）；没装就在 hint 里的原文链接读。
 
-**入账 v2.1 上线步骤**（给 PI）：
+**入账 v2.1 上线步骤**（给 PI，已执行，见 `ops/reports/2026-09-29-accounting-v2.1.md`）：
 1. `git pull` → `cd web && npm run build` → 重启 uvicorn
 2. `pip install pypdf`（可选：活动记录表正文补进摘要；不装就交 AI 读原文）
 3. `python -m app.ingest triage`（第一次会把 v1 入账的 12 条和规则判成例行的重开，按 v2.1 重判）
@@ -97,11 +101,44 @@ curl -X POST http://localhost:8000/api/candidates/judge -H 'content-type: applic
 6. `python -m app.ingest recompute`
 7. 出快照（`python3 tools/snapshot/build.py --api http://127.0.0.1:8000`）推上来，执行记录写 `ops/reports/YYYY-MM-DD-*.md`
 
+**入账 v2.2 上线步骤**（给 PI；规格 `docs/claude/teardown-review-2026-09-29-real-data.md` §5）：
+0. **先量回填漏了多少**（评审 §3，必须在第 3 步 `triage` 之前跑：`triage` 会把这些规则例行的重开），数字写进报告：
+   ```sql
+   SELECT COUNT(*) FROM candidates
+    WHERE origin='backfill' AND status='rejected' AND decided_by='rule'
+      AND title NOT LIKE '%股东大会%' AND title NOT LIKE '%减持%' AND title NOT LIKE '%质押%' AND title NOT LIKE '%回购%'
+      AND title NOT LIKE '%激励%' AND title NOT LIKE '%审计%' AND title NOT LIKE '%问询%' AND title NOT LIKE '%年度报告%'
+      AND title NOT LIKE '%季度报告%' AND title NOT LIKE '%半年度报告%' AND title NOT LIKE '%业绩%'
+      AND (title LIKE '%对外投资%' OR title LIKE '%重大合同%' OR title LIKE '%签订%' OR title LIKE '%中标%'
+           OR title LIKE '%投资建设%' OR title LIKE '%项目%' OR title LIKE '%自愿性%' OR title LIKE '%产线%'
+           OR title LIKE '%投产%' OR title LIKE '%扩产%' OR title LIKE '%出货%');
+   ```
+1. `git pull` → `cd web && npm run build` → 重启 uvicorn（`pypdf` 已装；没装的话 `pip install pypdf`，否则读不了正文，套话标题全部交 AI）
+2. v2 之前经旧 `/confirm` 入的 5 条按 v2.1 标准重判（评审 §5.2，`POST /api/candidates/judge`，已入账的会先重开）
+3. `python -m app.ingest triage`：换版重判（v2.1 规则判过的入账与例行全部重开）+ 读正文 + 分流。**这一步就是「对回填候选重跑读正文」**，
+   不用另跑命令；套话标题的公告每条下载一份 PDF，预计几千条、一小时上下，日志每 50 条报一次进度，期间持有 ingest.lock
+4. 判新一批 `candidate_triage` 待办（预计几百条，分批 ≤ 200，7 天内判完），`POST /api/candidates/judge` 交回
+5. `python -m app.ingest recompute`
+6. 出快照推上来，报告写 `ops/reports/YYYY-MM-DD-*.md`，加一行**真事件数（AI 判算的 + 规则入账的）与按部件的分布**：
+   ```bash
+   cd api && python - <<'PY'
+   from collections import Counter
+   from app import market
+   from app.db import connect
+   evs = market.list_events(connect(), limit=100000)          # 已排除人判「不算」的
+   real = [e for e in evs if not e["is_sample"]]              # 只算真事件，不算示例
+   print(len(real), Counter((e["part"] or {}).get("part_name") for e in real).most_common())
+   PY
+   ```
+
 回填可靠性：每页独立提交候选（尚不代表事件入账），日志在请求前和提交后输出公司 / 月份 / 页码 / 耗时，重定向也立即刷新。
 后页失败或进程中断不会撤销已提交页；存储失败直接终止，不伪装成网络失败。`fetch.complete=false` 表示某些月份失败、熔断或达到页数上限，
 作业 `ok=false`，具体位置在 `fetch.failures` / `last_position`。`fetched` / `tagged` 是本次扫描去重后的计数，`new` 才是新增入库数；重跑可能 fetched 非零而 new 为零。
 恢复时用原区间重跑，按 URL 幂等去重并保留既有判定；**这是幂等重扫，不是持久游标断点续传**。异常中断后的候选可先执行 `triage`，再恢复抓取。
-CLI 的 Ctrl-C / SIGTERM 会收尾自己的作业记录；SIGKILL、断电仍可能留下未完成记录，不能据此认定仍在运行，也不能把其他未完成作业一律标死。
+单条公告缺 PDF 链接或标题：跳过并计数（`fetch.skipped`，`fetch.failures` 里按条记 `kind: item`），整页照常提交，不影响 `complete`。
+CLI 的 Ctrl-C / SIGTERM 会收尾自己的作业记录。SIGKILL、断电、工具超时留下的未完成记录由下一次作业启动时收尾：`finished_at` 为空、
+且「同一 job」或「`started_at` 早于 12 小时」的 run 记 `ok=0, error='中断未收尾（进程被杀或超时）'`（作业由 ingest.lock 串行，
+同一 job 的新 run 能开始就说明旧的已经死了；别的 job 12 小时内的不动）。
 - 建库不带 `--no-sample` 时，样例事件仍在但标着示例；真行情一进来 series / 拥挤度 / 估值就全换成真的（`sample=0`），页脚「示例」自动消失。
 
 ## 表

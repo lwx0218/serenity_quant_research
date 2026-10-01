@@ -2,12 +2,16 @@
 so a fresh database can always be rebuilt from the seed files."""
 from __future__ import annotations
 
+import os
 import sqlite3
+import sys
+import tempfile
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
 
-from .config import DB_PATH
+from . import config
+from .config import DB_PATH, DEFAULT_DB_PATH
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS nodes (
@@ -177,7 +181,27 @@ CREATE TABLE IF NOT EXISTS verifications (
 """
 
 
-def connect(path: Path | str = DB_PATH) -> sqlite3.Connection:
+def _testing() -> bool:
+    """在跑测试:pytest 跑用例时设 PYTEST_CURRENT_TEST;tests/__init__.py 设 SQR_TESTING(unittest 也走这里);
+    或是 `python -m unittest`。"""
+    return bool(os.environ.get("PYTEST_CURRENT_TEST") or os.environ.get("SQR_TESTING")
+                or (sys.argv[:1] == ["python -m unittest"]))          # unittest 的 __main__ 把 argv[0] 设成这一串
+
+
+def _guard_test_path(path: Path | str) -> None:
+    """测试里只许连临时库:默认库路径、临时目录之外的路径(服务器上 SQR_DB_PATH 指的生产库)一律抛错。
+    09-29 PI 在生产机跑单测时误写了生产库(events 18 → 39),这是那次的硬防线。"""
+    if not _testing() or str(path) == ":memory:":
+        return
+    p = Path(path).resolve()
+    if p == DEFAULT_DB_PATH.resolve() or not p.is_relative_to(Path(tempfile.gettempdir()).resolve()):
+        raise RuntimeError(f"测试环境只能连临时库,拒绝连接 {p}")
+
+
+def connect(path: Path | str | None = None) -> sqlite3.Connection:
+    """path 不给就用 config.DB_PATH(调用时读,测试能换)。"""
+    path = config.DB_PATH if path is None else path
+    _guard_test_path(path)
     conn = sqlite3.connect(str(path), check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")

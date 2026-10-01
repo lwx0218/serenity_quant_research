@@ -7,7 +7,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SEED_DIR = Path(os.environ.get("SQR_SEED_DIR", REPO_ROOT / "data" / "seeds" / "cpo"))
-DB_PATH = Path(os.environ.get("SQR_DB_PATH", REPO_ROOT / "data" / "sqr.sqlite"))
+DEFAULT_DB_PATH = REPO_ROOT / "data" / "sqr.sqlite"
+DB_PATH = Path(os.environ.get("SQR_DB_PATH", DEFAULT_DB_PATH))
 WEB_DIST = Path(os.environ.get("SQR_WEB_DIST", REPO_ROOT / "web" / "dist"))
 NOTES_DIR = Path(os.environ.get("SQR_NOTES_DIR", REPO_ROOT / "data" / "notes"))
 

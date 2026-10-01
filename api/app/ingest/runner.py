@@ -136,7 +136,7 @@ def job_recompute(conn: sqlite3.Connection, log=print) -> dict:
 def job_news(conn: sqlite3.Connection, only: str | None = None, log=print) -> dict:
     out = news.run_news(conn, only=only, log=log)
     out["triage"] = news.retriage(conn)        # 规则可能改过：给整个池子重算一遍「值得看 / 例行」
-    out["accounting"] = accounting.account(conn)   # 新候选按规则入账 / 不算 / 交给 AI
+    out["accounting"] = accounting.account(conn, log=log)   # 新候选按规则入账 / 不算 / 交给 AI
     out["expired"] = accounting.expire_triage(conn)   # 交给 AI 7 天没判的待办作废，候选保持 pending
     return out
 
@@ -145,7 +145,7 @@ def job_triage(conn: sqlite3.Connection, log=print) -> dict:
     """对库里所有还没人判过的候选跑一遍入账规则（上线时对现有候选跑一次；之后 news 作业每次都跑）。
     规则换版后第一次跑时，上一版规则自动入账的先重开，按这一版重判（人判过的不动）。"""
     rejudged = accounting.rejudge(conn)
-    out = {"rejudged": rejudged, "relevance": news.retriage(conn), **accounting.account(conn)}
+    out = {"rejudged": rejudged, "relevance": news.retriage(conn), **accounting.account(conn, log=log)}
     out["summary"] = accounting.summary(conn)
     log(f"  重判 {rejudged} · 入账 {out['auto']} · 例行 {out['routine']} · 交给 AI {out['triage']}")
     return out
@@ -159,7 +159,7 @@ def job_backfill(conn: sqlite3.Connection, since: str | None = None, until: str 
         raise ValueError(f"since {since} 晚于 until {until}")
     out = {"fetch": news.backfill(conn, since, until, log=log)}
     out["relevance"] = news.retriage(conn)
-    out["accounting"] = accounting.account(conn)
+    out["accounting"] = accounting.account(conn, log=log)
     out["backfill"] = {r["status"]: r["n"] for r in conn.execute(
         "SELECT status, COUNT(*) AS n FROM candidates WHERE origin='backfill' GROUP BY status")}
     out["summary"] = accounting.summary(conn)
@@ -196,12 +196,30 @@ def job_daily(conn: sqlite3.Connection, full: bool = False, log=print) -> dict:
 
 
 # ------------------------------------------------------------------ run with log
+STALE_RUN_HOURS = 12
+STALE_RUN_ERROR = "中断未收尾（进程被杀或超时）"
+
+
+def close_stale_runs(conn: sqlite3.Connection, job: str, now: datetime | None = None) -> int:
+    """作业启动时收尾挂着的 run(finished_at 为空):同一个 job 的——作业由 ingest.lock 串行,同一 job 的新 run 能开始,
+    旧的就已经死了;别的 job 的,started_at 早于 12 小时才收(可能还有别的 job 正在跑,不一律标死)。"""
+    now = now or datetime.now()
+    cur = conn.execute("UPDATE ingest_runs SET finished_at=?, ok=0, error=? WHERE finished_at IS NULL AND (job=? OR started_at < ?)",
+                       (now.isoformat(timespec="seconds"), STALE_RUN_ERROR, job,
+                        (now - timedelta(hours=STALE_RUN_HOURS)).isoformat(timespec="seconds")))
+    conn.commit()
+    return cur.rowcount
+
+
 def run(job: str, *, db_path=None, full: bool = False, only: str | None = None, since: str | None = None,
         until: str | None = None, log=progress_log) -> dict:
     if job not in JOBS:
         raise ValueError(f"unknown job {job!r}; one of {JOBS}")
     conn = connect(db_path or config.DB_PATH)
     ensure_schema(conn)
+    stale = close_stale_runs(conn, job)
+    if stale:
+        log(f"收尾 {stale} 条中断未收尾的 run")
     started = datetime.now().isoformat(timespec="seconds")
     cur = conn.execute("INSERT INTO ingest_runs (job, started_at) VALUES (?, ?)", (job, started))
     run_id = cur.lastrowid

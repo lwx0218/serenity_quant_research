@@ -14,13 +14,16 @@
 - **Cowork**：评审（代码、真数据、设计层）、画布方向稿、写规格；不能 push，规格以 `docs/claude/*.md` 交给 CC。
 
 ## 当前基线
-- GitHub `physical-first`：入账 v2.1（见下）+ 预审 C 剩余 + AGENTS.md 换成 09-29 版（愿景 / 验收标准 / 刚刚好）
+- GitHub `physical-first`：**入账 v2.2**（读正文 + 过程修复，见待做 1）+ 入账 v2.1 + 预审 C 剩余 + AGENTS.md 换成 09-29 版（愿景 / 验收标准 / 刚刚好）
   + 合并 `pi/backfill-fixes`（de76110：回填逐页提交、CLI 的 Ctrl-C / SIGTERM 收尾自己的 run、`tests/__init__.py` 测试隔离；
   CC 验证：`SQR_DB_PATH` 指向一个「生产」库跑全套 pytest / unittest，库文件哈希不变）。
   PI 的 v2.1 执行记录：`ops/reports/2026-09-29-accounting-v2.1.md`（真事件 7 条；回填新增候选 8943，规则入账 1 · 例行 8940 · 交 AI 2）。main 留着 tag `v1.0-teardown-reboot`，未分叉；合并到 main 要 Faye 点头。
 - 服务器（09-29 16:45）：行情 140 / 144 家，截至 09-29；融资 72、估值 73；序列 164 条（含部件篮子）；候选 423 = 规则入账 12 · 例行 365 · 交 AI 46；事件 12（全是噪声，见下）。4 家行情缺口（北交所 920045 / 920060 / 920179 + 台燿 6274.TWO）。
 - 证据层：17 部件、211 条映射、158 家公司、244 条来源（verified 158 · consensus 38 · candidate 15）；反向扫描全集 200 家在 `physical/data/coverage-1.6t-dr8-siph.json`。
-- 已知问题：互动易 405（源停用）、9 个 RSS 停用（`news_sources.json` enabled:false）、东财长窗口断连（已分段）、run 41 中断未收尾（runner 启动时应把上一条 NULL 的 run 标 failed）。
+- 进度三个数（评审 `teardown-review-2026-09-29-real-data.md` §2）：真事件 **3**（库里 7，3 条是 v2 之前 AI 判的噪声、1 条边缘）· 有效力的部件 **0** · 首页结论因果 **不成立**。
+- 回填漏了多少（评审 §3 的 SQL，PI 在服务器上 v2.2 `triage` 之前跑）：**待 PI 回填数字**。
+- 已知问题：互动易 405（源停用）、9 个 RSS 停用（`news_sources.json` enabled:false）、东财长窗口断连（已分段）。
+  run 41、48 中断未收尾：v2.2 起下一次作业启动时自动收尾（规则见待做 1）。
 
 ## 真数据评审结论（Cowork 09-29，快照 56cb689）
 后半段通了：部件篮子（5–25 家）、7 天 / 3 个月读数、20 日分位、反应、共振、结论句在真数据上全部算出且内部一致。前半段错了：规则自动入账的 12 条没有一条是这只模块的卡口事件（募资类公告 + Meta / 微软 / TSMC / NVIDIA 泛新闻），真正像卡口事件的在「交 AI」的 46 条里。「够不够直接」现在答不了——事件层还没给出一条真信号。修法是入账规则的设计：**规则只挡与归位，判定交 AI，历史回填凑样本**，规格见 `teardown-accounting-v2.md`。
@@ -40,8 +43,22 @@
    另把「使用部分募集资金」一并算软组）在标题同时有产品词（强产品词或部件词）与类别动词时不挡——「关于使用募集资金投资建设 1.6T 硅光模块产线的公告」→ 自动入账 · 扩产；
    换版时 `rejudge` 把规则判成例行的（`status='rejected' AND decided_by='rule'`）也重开重跑；`categorize()` 英文关键词按整词匹配（`\b` + ASCII，带可选复数 s），
    fab / order 不再撞 fabric / border。对 09-29 那 46 条交 AI 的真候选分流不变（例行 25 · 交 AI 21）；东财 14 条原先靠英文子串拿到类别的会在下次抓取时失去类别（多为噪声）。
-2. **PI**：pull → build → 重启 → `pip install pypdf`（可选）→ `triage`（第一次会把 v1 入账的 12 条重开重判）→ `backfill --since 2025-10-01 --until 2026-09-29`
-   → 读 `/api/ingest/todo` 判候选，`POST /api/candidates/judge` 交回 → `recompute` → 出快照、写 `ops/reports/`。（`ops/README.md` 有逐条命令）
+   **入账 v2.2（10-01，`RULES_VERSION = "v2.2"`，评审 §4）**：
+   - 读正文：第 0 层巨潮公告标题像事件（类别动词 / `GENERIC_EVENT_TITLE` 套话 / 活动记录表）→ 入账前读 PDF 正文前 1500 字进 `summary`；
+     `relevance_of` 对这类标题给 1，且例行词只看标题（正文里「无需提交股东大会审议」不再让它变 0）；产品词看标题 + 正文，自动入账只认标题；
+     删掉「回填没有产品词 → 例行」，改成第 0 层「标题无动词且正文无产品词 → 例行」；提示词补「产品族就算 / 不要求点名本型号或 NVIDIA」「募资公告里的建设项目按扩产判」。
+   - 与规格的出入：正文不在抓取时读、统一在入账前读（抓取时连活动记录表也不读了，回填逐页提交不被 PDF 下载拖慢）；新增 `candidates.body_at`
+     记读过正文（取不到也记，不每轮重抓；没装 pypdf 时不记，装上后再读）；「标题无动词且正文无产品词 → 例行」只用于第 0 层（英文行业媒体标题没有中文动词，
+     套上会全部例行）；第 0 层标题既非事件套话又无动词的（如「获得发明专利证书」）现在直接例行，v2.1 是交 AI；标题像事件但正文没取到的照旧交 AI。
+   - 测试隔离（硬要求）：`tests/__init__.py` 设 `SQR_TESTING=1`；`app.db.connect()` 在测试环境（`SQR_TESTING` / `PYTEST_CURRENT_TEST` / `python -m unittest`）
+     只许连临时目录里的库，默认库与临时目录外的库（服务器上的生产库）一律在建文件前抛错——比规格「默认库路径抛错」更严，因为 09-29 误写的是 env 指的生产库；
+     所有用例继承 `tests.IsolatedTestCase`，setUpClass / setUp 先确认 `SQR_DB_PATH` 与 `config.DB_PATH` 在临时目录，不在就换成新的临时文件；
+     `connect()` 不给路径时在调用时读 `config.DB_PATH`。CC 验证：临时目录外放一个「生产」库，带着 `SQR_DB_PATH` 跑全套 pytest / unittest，哈希不变。
+   - runner 收尾（Owner 定）：作业启动时把 `finished_at` 为空、且「同一 job」或「`started_at` 早于 12 小时」的 run 记 `ok=0, error='中断未收尾（进程被杀或超时）'`；
+     别的 job 12 小时内的不动。
+   - 回填：单条公告缺 PDF 链接或标题 → 跳过并计数（`fetch.skipped`，`fetch.failures` 按条记 `kind: item`），整页不算失败、不影响 `complete`。
+2. **PI**（v2.2，`ops/README.md` 有逐条命令）：先跑评审 §3 的 SQL（必须在 `triage` 之前）→ pull → build → 重启 → 重判 v2 之前的 5 条（评审 §5.2）
+   → `triage`（换版重判 + 读正文，预计一小时上下）→ 判新一批 AI 待办（分批 ≤ 200，7 天内）→ `recompute` → 快照 + 报告（真事件数与按部件分布）。
 3. **CC**：回填出 50 条以上真事件后做 `teardown-accounting-v2.md` §4（效力到部件级 + 部件篮子页）→ 预审 D → 预审 A。
 4. **Cowork**：拿到新快照后再做一次真数据评审，回答「够不够直接」。
 5. 互动易接口换新；4 家行情缺口（PI 从网页端 upload）。
@@ -51,9 +68,9 @@
 ## 从哪里读起
 1. `physical/README.md`（目录、schema 0.3、证据级规则、篮子规则）
 2. `ops/README.md`（部署、cron、给 PI 的候选判定与重建步骤）
-3. `ops/reports/`（服务器每次执行的记录，最新 `2026-09-29-rebuild-and-accounting.md`）
+3. `ops/reports/`（服务器每次执行的记录，最新 `2026-09-29-accounting-v2.1.md`）
 4. `api/app/ingest/accounting.py`（入账规则）、`news.py::relevance_of`、`api/tests/test_ingest.py`
-5. `docs/claude/teardown-accounting-v2.md`、`docs/claude/teardown-design-review-2026-09-29.md`
+5. `docs/claude/teardown-accounting-v2.md`、`docs/claude/teardown-review-2026-09-29-real-data.md`（v2.2）、`docs/claude/teardown-design-review-2026-09-29.md`
 6. 画布「Teardown 实物剖面 · 1.6T 光模块」（Claude Design，方向稿）
 
 ## 工具

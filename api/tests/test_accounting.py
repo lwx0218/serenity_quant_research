@@ -16,6 +16,7 @@ os.environ["SQR_DB_PATH"] = str(_tmp / "unused.sqlite")
 
 from fastapi.testclient import TestClient  # noqa: E402
 
+from tests import IsolatedTestCase  # noqa: E402
 from app import market  # noqa: E402
 from app.db import connect  # noqa: E402
 from app.deps import get_conn  # noqa: E402
@@ -82,8 +83,9 @@ MORE = {
 POOL = {**REAL, **MORE}
 
 
-class AccountingV2Tests(unittest.TestCase):
+class AccountingV2Tests(IsolatedTestCase):
     def setUp(self):
+        super().setUp()
         self.db = Path(tempfile.mkdtemp()) / "sqr.sqlite"
         rebuild(self.db, include_sample=False)
         self.conn = connect(self.db)
@@ -91,6 +93,9 @@ class AccountingV2Tests(unittest.TestCase):
             upload(self.conn, "bars", cid, [{"date": f"2026-09-{d:02d}", "close": 100 + d + len(cid) % 3} for d in (17, 18, 21, 22, 23, 24, 25)])
         recompute.recompute_all(self.conn)                                           # 行情 → 序列(生产上是 daily 作业做的)
         news.store(self.conn, [c for c, _ in POOL.values()])
+        # 测试不出网:默认当作服务器没装 pypdf(读不了正文);要读正文的用例自己打开并给出正文
+        nopdf = mock.patch.object(news, "can_read_pdf", return_value=False)
+        nopdf.start(); self.addCleanup(nopdf.stop)
 
     def tearDown(self):
         app.dependency_overrides.pop(get_conn, None)
@@ -207,7 +212,7 @@ class AccountingV2Tests(unittest.TestCase):
         self.assertEqual((r["status"], r["decided_by"], r["category"]), ("confirmed", "rule", "capex"))
         self.assertEqual(self._row("sy-zengzi")["status"], "rejected")                 # 其余照旧
         self.assertEqual(self.conn.execute("SELECT value FROM settings WHERE key='accounting_rules'").fetchone()[0], ACC.RULES_VERSION)
-        self.assertEqual(ACC.RULES_VERSION, "v2.1")
+        self.assertEqual(ACC.RULES_VERSION, "v2.2")
 
     # ---------------------------------------------------------------- §2 AI 交回
     def test_judge_batch_true_false_error(self):
@@ -293,47 +298,106 @@ class AccountingV2Tests(unittest.TestCase):
 
         pages = {
             ("中际旭创", "2026-07-01", 1): {"announcements": [
-                ann("a1", "中际旭创：关于投资建设1.6T硅光模块产线的公告", "2026-07-06"),             # 强命中 → 入账
+                ann("a1", "中际旭创：关于投资建设1.6T硅光模块产线的公告", "2026-07-06"),             # 标题强命中 → 入账
                 ann("a2", "中际旭创：2026年半年度报告摘要", "2026-07-20"),                           # 例行
-                ann("a3", "中际旭创：关于签订日常经营重大合同的公告", "2026-07-21")], "hasMore": True},  # 回填没有产品词 → 例行
+                ann("a3", "中际旭创：关于签订日常经营重大合同的公告", "2026-07-21"),                 # 套话标题,正文有 1.6T → 交 AI
+                {"announcementId": "bad", "announcementTitle": "", "adjunctUrl": "finalpage/x.PDF"}], "hasMore": True},   # 缺标题:跳过并计数
             ("中际旭创", "2026-07-01", 2): {"announcements": [
-                ann("a4", "中际旭创：关于硅光产品研发进展的自愿性信息披露公告", "2026-07-28"),        # 有产品词没动词 → 交 AI
+                ann("a4", "中际旭创：关于硅光产品研发进展的自愿性信息披露公告", "2026-07-28"),        # 已在池里(定时抓取先抓到)
                 ann("a5", "新易盛：关于投资建设光模块产线的公告", "2026-07-29", code="300502")], "hasMore": False},   # 别家的,不要
             ("中际旭创", "2026-08-01", 1): {"announcements": [
                 ann("a6", "中际旭创：投资者关系活动记录表", "2026-08-12"),                           # 没取到正文 → 交 AI 读原文
+                ann("a7", "中际旭创：关于对外投资的公告", "2026-08-13"),                             # 正文是理财 → 例行
+                ann("a8", "中际旭创：关于对外投资设立子公司的公告", "2026-08-14"),                   # 正文有硅光 → 交 AI
                 ann("a1", "中际旭创：关于投资建设1.6T硅光模块产线的公告", "2026-07-06")], "totalpages": 1},
         }
-        calls = []
+        bodies = {"a3": "公司与客户签订日常经营重大合同,标的为 1.6T 光模块,合同金额 12 亿元。",
+                  "a7": "公司拟使用自有闲置资金购买银行理财产品,额度不超过 5 亿元。",
+                  "a8": "子公司主营硅光芯片的研发与封测,注册资本 2 亿元。",
+                  "a1": "公司拟投资建设 1.6T 硅光模块产线。"}
+        calls, read = [], []
 
         def fake(url, params=None, **kw):
             calls.append((params["searchkey"], params["sdate"], params["edate"], params["pageNum"]))
             return pages.get((params["searchkey"], params["sdate"], params["pageNum"]), {"announcements": [], "totalAnnouncement": 0})
 
+        def body(url, limit=1500):
+            read.append(url)
+            return bodies.get(url.rsplit("/", 1)[-1].split(".")[0])
+
         live = cand("live-a4", "中际旭创：关于硅光产品研发进展的自愿性信息披露公告", category="roadmap", date="2026-07-28",
                     url="http://static.cninfo.com.cn/finalpage/2026-07-28/a4.PDF")
         news.store(self.conn, [live])                                                  # 定时抓取先抓到的,回填不改它的 origin
         with mock.patch.object(news.http, "get_json", side_effect=fake), mock.patch.object(news, "BACKFILL_PAUSE", 0), \
-                mock.patch.object(news, "announcement_text", return_value=None):
+                mock.patch.object(news, "can_read_pdf", return_value=True), mock.patch.object(news, "announcement_text", side_effect=body):
             out = runner.job_backfill(self.conn, since="2026-07-01", until="2026-08-31", log=lambda *_: None)
         self.assertIn(("中际旭创", "2026-07-01", "2026-07-31", 2), calls)
         self.assertNotIn(("中际旭创", "2026-07-01", "2026-07-31", 3), calls)            # hasMore=false 就停
-        self.assertEqual(out["fetch"]["segments"], 2)
-        self.assertEqual((out["fetch"]["fetched"], out["fetch"]["new"], out["fetch"]["merged"]), (5, 4, 0))   # a5 别家、a1 重复;a4 已在池里
-        self.assertEqual(out["fetch"]["companies_failed"], 0)
+        f = out["fetch"]
+        self.assertEqual(f["segments"], 2)
+        self.assertEqual((f["fetched"], f["new"], f["merged"]), (7, 6, 0))              # a5 别家、a1 重复;a4 已在池里
+        self.assertEqual((f["skipped"], f["segments_failed"], f["complete"]), (1, 0, True))   # 缺标题那条按条记,整页不算失败
+        self.assertEqual([(x["kind"], x["error"]) for x in f["failures"]], [("item", "缺标题")])
         rows = {r["title"].split("：", 1)[1]: dict(r) for r in self.conn.execute("SELECT * FROM candidates WHERE origin='backfill'")}
         self.assertEqual({k: (r["status"], r["decided_by"]) for k, r in rows.items()}, {
             "关于投资建设1.6T硅光模块产线的公告": ("confirmed", "rule"),
             "2026年半年度报告摘要": ("rejected", "rule"),
-            "关于签订日常经营重大合同的公告": ("rejected", "rule"),
+            "关于签订日常经营重大合同的公告": ("pending", None),
             "投资者关系活动记录表": ("pending", None),
+            "关于对外投资的公告": ("rejected", "rule"),
+            "关于对外投资设立子公司的公告": ("pending", None),
         })
-        self.assertEqual(rows["关于签订日常经营重大合同的公告"]["decided_note"], "回填,没有部件 / 产品词")
-        self.assertEqual(out["backfill"], {"confirmed": 1, "rejected": 2, "pending": 1})
-        self.assertEqual((out["summary"]["backfill"], out["summary"]["backfill_accounted"]), (4, 1))
+        self.assertIn("1.6T 光模块", rows["关于签订日常经营重大合同的公告"]["summary"])     # 正文写进 summary
+        self.assertIn("产品词只在正文里", self.conn.execute("SELECT reason FROM ingest_todo WHERE company_id=?",
+                                                       (rows["关于签订日常经营重大合同的公告"]["id"],)).fetchone()[0])
+        self.assertEqual(rows["关于对外投资的公告"]["decided_note"], "标题没有类别动词,正文也没有部件 / 产品词")
+        self.assertIn("没取到正文", self.conn.execute("SELECT reason FROM ingest_todo WHERE company_id=?",
+                                                  (rows["投资者关系活动记录表"]["id"],)).fetchone()[0])
+        self.assertIsNotNone(rows["投资者关系活动记录表"]["body_at"])                      # 取不到也记,不每轮重抓
+        self.assertFalse(any("a2" in u for u in read))                                   # 例行标题不读正文
+        self.assertEqual(out["backfill"], {"confirmed": 1, "rejected": 2, "pending": 3})
+        self.assertEqual((out["summary"]["backfill"], out["summary"]["backfill_accounted"]), (6, 1))
         a4 = dict(self.conn.execute("SELECT * FROM candidates WHERE id=?", (live["id"],)).fetchone())
         self.assertEqual((a4["origin"], a4["status"], a4["also_reported_by"]), ("live", "pending", "[]"))   # 同一个源再抓一遍不算第二家
         e = market.get_event(self.conn, rows["关于投资建设1.6T硅光模块产线的公告"]["event_id"])
         self.assertEqual((e["date"], e["category"]), ("2026-07-06", "capex"))
+        n = len(read)
+        with mock.patch.object(news, "can_read_pdf", return_value=True), mock.patch.object(news, "announcement_text", side_effect=body):
+            ACC.account(self.conn)
+        self.assertEqual(len(read), n)                                                   # 读过的(包括没取到的)不再读
+
+    def test_v22_body_rules(self):
+        """评审 §4.1 的三条:套话标题 + 正文决定去向;正文里的产品词不够自动入账。"""
+        bodies = {"c1": "本合同标的为 1.6T 光模块,合同金额 3 亿元。", "c2": "拟投资设立硅光芯片子公司。", "c3": "使用闲置自有资金购买理财产品。"}
+        items = [cand("c1", "关于签订日常经营重大合同的公告", category="order", url="http://static.cninfo.com.cn/finalpage/c1.PDF"),
+                 cand("c2", "关于对外投资的公告", category=None, url="http://static.cninfo.com.cn/finalpage/c2.PDF"),
+                 cand("c3", "关于对外投资的公告(二)", category=None, url="http://static.cninfo.com.cn/finalpage/c3.PDF")]
+        for it in items:                                                                  # 和抓取一样打 relevance
+            it["relevance"] = news.relevance_of({"type": "cninfo_announcement"}, it["title"], it["category"], [], title=it["title"])
+        self.assertEqual([it["relevance"] for it in items], [1, 1, 1])                   # 套话标题不再因为没类别词判 0
+        news.store(self.conn, items)
+        with mock.patch.object(news, "can_read_pdf", return_value=True), \
+                mock.patch.object(news, "announcement_text", side_effect=lambda url, limit=1500: bodies.get(url.rsplit("/", 1)[-1][:2])):
+            ACC.account(self.conn)
+        st = {it["key"]: tuple(self.conn.execute("SELECT status, decided_by FROM candidates WHERE id=?", (it["id"],)).fetchone())
+              for it in [dict(x, key=k) for x, k in zip(items, ("c1", "c2", "c3"))]}
+        self.assertEqual(st, {"c1": ("pending", None), "c2": ("pending", None), "c3": ("rejected", "rule")})
+        self.assertIsNotNone(self.conn.execute("SELECT 1 FROM ingest_todo WHERE company_id=? AND status='open'", (items[0]["id"],)).fetchone())
+        # 读不了正文(没装 pypdf):套话标题照旧交 AI 读原文,不判例行
+        it = cand("c4", "关于对外投资的公告(三)", category=None, url="http://static.cninfo.com.cn/finalpage/c4.PDF")
+        news.store(self.conn, [it])
+        ACC.account(self.conn)
+        self.assertEqual(self.conn.execute("SELECT status FROM candidates WHERE id=?", (it["id"],)).fetchone()[0], "pending")
+        # 正文里的硬例行词不让 relevance 变 0(「无需提交股东大会审议」是正文常见句)
+        self.assertEqual(news.relevance_of({"type": "cninfo_announcement"}, "关于签订日常经营重大合同的公告 本合同无需提交股东大会审议",
+                                           "order", [], title="关于签订日常经营重大合同的公告"), 1)
+
+    def test_hint_calibration(self):
+        ACC.account(self.conn)
+        hint = self._todo("mingpu-lpo")["hint"]
+        self.assertIn("只要包含这个部件所属的产品族就算", hint)
+        self.assertIn("不要求点名本型号或 NVIDIA", hint)
+        self.assertIn("募资公告里明确的建设项目本身按扩产判", hint)
 
     def test_backfill_breaker_and_segments(self):
         self.assertEqual(news.month_segments("2025-10-15", "2026-01-10"),

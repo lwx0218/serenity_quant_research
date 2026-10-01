@@ -16,6 +16,7 @@ from unittest import mock
 _tmp = tempfile.mkdtemp()
 os.environ["SQR_DB_PATH"] = str(Path(_tmp) / "ingest.sqlite")
 
+from tests import IsolatedTestCase  # noqa: E402
 from app import insights, market  # noqa: E402
 from app.db import connect  # noqa: E402
 from app.ingest import candidates as C  # noqa: E402
@@ -40,7 +41,7 @@ YAHOO = {"chart": {"result": [{"meta": {"gmtoffset": -14400}, "timestamp": _TS,
 STOOQ = "Date,Open,High,Low,Close,Volume\n2026-09-10,170,172,169,171,100000000\n2026-09-11,171,173,170,172.5,120000000\n"
 
 
-class ParserTests(unittest.TestCase):
+class ParserTests(IsolatedTestCase):
     def test_eastmoney_kline(self):
         with mock.patch.object(quotes.http, "get_json", return_value=EM_KLINE):
             rows = quotes.fetch_eastmoney("0.300308", date(2026, 9, 1))
@@ -97,9 +98,10 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(news.categorize("公司拟投资建设泰国封测产线", spec["categories"]), "capex")
 
 
-class PipelineTests(unittest.TestCase):
+class PipelineTests(IsolatedTestCase):
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         rebuild(Path(os.environ["SQR_DB_PATH"]))
         cls.conn = connect(os.environ["SQR_DB_PATH"])
         ensure_schema(cls.conn)
@@ -234,7 +236,7 @@ class PipelineTests(unittest.TestCase):
         conn.close()
 
 
-class RebuildRenameTests(unittest.TestCase):
+class RebuildRenameTests(IsolatedTestCase):
     """服务器库是旧种子建的(则成电子还是 cn.837821):重建时接入层数据要跟着改名走,对不上的行跳过而不是让重建失败。"""
 
     def test_rebuild_carries_renamed_company_and_skips_orphans(self):
@@ -264,7 +266,7 @@ class RebuildRenameTests(unittest.TestCase):
             c.close()
 
 
-class RebuildLeftoverKeepTests(unittest.TestCase):
+class RebuildLeftoverKeepTests(IsolatedTestCase):
     """服务器的真实处境:上一次重建在倒回时失败,库里没有接入数据,接入数据只在 data/<库名>.ingest-keep.sqlite 里。
     再跑一次重建不能先把这个 keep 删掉(那样数据就没了),要把它当作来源倒回。"""
 

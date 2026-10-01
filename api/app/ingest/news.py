@@ -52,6 +52,9 @@ OPTICAL_CONTEXT = re.compile(r"光模块|光通信|光器件|光电|光芯片|�
 # 「投资建设 1.6T 硅光产线」数成技术路线),自动入账时以它为准
 CATEGORY_VERBS = re.compile(r"(?P<capex>投资建设|新建|扩建|产线|投产)|(?P<order>签订.*?合同|中标|框架协议|供货协议)|"
                             r"(?P<qualification>批量出货|小批量|送样|通过.*?认证|导入)|(?P<price>涨价|提价|调价)")
+# A 股公告的套话标题:「关于对外投资的公告」「关于签订日常经营重大合同的公告」——标题里没有产品词,事件在正文里。
+# 命中的第 0 层公告不因没有类别词判例行,入账前先读正文(accounting.read_bodies)
+GENERIC_EVENT_TITLE = re.compile(r"对外投资|重大合同|日常经营.*?合同|签订|中标|投资建设|项目|自愿性信息披露|进展|投产|产线|出货|送样|认证|导入")
 STRONG_TERMS = re.compile(r"1\.6T|3\.2T|硅光|光模块|CPO|LPO|CW\s*光源|CW\s*激光|EML|DR8|OSFP|光引擎|FAU|MPO|光芯片|投产|扩产|中标|框架协议|供货协议|1\.6t|silicon photonics|transceiver", re.I)
 SOURCE_KIND = {"cninfo_announcement": "announcement", "cninfo_irm": "irm", "rss": "news", "upload": "news"}
 
@@ -198,12 +201,21 @@ def _cninfo_item(a: dict, rec: dict) -> dict | None:
     ts = a.get("announcementTime")
     title = re.sub(r"<[^>]+>", "", a.get("announcementTitle", ""))
     url = "http://static.cninfo.com.cn/" + a.get("adjunctUrl", "")
-    summary = announcement_text(url) if IR_RECORD in title else None      # 活动记录表:标题没信息,补正文前 600 字
-    return {"title": title, "url": url, "summary": summary or "",
+    # 正文不在抓取时读:入账前统一读(accounting.read_bodies),只读标题像事件、且没被例行挡掉的
+    return {"title": title, "url": url, "summary": "",
             "date": datetime.fromtimestamp(ts / 1000).isoformat() if ts else "", "_company": rec["companyId"]}
 
 
-def announcement_text(url: str, limit: int = 600) -> str | None:
+def can_read_pdf() -> bool:
+    """装了 pypdf(可选依赖)才读得了公告正文。"""
+    try:
+        import pypdf  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
+def announcement_text(url: str, limit: int = 1500) -> str | None:
     """公告 PDF 正文前 limit 字。要 pypdf(可选依赖,`pip install pypdf`);没有或取不到就返回 None,照旧交 AI 读原文。"""
     try:
         from pypdf import PdfReader
@@ -338,17 +350,30 @@ def parse_date(s: str) -> str | None:
     return f"{m.group(1)}-{int(m.group(2)):02d}-{int(m.group(3)):02d}" if m else None
 
 
-def relevance_of(src: dict, text: str, cat: str | None, parts_hit: list) -> int:
+def relevance_of(src: dict, text: str, cat: str | None, parts_hit: list, title: str | None = None) -> int:
     """1 = 值得看（有类别 / 命中部件 / 强关键词），0 = 例行（公告里的减持、质押、会议……），默认不进收件箱。
-    投资者关系活动记录表例外：它常常藏着送样 / 供货的口径，算相关。"""
-    if "投资者关系活动记录" in text:
+    投资者关系活动记录表例外：它常常藏着送样 / 供货的口径，算相关。
+    例行词只看标题（正文里「无需提交股东大会审议」不算例行）；巨潮公告标题是套话（对外投资 / 重大合同 / 项目 …）
+    或有类别动词的，算相关——事件在正文里，入账前会读正文。"""
+    title = text if title is None else title
+    if IR_RECORD in title:
         return 1
-    routine = ROUTINE_HARD.search(text) or (ROUTINE_SOFT.search(text) and not parts_hit)
-    if src["type"] == "cninfo_announcement" and routine and not STRONG_TERMS.search(text):
+    announcement = src["type"] == "cninfo_announcement"
+    if announcement and ROUTINE_HARD.search(title) and not STRONG_TERMS.search(text):
+        return 0
+    if announcement and wants_body(title):
+        return 1
+    if announcement and ROUTINE_SOFT.search(title) and not parts_hit and not STRONG_TERMS.search(text):
         return 0
     if cat or parts_hit or STRONG_TERMS.search(text):
         return 1
-    return 0 if src["type"] == "cninfo_announcement" else 1
+    return 0 if announcement else 1
+
+
+def wants_body(title: str) -> bool:
+    """标题像事件(类别动词 / 套话事件标题 / 投资者关系活动记录表),产品词要看正文。"""
+    t = title or ""
+    return bool(category_verb(t) or GENERIC_EVENT_TITLE.search(t) or IR_RECORD in t)
 
 
 def routine_hit(title: str, source_type: str | None, parts: dict | None = None) -> str | None:
@@ -455,7 +480,7 @@ def tag(src: dict, it: dict, companies: dict, parts: dict, spec: dict, cutoff: s
         return None
     title = (it.get("title") or "").strip()
     return {
-        "relevance": relevance_of(src, text, cat, ps),
+        "relevance": relevance_of(src, text, cat, ps, title=it.get("title") or ""),
         "id": cand_id(it.get("url", "")), "date": d, "title": title, "url": it.get("url", ""),
         "summary": re.sub(r"\s+", " ", it.get("summary") or "")[:600 if IR_RECORD in title else 240],
         "source": src["name"], "source_type": src["type"], "tier": src["tier"], "weight": src.get("weight", 0.5),
@@ -536,7 +561,8 @@ def backfill_companies(conn: sqlite3.Connection) -> list[dict]:
 def backfill(conn: sqlite3.Connection, since: str, until: str, spec: dict | None = None, log=progress_log,
              pause: float | None = None) -> dict:
     """每页原子入池；中断保留已提交页。重跑从头扫描、按 URL 幂等，不是持久游标续传。
-    只在本次运行保留去重 ID，不累积公告正文。连续 5 家所有月份均失败时熔断。"""
+    只在本次运行保留去重 ID，不累积公告正文。连续 5 家所有月份均失败时熔断。
+    单条公告缺 PDF 链接或标题:跳过,计入 skipped 与 failures(kind=item),不算页失败、不影响 complete。"""
     spec = spec or load_spec()
     cfg = spec["fetch"]
     pause = BACKFILL_PAUSE if pause is None else pause
@@ -548,7 +574,7 @@ def backfill(conn: sqlite3.Connection, since: str, until: str, spec: dict | None
     segs = month_segments(since, until)
     log(f"回填 {since} → {until}:{len(targets)} 家 × {len(segs)} 段")
     seen = set()
-    out = {"new": 0, "merged": 0, "seen": 0, "fetched": 0, "tagged": 0, "pages": 0,
+    out = {"new": 0, "merged": 0, "seen": 0, "fetched": 0, "tagged": 0, "pages": 0, "skipped": 0,
            "segments_ok": 0, "segments_failed": 0, "last_position": None, "failures": []}
     ok = failed = fails = 0
     stopped = False
@@ -569,10 +595,7 @@ def backfill(conn: sqlite3.Connection, since: str, until: str, spec: dict | None
                     anns = data["announcements"]
                     if anns is None and data.get("totalAnnouncement") == 0:
                         anns = []
-                    if not isinstance(anns, list) or any(
-                        not isinstance(a, dict) or not a.get("adjunctUrl") or not a.get("announcementTitle")
-                        for a in anns
-                    ):
+                    if not isinstance(anns, list):
                         raise http.FetchError("invalid announcements in response")
                     if not anns and (data.get("hasMore") is True or not (
                         data.get("hasMore") is False or data.get("totalAnnouncement") == 0
@@ -586,6 +609,13 @@ def backfill(conn: sqlite3.Connection, since: str, until: str, spec: dict | None
                 raw = []
                 page_ids = set()
                 for a in anns:
+                    bad = ("不是对象" if not isinstance(a, dict) else "缺 PDF 链接" if not a.get("adjunctUrl")
+                           else "缺标题" if not a.get("announcementTitle") else None)
+                    if bad:                        # 单条坏数据跳过并计数,整页照常提交(重跑也修不好源头的缺字段)
+                        out["skipped"] += 1
+                        out["failures"].append({**position, "kind": "item", "error": bad,
+                                                "announcement_id": a.get("announcementId") if isinstance(a, dict) else None})
+                        continue
                     aid = a.get("announcementId") or a.get("adjunctUrl")
                     if aid in seen or aid in page_ids:
                         continue
@@ -647,7 +677,7 @@ def retriage(conn: sqlite3.Connection, spec: dict | None = None) -> dict:
     for r in conn.execute("SELECT id, title, summary, source_type, category, part_ids FROM candidates").fetchall():
         text = f"{r['title']} {r['summary'] or ''}"
         _, ps = match_entities(text, companies, parts)
-        rel = relevance_of({"type": r["source_type"]}, text, r["category"], ps or json.loads(r["part_ids"] or "[]"))
+        rel = relevance_of({"type": r["source_type"]}, text, r["category"], ps or json.loads(r["part_ids"] or "[]"), title=r["title"])
         conn.execute("UPDATE candidates SET relevance=? WHERE id=?", (rel, r["id"]))
         n[rel] += 1
     conn.commit()

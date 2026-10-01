@@ -18,13 +18,14 @@ os.environ["SQR_NOTES_DIR"] = str(_notes_tmp)
 
 from fastapi.testclient import TestClient  # noqa: E402
 
+from tests import IsolatedTestCase  # noqa: E402
 from app import analytics as A  # noqa: E402
 from app import config, notes  # noqa: E402
 from app.main import app  # noqa: E402
 from app.seed import rebuild  # noqa: E402
 
 
-class AnalyticsTests(unittest.TestCase):
+class AnalyticsTests(IsolatedTestCase):
     def test_trading_day_arithmetic_skips_weekends(self):
         fri = date(2026, 8, 28)
         self.assertEqual(A.add_trading_days(fri, 1), date(2026, 8, 31))
@@ -81,7 +82,7 @@ class AnalyticsTests(unittest.TestCase):
         self.assertAlmostEqual(bs[d1], 102.0)
 
 
-class NotesTests(unittest.TestCase):
+class NotesTests(IsolatedTestCase):
     def test_round_trip_keeps_front_matter_and_questions(self):
         n = notes.load_note("cpo.mod.pic", _notes_tmp)
         self.assertEqual(n.direction, "pos")
@@ -96,7 +97,7 @@ class NotesTests(unittest.TestCase):
         self.assertIn("中际旭创", again.to_dict()["links"])
 
 
-class NotesEdgeCaseTests(unittest.TestCase):
+class NotesEdgeCaseTests(IsolatedTestCase):
     def test_empty_scalars_unknown_keys_and_tail_survive(self):
         text = ("---\nsubject: x\ntitle: \"say \\\"hi\\\": now\"\ndirection: pos\nposition:\nthreshold_pct:\ntags:\n  - cpo\n  - watch\n---\n"
                 "论点。\n\n## 问题\n\n- [ ] q1 (2026-08-01)\n\n## 复盘\n\n还没写。\n")
@@ -113,9 +114,10 @@ class NotesEdgeCaseTests(unittest.TestCase):
         self.assertEqual(again.questions, n.questions)
 
 
-class ResearchApiTests(unittest.TestCase):
+class ResearchApiTests(IsolatedTestCase):
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         # never write into the repo's own notes, whichever test module imported config first
         config.NOTES_DIR = _notes_tmp
         rebuild(config.DB_PATH, config.SEED_DIR)

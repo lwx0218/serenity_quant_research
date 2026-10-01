@@ -77,7 +77,8 @@ CREATE TABLE IF NOT EXISTS candidates (
   part_id       TEXT,                         -- 归到哪个部件：规则初判，AI 判定时可改（以它为准）
   thesis        TEXT,                         -- 一句话：这件事对这个部件意味着什么（规则入账时是标题）
   confidence    INTEGER,                      -- 1–5：对「是卡口事件且归位正确」的把握（规则入账为 3）
-  origin        TEXT NOT NULL DEFAULT 'live'  -- live（定时抓取）/ backfill（历史回填）
+  origin        TEXT NOT NULL DEFAULT 'live', -- live（定时抓取）/ backfill（历史回填）
+  body_at       TEXT                          -- 读过公告正文的时间（取不到也记，别每轮重抓）；正文写在 summary
 );
 CREATE INDEX IF NOT EXISTS ix_cand_status ON candidates(status, date);
 
@@ -115,6 +116,7 @@ MIGRATIONS = [("candidates", "relevance", "INTEGER NOT NULL DEFAULT 1"),
               ("candidates", "thesis", "TEXT"),
               ("candidates", "confidence", "INTEGER"),
               ("candidates", "origin", "TEXT NOT NULL DEFAULT 'live'"),
+              ("candidates", "body_at", "TEXT"),
               # events 是 main 的表(db.py):入账时把判定一起带过去,part_id 是 AI 归位过的部件(以它为准)
               ("events", "thesis", "TEXT"),
               ("events", "confidence", "INTEGER"),

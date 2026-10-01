@@ -13,14 +13,16 @@ from unittest import mock
 
 os.environ["SQR_DB_PATH"] = str(Path(tempfile.mkdtemp()) / "unused.sqlite")
 
+from tests import IsolatedTestCase  # noqa: E402
 from app.db import connect
 from app.ingest import crowding, news, progress, runner
 from app.ingest import __main__ as cli
 from app.seed import rebuild
 
 
-class IngestReliabilityTests(unittest.TestCase):
+class IngestReliabilityTests(IsolatedTestCase):
     def setUp(self):
+        super().setUp()
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.db = Path(self.tmp.name) / "test.sqlite"
@@ -100,7 +102,9 @@ class IngestReliabilityTests(unittest.TestCase):
                 self.assertTrue(self.backfill()["complete"])
 
     def test_run_rolls_back_only_uncommitted_data_and_does_not_touch_other_runs(self):
-        other = self.conn.execute("INSERT INTO ingest_runs (job, started_at) VALUES ('news', '2026-07-01')").lastrowid
+        # 别的 job、12 小时内开始的 run:可能还在跑,不动(早于 12 小时的才收尾,见下一条用例)
+        other = self.conn.execute("INSERT INTO ingest_runs (job, started_at) VALUES ('news', ?)",
+                                  (runner.datetime.now().isoformat(timespec="seconds"),)).lastrowid
         self.conn.commit()
         def job(conn, **kw):
             conn.execute("INSERT INTO settings VALUES ('committed-unit', '1')")
@@ -116,6 +120,39 @@ class IngestReliabilityTests(unittest.TestCase):
         self.assertEqual(current["ok"], 0)
         self.assertIsNotNone(current["finished_at"])
         self.assertIsNone(self.conn.execute("SELECT finished_at FROM ingest_runs WHERE id=?", (other,)).fetchone()[0])
+
+    def test_stale_runs_are_closed_on_start(self):
+        now = runner.datetime.now()
+        iso = lambda d: d.isoformat(timespec="seconds")  # noqa: E731
+        rows = {"same_recent": ("backfill", iso(now - runner.timedelta(hours=1))),     # 同一 job:新 run 能开始,旧的已经死了
+                "other_old": ("news", iso(now - runner.timedelta(hours=13))),          # 别的 job,早于 12 小时
+                "other_recent": ("news", iso(now - runner.timedelta(hours=2)))}         # 别的 job,12 小时内:不动
+        ids = {k: self.conn.execute("INSERT INTO ingest_runs (job, started_at) VALUES (?, ?)", v).lastrowid for k, v in rows.items()}
+        done = self.conn.execute("INSERT INTO ingest_runs (job, started_at, finished_at, ok) VALUES ('backfill', '2026-07-01', '2026-07-01', 1)").lastrowid
+        self.conn.commit()
+        with mock.patch.object(runner, "job_backfill", return_value={"fetch": {"complete": True}}):
+            out = runner.run("backfill", db_path=self.db, log=self.messages.append)
+        self.assertTrue(out["ok"])
+        get = lambda i: self.conn.execute("SELECT finished_at, ok, error FROM ingest_runs WHERE id=?", (i,)).fetchone()  # noqa: E731
+        for k in ("same_recent", "other_old"):
+            r = get(ids[k])
+            self.assertEqual((r["ok"], r["error"]), (0, runner.STALE_RUN_ERROR), k)
+            self.assertIsNotNone(r["finished_at"])
+        self.assertIsNone(get(ids["other_recent"])["finished_at"])
+        self.assertEqual(tuple(get(done))[1:], (1, None))                                # 已收尾的不动
+        self.assertTrue(any("收尾 2 条" in m for m in self.messages))
+
+    def test_connect_refuses_non_temp_db_under_tests(self):
+        from app import config, db
+        outside = config.REPO_ROOT / "data" / "never-created-by-tests.sqlite"
+        for path in (config.DEFAULT_DB_PATH, outside):
+            with self.subTest(path=path), self.assertRaises(RuntimeError):
+                db.connect(path)
+        self.assertFalse(outside.exists())                                             # 抛错在建文件之前
+        with mock.patch.object(config, "DB_PATH", outside), self.assertRaises(RuntimeError):
+            db.connect()                                                               # 不给路径时读 config.DB_PATH,同样拦
+        db.connect(":memory:").close()
+        db.connect(self.db).close()
 
     def test_run_records_keyboard_interrupt_then_reraises(self):
         with mock.patch.object(runner, "job_backfill", side_effect=KeyboardInterrupt()):
