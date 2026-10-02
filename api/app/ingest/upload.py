@@ -1,6 +1,7 @@
 """AI（或人）从网页端取来的数据交回来：POST /api/ingest/upload {kind, company_id, rows}。
 kind: bars | margin | holders | valuation | candidates。写完把对应的 ingest_todo 关掉；bars 之后要跑 recompute 才会体现。
-candidates 的每行可带 origin（live | backfill，媒体回填用 backfill）与 tier（行业媒体 1）；进池后立刻按入账规则分流。"""
+candidates 的每行可带 origin（live | backfill，媒体回填用 backfill）与 tier（行业媒体 1）；进池后立刻按入账规则分流。
+互动问答（互动易接口不通、或上证 e 互动）：source_type=cninfo_irm、title=问题、summary=回答、date=回答日、url=问答页，tier 默认 0。"""
 from __future__ import annotations
 
 import sqlite3
@@ -47,14 +48,17 @@ def upload(conn: sqlite3.Connection, kind: str, company_id: str | None, rows: li
         for r in rows:
             if not r.get("url") or not r.get("title"):
                 continue
-            tier = int(r.get("tier", 2))
+            stype = r.get("source_type") or "upload"
+            if stype not in ("upload", "cninfo_irm"):
+                raise ValueError(f"source_type {stype!r}: upload | cninfo_irm(互动问答:title=问题,summary=回答)")
+            tier = int(r.get("tier", 0 if stype == "cninfo_irm" else 2))
             origin = r.get("origin") or "live"
             if origin not in ("live", "backfill"):
                 raise ValueError(f"origin {origin!r}: live | backfill")
             text = f"{r['title']} {r.get('summary') or ''}"
             cs, ps = news.match_entities(text, companies, parts)          # 没给公司 / 部件 / 类别的,和抓取一样现打
             items.append({"id": news.cand_id(r["url"]), "date": news.parse_date(r.get("date") or ""), "title": r["title"], "url": r["url"],
-                          "summary": (r.get("summary") or "")[:600], "source": r.get("source") or "AI 网页端", "source_type": "upload",
+                          "summary": (r.get("summary") or "")[:600], "source": r.get("source") or "AI 网页端", "source_type": stype,
                           "tier": tier, "weight": 0.5, "evidence": news.TIER_EVIDENCE.get(tier, "candidate"),
                           "category": r.get("category") or news.categorize(text, spec["categories"]),
                           "companies": ([{"companyId": r["company_id"], "name": r.get("company_name") or r["company_id"]}] if r.get("company_id")

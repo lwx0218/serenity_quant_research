@@ -74,7 +74,11 @@ curl http://localhost:8000/api/ingest/status        # 行情截至、多少家�
   第 0 层公告标题没有类别动词且标题 + 正文都没有部件 / 产品词的直接不算。
   交给 AI 7 天没判的待办作废（`news` 作业末尾），候选保持 pending。
 - 规则换版后第一次 `triage` 会把上一版规则判过的候选（自动入账的与判成例行的）重开重判（人判过的、AI 判过的不动），
-  版本记在 `settings.accounting_rules`（当前 v2.2）。
+  版本记在 `settings.accounting_rules`（当前 v2.3）。
+- 归位底线：事件只能落在公司已有映射的部件上（`/judge`、`/confirm` 校验，读的时候也不认映射以外的 `part_id`）；
+  AI 认为公司该站在别的部件上，开 `mapping_candidate` 待办附来源（`POST /api/mapping/candidates`），走证据流程进 physical JSON，事件不改研究事实。
+- 互动问答（`source_type=cninfo_irm`：互动易接口，或上证 e 互动网页端上传）：标题是问题、摘要是回答；不自动入账，
+  回答里有事件、问答提到部件 / 产品的交 AI，其余例行。
 - 人工只剩「不算」：研究页卡口事件行悬停出现，`POST /api/events/{id}/dismiss`，可撤回（`/restore`）。
 - `seed --rebuild` 不倒回事件表，按已入账的候选重新写出来（人判的「不算」不会回来；部件 / thesis / confidence 跟着回来）。
 
@@ -130,6 +134,28 @@ curl -X POST http://localhost:8000/api/candidates/judge -H 'content-type: applic
    print(len(real), Counter((e["part"] or {}).get("part_name") for e in real).most_common())
    PY
    ```
+
+**入账 v2.3 上线步骤**（给 PI；Owner 10-02 的决定，见 `docs/claude/teardown-status.md` 待做 1）：
+1. `git pull` → `cd web && npm run build` → 重启 uvicorn（`settings.accounting_rules` 换到 v2.3）
+2. `python -m app.ingest probe`，看「irm 300308」那一行：`ok … rows=… answered=… keys=[…]` 说明互动易新接口通了（keys 里应有
+   `indexId / mainContent / attachedContent / updateDate`，没有就把这一行贴进报告，CC 照着改 `news._irm_item`）；`ERR` 就走第 6 步的上传
+3. 按 id 重判 3 条（`POST /api/candidates/judge`，`is_chokepoint: false`，reason 写清楚）：
+   `cand.54cf09807441`、`cand.42f9ff26f061`（生益电子 10-29 / 03-13：募投项目结项 / 投用，不是新增产能）；
+   `cand.c1af7046eca3`（中天科技 MPO 跳线订单：跳线是机房外部布线，不是模块内的 MPO 插座 / MT 插芯，Owner 定不算）
+4. `python -m app.ingest triage`（换版重判：v2.2 规则判过的重开；新挡「结项 / 内部投资结构 / 延期 / 变更或增加实施地点、实施主体」）
+5. 互动易回填（深交所、站在部件上的 36 家）：`python -m app.ingest backfill --only cninfo_irm --since 2025-10-01 --until 2026-09-30`；
+   只取已回答的问答，标题 = 问题、摘要 = 回答、日期 = 回答日。问题不是事实：互动问答不会自动入账，回答里有事件、问答提到部件 / 产品的交 AI，其余例行
+6. 上证 e 互动（上交所 32 家；以及第 2 步不通时的互动易）没有接口，从网页端整理后上传——只传「回答里有扩产 / 订单 / 认证 / 送样 / 出货 / 供需 / 涨价 / 路线、
+   问答提到部件或产品」的，别的传了也会被判例行：
+   ```bash
+   curl -X POST http://localhost:8000/api/ingest/upload -H 'content-type: application/json' -d '{"kind": "candidates", "rows": [
+     {"source_type": "cninfo_irm", "source": "上证e互动", "company_id": "cn.688498", "origin": "backfill",
+      "date": "2026-07-10", "title": "<问题原文>", "summary": "<回答原文>", "url": "<问答页链接>"}]}'
+   ```
+7. 判新一批 `candidate_triage` 待办（分批 ≤ 200，7 天内）。**部件只能是公司在实物映射里站着的**（hint 里列出），认为公司该站在别的部件上：
+   `POST /api/mapping/candidates {company_id, part_id, stage, role, sources:[{title, url, publisher, date, quote}], reason, candidate_id}`，
+   这条候选先不交回；`GET /api/mapping/candidates` 看提议，映射按 `physical/README.md` 证据流程进 physical JSON、重建后自动关掉并把候选重新交 AI
+8. `python -m app.ingest recompute` → 出快照 → 报告：真事件数、按部件、**按类别**（这一轮看订单 / 认证 / 出货有没有进来）
 
 回填可靠性：每页独立提交候选（尚不代表事件入账），日志在请求前和提交后输出公司 / 月份 / 页码 / 耗时，重定向也立即刷新。
 后页失败或进程中断不会撤销已提交页；存储失败直接终止，不伪装成网络失败。`fetch.complete=false` 表示某些月份失败、熔断或达到页数上限，

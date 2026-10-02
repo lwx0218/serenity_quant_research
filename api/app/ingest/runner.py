@@ -151,13 +151,17 @@ def job_triage(conn: sqlite3.Connection, log=print) -> dict:
     return out
 
 
-def job_backfill(conn: sqlite3.Connection, since: str | None = None, until: str | None = None, log=print) -> dict:
-    """巨潮公告历史回填（origin=backfill）→ 入账规则。默认回填过去一年到今天。"""
+def job_backfill(conn: sqlite3.Connection, since: str | None = None, until: str | None = None, only: str | None = None,
+                 log=print) -> dict:
+    """历史回填（origin=backfill）→ 入账规则。默认巨潮公告；--only cninfo_irm 回填互动易问答。默认过去一年到今天。"""
     until = until or date.today().isoformat()
     since = since or (date.fromisoformat(until) - timedelta(days=365)).isoformat()
     if since > until:
         raise ValueError(f"since {since} 晚于 until {until}")
-    out = {"fetch": news.backfill(conn, since, until, log=log)}
+    if only not in (None, "cninfo_announcement", "cninfo_irm"):
+        raise ValueError(f"backfill 只支持 cninfo_announcement / cninfo_irm,不是 {only!r}")
+    fetch = news.backfill_irm if only == "cninfo_irm" else news.backfill
+    out = {"fetch": fetch(conn, since, until, log=log)}
     out["relevance"] = news.retriage(conn)
     out["accounting"] = accounting.account(conn, log=log)
     out["backfill"] = {r["status"]: r["n"] for r in conn.execute(
@@ -183,8 +187,29 @@ def job_probe(conn: sqlite3.Connection, log=print) -> dict:
             n = fn(); out[name] = f"ok {n} rows"; log(f"  ok  {name}: {n} rows")
         except Exception as e:  # noqa: BLE001
             out[name] = f"ERR {str(e)[:160]}"; log(f"  ERR {name}: {str(e)[:160]}")
+    out["irm 300308"] = _probe_irm(log)
     out["rss"] = news.probe(log=log)
     return out
+
+
+def _probe_irm(log=print) -> str:
+    """互动易新接口试一家(中际旭创):orgId → 最近 30 天第一页,打出第一条的字段名,换接口时对照 news._irm_item。"""
+    spec = news.load_spec()
+    src = next((s for s in spec["sources"] if s["type"] == "cninfo_irm"), None)
+    if not src:
+        return "ERR 没有互动易源"
+    try:
+        org = news.irm_org_id(src, spec["fetch"], "300308")
+        since = (date.today() - timedelta(days=30)).isoformat()
+        data = news.irm_page(src, spec["fetch"], "300308", org, since, date.today().isoformat(), 1)
+        rows = data["rows"]
+        keys = sorted(rows[0]) if rows else []
+        answered = sum(1 for r in rows if isinstance(r, dict) and news._irm_item(r, {"companyId": "cn.300308"}))
+        msg = f"ok orgId={org} rows={len(rows)} answered={answered} totalPage={data.get('totalPage')} keys={keys}"
+    except Exception as e:  # noqa: BLE001
+        msg = f"ERR {str(e)[:200]}"
+    log(f"  {'ok ' if msg.startswith('ok') else 'ERR'} irm 300308: {msg}")
+    return msg
 
 
 def job_daily(conn: sqlite3.Connection, full: bool = False, log=print) -> dict:
@@ -228,7 +253,7 @@ def run(job: str, *, db_path=None, full: bool = False, only: str | None = None, 
         fn = {"quotes": lambda: job_quotes(conn, full=full, log=log), "crowding": lambda: job_crowding_inputs(conn, log=log),
               "valuation": lambda: job_valuation(conn, log=log), "news": lambda: job_news(conn, only=only, log=log),
               "triage": lambda: job_triage(conn, log=log),
-              "backfill": lambda: job_backfill(conn, since=since, until=until, log=log),
+              "backfill": lambda: job_backfill(conn, since=since, until=until, only=only, log=log),
               "recompute": lambda: job_recompute(conn, log=log), "daily": lambda: job_daily(conn, full=full, log=log),
               "probe": lambda: job_probe(conn, log=log)}[job]
         log(f"run {run_id} {job} 开始")

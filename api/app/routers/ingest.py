@@ -164,6 +164,37 @@ def judge(body: JudgeIn, conn: Conn):
     return C.judge(conn, body.items, by=body.by)
 
 
+class MappingIn(BaseModel):
+    company_id: str
+    part_id: str
+    stage: str
+    role: str | None = None
+    sources: list[dict[str, Any]] = Field(min_length=1)
+    reason: str
+    candidate_id: str | None = None
+    by: str = Field("ai", pattern="^(ai|human)$")
+
+
+@router.post("/mapping/candidates")
+def propose_mapping(body: MappingIn, conn: Conn):
+    """AI 认为某家公司该站在某个部件上:开一条 mapping_candidate 待办附来源。不改实物映射——
+    映射走证据流程进 physical JSON;重建后自动关掉,牵出的候选重新交 AI。"""
+    ensure_schema(conn)
+    try:
+        return C.propose_mapping(conn, body.model_dump(), by=body.by)
+    except LookupError as e:
+        raise HTTPException(404, str(e))
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+
+
+@router.get("/mapping/candidates")
+def list_mappings(conn: Conn, status: str = Query("open", pattern="^(open|done|dropped|all)$")):
+    ensure_schema(conn)
+    items = C.mapping_candidates(conn, status)
+    return {"count": len(items), "items": items}
+
+
 class ConfirmIn(BaseModel):
     company_id: str | None = None
     category: str | None = Field(None, pattern="^(capex|order|qualification|supply|price|roadmap|buyback|other)$")

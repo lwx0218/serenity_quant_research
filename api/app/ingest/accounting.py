@@ -17,8 +17,13 @@
              综合媒体(tier ≥ 2)标题里没有部件 / 产品词;第 0 层公告标题没有类别动词、正文(标题 + 正文)也没有部件 / 产品词
              (标题像事件但正文没取到的除外)。7 天没判的待办作废(dropped),候选保持 pending。
 
+  互动问答(cninfo_irm:互动易,或 PI 从 e 互动网页端 upload 的):标题是问题,事实在回答里——不自动入账;
+             回答里有事件(类别动词 / 六类关键词)且问答提到部件 / 产品 → 交 AI,否则例行。
+  归位底线:事件只能落在公司已有映射的部件上(candidates.confirm / judge 校验);AI 认为公司该站在别的部件上,
+             POST /api/mapping/candidates 附来源开 mapping_candidate 待办,走证据流程进 physical JSON,事件不改研究事实。
+
 规则只动还没人判过的候选(pending 且 decided_by 为空);AI 或人判过的不再改。
-规则换版(RULES_VERSION,现为 v2.2)后第一次跑 triage 时,上一版规则判过的(入账与例行)重开重判(rejudge);
+规则换版(RULES_VERSION,现为 v2.3)后第一次跑 triage 时,上一版规则判过的(入账与例行)重开重判(rejudge);
 人工「不算」过的、AI 判过的不动。
 人工只剩「不算」:对已入账的事件说不算(POST /api/events/{id}/dismiss),可撤回。"""
 from __future__ import annotations
@@ -35,7 +40,7 @@ from .recompute import latest_bar_date, rebuild_reactions
 
 EVENT_CATEGORIES = C.EVENT_CATEGORIES     # 卡口事件的六类
 OFFICIAL_TIER = 0          # 公告 / 互动易
-RULES_VERSION = "v2.2"     # settings.accounting_rules:库里的候选按哪一版规则判过(v2.1 例行分硬 / 软;v2.2 读正文)
+RULES_VERSION = "v2.3"     # settings.accounting_rules:库里的候选按哪一版规则判过(v2.1 例行分硬 / 软;v2.2 读正文;v2.3 募投收尾挡掉、互动问答)
 TRIAGE_TTL_DAYS = 7        # 交给 AI 的待办,这么多天没判就作废
 RULE_CONFIDENCE = 3
 
@@ -92,13 +97,18 @@ def classify(conn: sqlite3.Connection, c: dict, vocab: tuple[dict, dict] | None 
         problem = f"命中 {len(ids)} 家公司,要定是哪一家"
     else:
         part_id = initial_part(conn, next(iter(ids)), verb[1] if verb else c.get("category"), hits)   # 动词的类别比关键词计数准
+    product = news.product_hit(text) or bool(hits)
+    # 互动问答:标题是投资者的问题,事实在回答里——不自动入账;回答里有事件、问答提到部件 / 产品才交 AI
+    if c.get("source_type") == "cninfo_irm":
+        if not (product and news.event_signal(c.get("summary") or "")):
+            return "routine", "互动问答:回答里没有事件,或问答都没提到部件 / 产品", None
+        return "triage", ";".join(([problem] if problem else []) + ["互动问答,事实在回答里,要读原文"]), part_id
     # 1.3 强命中:只认标题(正文里「公司主营光模块」是公司简介,不能当强命中)
     title_product = news.product_hit(title) or bool(title_hits)
     category_ok = c.get("category") in EVENT_CATEGORIES
     if not problem and tier == OFFICIAL_TIER and title_product and verb and category_ok and c.get("date"):
         return "auto", f"自动入账 · {c.get('source') or '公告'} · 「{verb[0]}」", part_id
     # 1.4 其余交给 AI;综合媒体与第 0 层公告先过一道门槛。产品词看标题 + 正文
-    product = news.product_hit(text) or bool(hits)
     ir = news.IR_RECORD in title
     body_missing = (c.get("source_type") == "cninfo_announcement" and news.wants_body(title)
                     and not (c.get("summary") or "").strip())                  # 标题像事件但正文没取到:交 AI 读原文
@@ -181,14 +191,19 @@ def _hint(conn: sqlite3.Connection, c: dict, reason: str, part_id: str | None) -
         who = f"命中的 {len(ids)} 家之一({'、'.join(ids)};交回时给 company_id)" if ids else "某家公司(没命中,交回时给 company_id)"
     p = conn.execute("SELECT name FROM physical_parts WHERE id=?", (part_id,)).fetchone() if part_id else None
     where = f"{PH.short_name(p['name'])}({part_id})" if p else "未定的部件(交回时给 part_id)"
+    stands = "、".join(f"{x['part_id']}({PH.short_name(x['part_name'])})" for x in PH.company_parts(conn, ids[0])) if len(ids) == 1 else ""
     return (f"判断这条候选是不是「{who} 在 {where} 上的卡口事件」:「{c['title']}」{c['url']}"
             f"(来源 {c.get('source')},{c.get('date') or '无日期'};候选 {c['id']};规则交给你的原因:{reason})。\n"
             "卡口事件 = 会改变这家公司在这个部件上的供给 / 需求 / 价格 / 技术路线的事:扩产(新产线、投产)、订单合同、"
             "认证导入(送样、批量出货、通过认证)、供需(缺货、交期、分配)、涨价、技术路线(CPO / LPO / 硅光 / 1.6T 路线变化)。"
             "公司站在这个部件上,扩产 / 订单 / 认证的对象只要包含这个部件所属的产品族就算(如「高速光芯片与器件」之于 CW 激光器),"
             "confidence 按拆分明确程度给 2–3;不要求点名本型号或 NVIDIA。\n"
-            "不是:融资安排(定增、募资)、股权变动、人事、会议、财报预告、泛行业新闻、与这只 1.6T 光模块无关的业务。"
+            "不是:融资安排(定增、募资)、股权变动、人事、会议、财报预告、泛行业新闻、与这只 1.6T 光模块无关的业务;"
+            "募投项目结项、延期、变更实施地点、调整内部投资结构也不是(不是新增产能)。"
             "但募资公告里明确的建设项目本身按扩产判:看项目算不算,不看定增。\n"
+            + (f"部件只能是这家公司在实物映射里站着的:{stands}。" if stands else "")
+            + "认为它该站在别的部件上:POST /api/mapping/candidates {company_id, part_id, stage, sources:[{url, quote, …}], reason, candidate_id},"
+            "这条先不交回(不判算也不判不算),映射进了实物层会重新交给你。\n"
             f"交回:POST /api/candidates/judge,格式 {JUDGE_FORMAT}(一批最多 200 条)。")
 
 
@@ -204,6 +219,7 @@ def account(conn: sqlite3.Connection, recompute: bool = True, log=lambda *_: Non
     """对所有还没人判过的候选跑一遍规则:先给标题像事件的公告读正文,再分流。
     入账的写成事件,例行的记不算,拿不准的开 candidate_triage 待办。"""
     out = {"auto": 0, "routine": 0, "triage": 0, "failed": 0}
+    out["mappings_resolved"] = C.resolve_mappings(conn)        # 映射进了实物层的提议关掉,牵出的候选重新交 AI
     rows = [dict(r) for r in conn.execute("SELECT * FROM candidates WHERE status='pending' AND decided_by IS NULL ORDER BY COALESCE(date,''), id")]
     vocab = news.build_vocab(conn) if rows else None
     out.update(read_bodies(conn, rows, vocab, log))

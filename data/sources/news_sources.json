@@ -44,7 +44,7 @@
     {
       "name": "互动易 · 投资者问答",
       "type": "cninfo_irm",
-      "url": "https://irm.cninfo.com.cn/ircs/index/search",
+      "url": "https://irm.cninfo.com.cn/newircs/company/question",
       "lang": "zh",
       "region": "cn",
       "tier": 0,
@@ -53,9 +53,9 @@
         "irm"
       ],
       "entity_match": "by_company",
-      "note": "深交所互动易；上证 e 互动另配适配器",
-      "enabled": false,
-      "disabled_reason": "POST 返回 405，接口已变，待换；换到能打开的地址后把 enabled 改回 true，或让 AI 从网页端以 kind=candidates 上传"
+      "note": "深交所互动易新接口（newircs，同 akshare stock_irm_cninfo）：先 queryKeyboardInfo 取 orgId，再 company/question 分页；只取已回答的问答。上证 e 互动没有适配器，由 PI 从网页端以 kind=candidates、source_type=cninfo_irm 上传。服务器上先 python -m app.ingest probe 看「irm 300308」那一行",
+      "enabled": true,
+      "org_url": "https://irm.cninfo.com.cn/newircs/index/queryKeyboardInfo"
     },
     {
       "name": "讯石光通讯",

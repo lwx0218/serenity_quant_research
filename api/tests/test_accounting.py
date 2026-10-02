@@ -18,6 +18,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 from tests import IsolatedTestCase  # noqa: E402
 from app import market  # noqa: E402
+from app import physical as PH  # noqa: E402
 from app.db import connect  # noqa: E402
 from app.deps import get_conn  # noqa: E402
 from app.ingest import accounting as ACC  # noqa: E402
@@ -212,7 +213,7 @@ class AccountingV2Tests(IsolatedTestCase):
         self.assertEqual((r["status"], r["decided_by"], r["category"]), ("confirmed", "rule", "capex"))
         self.assertEqual(self._row("sy-zengzi")["status"], "rejected")                 # 其余照旧
         self.assertEqual(self.conn.execute("SELECT value FROM settings WHERE key='accounting_rules'").fetchone()[0], ACC.RULES_VERSION)
-        self.assertEqual(ACC.RULES_VERSION, "v2.2")
+        self.assertEqual(ACC.RULES_VERSION, "v2.3")
 
     # ---------------------------------------------------------------- §2 AI 交回
     def test_judge_batch_true_false_error(self):
@@ -391,6 +392,142 @@ class AccountingV2Tests(IsolatedTestCase):
         # 正文里的硬例行词不让 relevance 变 0(「无需提交股东大会审议」是正文常见句)
         self.assertEqual(news.relevance_of({"type": "cninfo_announcement"}, "关于签订日常经营重大合同的公告 本合同无需提交股东大会审议",
                                            "order", [], title="关于签订日常经营重大合同的公告"), 1)
+
+    # ---------------------------------------------------------------- v2.3:归位底线与映射提议
+    def test_event_only_on_mapped_part(self):
+        ACC.account(self.conn)
+        ir = POOL["ir-record"][0]["id"]                                              # 中际旭创:driver / pic / engine-assembly / module-maker
+        out = C.judge(self.conn, [{"id": ir, "is_chokepoint": True, "part_id": "part.mpo", "category": "order",
+                                   "thesis": "t", "confidence": 3}])
+        self.assertIn("不站在 part.mpo 上", out["results"][0]["error"])
+        self.assertIn("/api/mapping/candidates", out["results"][0]["error"])
+        self.assertEqual(self._row("ir-record")["status"], "pending")                # 报错的原样不动
+        mpo = POOL["mpo-short"][0]["id"]                                             # 没命中公司,规则初判 part.mpo(部件词)
+        self.assertEqual(self._row("mpo-short")["part_id"], "part.mpo")
+        r = C.judge(self.conn, [{"id": mpo, "is_chokepoint": True, "company_id": "cn.300308", "category": "supply",
+                                 "thesis": "t", "confidence": 2}])
+        self.assertTrue(r["ok"], r)                                                  # 存着的初判不在映射里:不用它,按映射排
+        e = market.get_event(self.conn, r["results"][0]["event_id"])
+        self.assertIn(e["part"]["part_id"], {p["part_id"] for p in PH.company_parts(self.conn, "cn.300308")})
+        meta = POOL["meta-glasses"][0]["id"]
+        C.reopen(self.conn, meta)
+        self.assertIn("不在这只模块的任何部件上", C.judge(self.conn, [{"id": meta, "is_chokepoint": True, "category": "capex",
+                                                               "thesis": "t", "confidence": 2}])["results"][0]["error"])
+        app.dependency_overrides[get_conn] = lambda: self.conn
+        r = TestClient(app).post(f"/api/candidates/{ir}/confirm", json={"part_id": "part.mpo", "category": "order"})
+        self.assertEqual(r.status_code, 422)
+        # 读的时候也守底线:库里一条事件的 part_id 不在映射里,页面不认,退回按映射排
+        self.conn.execute("UPDATE events SET part_id='part.mpo' WHERE id=?", (e["id"],))
+        self.assertNotEqual(market.get_event(self.conn, e["id"])["part"]["part_id"], "part.mpo")
+
+    def test_mapping_candidate_lifecycle(self):
+        ACC.account(self.conn)
+        app.dependency_overrides[get_conn] = lambda: self.conn
+        client = TestClient(app)
+        cand_id = POOL["ir-record"][0]["id"]
+        body = {"company_id": "cn.300308", "part_id": "part.mpo", "stage": "device", "role": "MPO 插座",
+                "sources": [{"title": "年报", "url": "http://static.cninfo.com.cn/x.PDF", "quote": "公司生产 MPO 插座"}],
+                "reason": "年报原文写明自产 MPO 插座", "candidate_id": cand_id}
+        for bad, why in (({**body, "sources": [{"url": "u"}]}, "quote"), ({**body, "part_id": "part.pic"}, "已经站在"),
+                         ({**body, "stage": "x"}, "stage")):
+            r = client.post("/api/mapping/candidates", json=bad)
+            self.assertEqual(r.status_code, 422, bad); self.assertIn(why, r.json()["detail"])
+        self.assertEqual(client.post("/api/mapping/candidates", json=body).status_code, 200)
+        items = client.get("/api/mapping/candidates").json()["items"]
+        self.assertEqual([(t["company_id"], t["payload"]["part_id"], t["payload"]["sources"][0]["quote"]) for t in items],
+                         [("cn.300308@part.mpo", "part.mpo", "公司生产 MPO 插座")])
+        self.assertEqual(ACC.account(self.conn)["mappings_resolved"], 0)             # 实物层还没有这条映射
+        # 交 AI 的待办作废了;映射按证据流程进了实物层(这里直接插一行模拟重建后的状态)
+        self.conn.execute("UPDATE ingest_todo SET status='dropped' WHERE company_id=?", (cand_id,))
+        self.conn.execute("""INSERT INTO physical_part_companies (part_id, seq, company_id, name, stage, evidence, sources)
+                             VALUES ('part.mpo', 99, 'cn.300308', '中际旭创', 'device', 'verified', '[]')""")
+        self.assertEqual(ACC.account(self.conn)["mappings_resolved"], 1)
+        self.assertEqual(client.get("/api/mapping/candidates?status=done").json()["count"], 1)
+        self.assertEqual(self._todo("ir-record")["status"], "open")                  # 牵出的候选重新交 AI
+        r = C.judge(self.conn, [{"id": cand_id, "is_chokepoint": True, "part_id": "part.mpo", "category": "order",
+                                 "thesis": "t", "confidence": 3}])
+        self.assertTrue(r["ok"], r)
+
+    def test_v23_raise_fund_wrap_up_is_routine(self):
+        for t in ("关于部分募投项目结项并将节余募集资金永久补充流动资金的公告", "关于调整部分募投项目内部投资结构的公告",
+                  "关于部分募投项目延期的公告", "关于变更部分募投项目实施地点的公告", "关于增加募集资金投资项目实施主体及实施地点的公告"):
+            self.assertIsNotNone(news.routine_hit(t, "cninfo_announcement"), t)
+        self.assertIsNone(news.routine_hit("关于投资建设 1.6T 硅光模块产线的公告", "cninfo_announcement"))
+        ACC.account(self.conn)
+        hint = self._todo("mingpu-lpo")["hint"]
+        self.assertIn("募投项目结项、延期、变更实施地点、调整内部投资结构也不是", hint)
+        self.assertIn("部件只能是这家公司在实物映射里站着的:part.shell", hint)
+        self.assertIn("POST /api/mapping/candidates", hint)
+
+    # ---------------------------------------------------------------- v2.3:互动问答
+    def test_irm_routing(self):
+        def irm(key, q, a, company="cn.300308"):
+            c = cand(key, q, ("互动易 · 投资者问答", "cninfo_irm", 0), company=company, category=None, summary=a)
+            return {**c, "companies": json.dumps(c["companies"]), "part_ids": "[]", "also_reported_by": "[]", "company_id": company}
+        vocab = news.build_vocab(self.conn)
+        way = lambda c: ACC.classify(self.conn, c, vocab)[0]  # noqa: E731
+        # 问题里有产品词 + 动词也不自动入账:问题不是事实
+        self.assertEqual(way(irm("q1", "请问贵公司1.6T光模块是否已批量出货?", "公司1.6T光模块已实现批量出货,感谢关注。")), "triage")
+        self.assertEqual(way(irm("q2", "请问贵公司1.6T光模块是否已批量出货?", "感谢您的关注,请以公司公告为准。")), "routine")
+        self.assertEqual(way(irm("q3", "公司明年有什么规划?", "公司将持续加大研发投入,感谢关注。")), "routine")
+        self.assertEqual(way(irm("q4", "800G 产品进展如何?", "目前已向多家客户送样,部分进入小批量阶段。")), "triage")
+        self.assertEqual(way(irm("q5", "公司市值管理有何举措?", "公司光模块订单饱满。")), "routine")       # 问题命中硬例行
+
+    def test_irm_fetch_and_backfill(self):
+        def row(i, q, a, when="2026-07-15"):
+            return {"indexId": f"q{i}", "mainContent": q, "attachedContent": a, "stockCode": "300308",
+                    "pubDate": int(datetime.fromisoformat(when).timestamp() * 1000) - 86400000,
+                    "updateDate": int(datetime.fromisoformat(when).timestamp() * 1000)}
+        pages = {("2026-07-01", 1): {"rows": [row(1, "1.6T 光模块出货情况?", "公司1.6T光模块已批量出货。"),
+                                              row(2, "公司分红计划?", "请关注公告。"),
+                                              row(3, "还没回答的问题", "")], "totalPage": 2},
+                 ("2026-07-01", 2): {"rows": [row(4, "800G 新客户?", "已完成新客户送样认证,即将批量交付。", "2026-07-20")], "totalPage": 2},
+                 ("2026-08-01", 1): {"rows": [], "totalPage": 0}}
+        calls = []
+
+        def fake(url, params=None, data=None, **kw):
+            if url.endswith("queryKeyboardInfo"):
+                return {"data": [{"code": "300308", "secid": "9900012345", "zwjc": "中际旭创"}]}
+            calls.append((params["stockcode"], params["startDay"], params["endDay"], params["pageNum"]))
+            return pages.get((params["startDay"], params["pageNum"]), {"rows": [], "totalPage": 0})
+
+        news._IRM_ORG.clear()
+        with mock.patch.object(news.http, "get_json", side_effect=fake), mock.patch.object(news, "BACKFILL_PAUSE", 0), \
+                mock.patch.object(news, "irm_companies", return_value=[{"companyId": "cn.300308", "name": "中际旭创", "ticker": "300308"}]):
+            out = runner.job_backfill(self.conn, since="2026-07-01", until="2026-08-31", only="cninfo_irm", log=lambda *_: None)
+        f = out["fetch"]
+        self.assertEqual((f["source"], f["pages"], f["fetched"], f["new"], f["skipped"], f["complete"]), ("cninfo_irm", 3, 3, 3, 1, True))
+        self.assertIn(("300308", "2026-07-01", "2026-07-31", 2), calls)
+        rows = {r["title"]: dict(r) for r in self.conn.execute("SELECT * FROM candidates WHERE source_type='cninfo_irm'")}
+        self.assertEqual({k: (r["status"], r["origin"]) for k, r in rows.items()}, {
+            "1.6T 光模块出货情况?": ("pending", "backfill"), "公司分红计划?": ("rejected", "backfill"),
+            "800G 新客户?": ("pending", "backfill")})
+        self.assertEqual(rows["800G 新客户?"]["date"], "2026-07-20")                   # 回答的日子是可知日
+        self.assertTrue(rows["800G 新客户?"]["url"].endswith("questionId=q4"))
+        # 定时抓取:只取深交所公司,只取已回答的
+        companies, _ = news.build_vocab(self.conn)
+        src = next(x for x in news.load_spec()["sources"] if x["type"] == "cninfo_irm")
+        live_calls = []
+
+        def live(url, params=None, data=None, **kw):
+            if url.endswith("queryKeyboardInfo"):
+                return {"data": [{"code": params and params.get("keyWord") or "", "secid": "99000"}]}
+            live_calls.append(params["stockcode"])
+            return pages[("2026-07-01", 1)]
+
+        with mock.patch.object(news.http, "get_json", side_effect=live), mock.patch.object(news.time, "sleep"):
+            items = news.fetch_cninfo_irm(src, {"timeout": 5, "recent_days": 14}, companies, log=lambda *_: None)
+        self.assertTrue(items and all(it["summary"] for it in items))                 # 没回答的不要
+        self.assertTrue(live_calls and all(news.is_szse(c) for c in live_calls))      # 只问深交所公司,上交所 / 北交所不走互动易
+
+    def test_irm_upload_fallback(self):
+        out = upload(self.conn, "candidates", None, [
+            {"url": "https://sns.sseinfo.com/q/1", "title": "公司CW光源进展?", "summary": "公司CW光源已通过客户认证并小批量出货。",
+             "date": "2026-07-10", "source": "上证e互动", "source_type": "cninfo_irm", "company_id": "cn.688498", "origin": "backfill"}])
+        r = dict(self.conn.execute("SELECT * FROM candidates WHERE id=?", (news.cand_id("https://sns.sseinfo.com/q/1"),)).fetchone())
+        self.assertEqual((r["source_type"], r["tier"], r["status"], r["part_id"]), ("cninfo_irm", 0, "pending", "part.cw-laser"))
+        with self.assertRaises(ValueError):
+            upload(self.conn, "candidates", None, [{"url": "https://x/2", "title": "t", "source_type": "rss"}])
 
     def test_hint_calibration(self):
         ACC.account(self.conn)

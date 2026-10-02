@@ -96,15 +96,18 @@ CREATE TABLE IF NOT EXISTS ingest_runs (
 -- 抓不到的，交给 AI（PI + web-access）去网页端取，再 POST /api/ingest/upload 交回。
 -- kind=candidate_triage：规则拿不准的候选交给 AI 判，company_id 列放的是候选 id；AI 用 POST /api/candidates/judge 批量交回。
 --   7 天没判的自动 dropped（候选保持 pending）
+-- kind=mapping_candidate：AI 认为某家公司该站在某个部件上（事件只能落在已有映射的部件上），
+--   company_id 列放「公司@部件」，payload 是提议与来源；走证据流程进 physical JSON 后自动关掉
 CREATE TABLE IF NOT EXISTS ingest_todo (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
-  kind        TEXT NOT NULL,                  -- bars | margin | holders | valuation | candidates | candidate_triage
+  kind        TEXT NOT NULL,                  -- bars | margin | holders | valuation | candidates | candidate_triage | mapping_candidate
   company_id  TEXT,
   hint        TEXT,                           -- 人话：去哪里取、取什么
   reason      TEXT,                           -- 自动抓取失败的原因
   status      TEXT NOT NULL DEFAULT 'open',   -- open | done | dropped
   created_at  TEXT NOT NULL,
   done_at     TEXT,
+  payload     TEXT,                           -- JSON：mapping_candidate 的提议（company_id / part_id / stage / role / sources / reason）
   UNIQUE (kind, company_id)
 );
 """
@@ -117,6 +120,7 @@ MIGRATIONS = [("candidates", "relevance", "INTEGER NOT NULL DEFAULT 1"),
               ("candidates", "confidence", "INTEGER"),
               ("candidates", "origin", "TEXT NOT NULL DEFAULT 'live'"),
               ("candidates", "body_at", "TEXT"),
+              ("ingest_todo", "payload", "TEXT"),
               # events 是 main 的表(db.py):入账时把判定一起带过去,part_id 是 AI 归位过的部件(以它为准)
               ("events", "thesis", "TEXT"),
               ("events", "confidence", "INTEGER"),

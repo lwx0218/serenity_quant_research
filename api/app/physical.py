@@ -179,6 +179,12 @@ def company_parts(conn: sqlite3.Connection, company_id: str) -> list[dict]:
     return out
 
 
+def company_on_part(conn: sqlite3.Connection, company_id: str | None, part_id: str | None) -> bool:
+    """这家公司在实物映射里站在这个部件上吗(任何证据级)。"""
+    return bool(company_id and part_id and conn.execute(
+        "SELECT 1 FROM physical_part_companies WHERE company_id=? AND part_id=?", (company_id, part_id)).fetchone())
+
+
 def part_for_event(conn: sqlite3.Connection, company_id: str | None, category: str | None,
                    part_id: str | None = None) -> dict | None:
     """The one part an event most likely lands on. The company's parts are ranked
@@ -187,8 +193,11 @@ def part_for_event(conn: sqlite3.Connection, company_id: str | None, category: s
     category, then by signal order. None when the company is not on any object.
 
     part_id: the part the event was placed on when it was judged (events.part_id /
-    candidates.part_id, AI 归位过的). It wins over the ranking when it exists."""
+    candidates.part_id, AI 归位过的). It wins over the ranking when it exists and the
+    company stands on it — 事件只能落在公司已有映射的部件上;映射以外的归位不认,退回排序。"""
     parts = company_parts(conn, company_id) if company_id else []
+    if part_id and company_id and not any(p["part_id"] == part_id for p in parts):
+        part_id = None
     if part_id:
         r = conn.execute("""SELECT p.id, p.name, p.sort, p.object_id, o.name AS object_name FROM physical_parts p
                             JOIN physical_objects o ON o.id = p.object_id WHERE p.id=?""", (part_id,)).fetchone()

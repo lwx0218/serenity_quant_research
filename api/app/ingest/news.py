@@ -37,7 +37,9 @@ ROUTINE_HARD = re.compile(
     # v2 追加:募资安排、发行上市、定期报告,以及财经媒体的盘面 / 汇总稿
     r"募集资金置换|募集资金专户|自筹资金|"
     r"中签|发行价|IPO|上市公告书|招股|询价|三季报|半年报|年报|预约披露|财经早餐|利好消息一览|公告最新快递|重大事项公告|晚间公告|"
-    r"涨停|跌停|市值|回购|机构密集|一览|名单|早盘|午盘|收评")
+    r"涨停|跌停|市值|回购|机构密集|一览|名单|早盘|午盘|收评|"
+    # v2.3:募投项目的收尾与挪动不是新增产能(结项 / 调整内部投资结构 / 延期 / 变更或增加实施地点、实施主体)
+    r"结项|内部投资结构|延期|(?:变更|增加)[^，。、]{0,12}实施(?:主体|地点)")
 ROUTINE_SOFT = re.compile(r"使用部分募集资金|使用募集资金|增资|借款|投资进展|土地使用权|出让合同|调研")
 # 英文源(rss / upload)标题里的例行与泛科技
 ROUTINE_EN = re.compile(r"(?<![A-Za-z])(?:buybacks?|share price|market cap|glasses|VR|smartphones?|earnings call|dividends?|layoffs?|lawsuits?)(?![A-Za-z])", re.I)
@@ -290,26 +292,168 @@ def month_segments(since: str, until: str) -> list[tuple[str, str]]:
     return out
 
 
+IRM_ORG_URL = "https://irm.cninfo.com.cn/newircs/index/queryKeyboardInfo"
+IRM_DETAIL = "https://irm.cninfo.com.cn/ircs/question/questionDetail?questionId={}"
+IRM_PAGE_SIZE = 100
+FORM = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8", "Referer": "https://irm.cninfo.com.cn/"}
+_IRM_ORG: dict[str, str] = {}
+
+
+def is_szse(ticker: str | None) -> bool:
+    """互动易只有深交所公司(00x / 30x);上交所在上证 e 互动,北交所另有平台。"""
+    return bool(ticker and re.fullmatch(r"(00|30)\d{4}", ticker))
+
+
+def irm_org_id(src: dict, cfg: dict, code: str) -> str:
+    """互动易要先拿公司的 orgId(secid)。同一进程里缓存。"""
+    if code in _IRM_ORG:
+        return _IRM_ORG[code]
+    data = http.get_json(src.get("org_url") or IRM_ORG_URL, {"_t": int(time.time())}, data=urlencode({"keyWord": code}).encode(),
+                         headers=FORM, timeout=cfg["timeout"], retries=1) or {}
+    rows = [r for r in (data.get("data") or []) if isinstance(r, dict) and r.get("secid")]
+    hit = next((r for r in rows if str(r.get("code") or r.get("stockCode") or "") == code), rows[0] if rows else None)
+    if not hit:
+        raise http.FetchError(f"互动易查不到 {code} 的 orgId")
+    _IRM_ORG[code] = hit["secid"]
+    return hit["secid"]
+
+
+def irm_page(src: dict, cfg: dict, code: str, org_id: str, sdate: str = "", edate: str = "", page: int = 1) -> dict:
+    """互动易一家公司的问答一页(POST,参数在 query string,与 akshare stock_irm_cninfo 同一个接口)。→ {rows, totalPage, …}"""
+    params = {"_t": int(time.time()), "stockcode": code, "orgId": org_id, "pageSize": IRM_PAGE_SIZE, "pageNum": page,
+              "keyWord": "", "startDay": sdate, "endDay": edate}
+    data = http.get_json(src["url"], params, data=b"", headers=FORM, timeout=cfg["timeout"], retries=1)
+    if not isinstance(data, dict) or not isinstance(data.get("rows"), list):
+        raise http.FetchError("互动易返回里没有 rows")
+    return data
+
+
+def _ms_or_str(v) -> str:
+    if isinstance(v, (int, float)) or (isinstance(v, str) and v.isdigit() and len(v) >= 12):
+        return datetime.fromtimestamp(int(v) / 1000).isoformat()
+    return str(v or "")
+
+
+def _irm_item(r: dict, rec: dict) -> dict | None:
+    """一条问答 → 原始条目:标题 = 问题,摘要 = 回答,日期 = 回答的日子(可知日)。没回答的不要:问题不是事实。"""
+    q = re.sub(r"<[^>]+>", "", r.get("mainContent") or "").strip()
+    a = re.sub(r"<[^>]+>", "", r.get("attachedContent") or "").strip()
+    qid = r.get("indexId") or r.get("id")
+    if not (q and a and qid):
+        return None
+    when = r.get("attachedPubDate") or r.get("updateDate") or r.get("pubDate")
+    return {"title": q[:120], "url": IRM_DETAIL.format(qid), "summary": a, "date": _ms_or_str(when), "_company": rec["companyId"]}
+
+
 def fetch_cninfo_irm(src: dict, cfg: dict, companies: dict, log=print) -> list[dict]:
-    """互动易搜索（POST JSON）；接口偶有变动，失败只记日志。"""
-    out = []
+    """互动易(新接口 newircs):深交所公司最近 recent_days 天的已回答问答。连续 5 家失败就停。"""
+    out, seen = [], set()
+    since = (datetime.now() - timedelta(days=cfg["recent_days"])).strftime("%Y-%m-%d")
+    today = datetime.now().strftime("%Y-%m-%d")
     fails = 0
     for name, rec in a_share_names(companies).items():
+        code = rec.get("ticker")
+        if not is_szse(code):
+            continue
         try:
-            data = http.post_json(src["url"], {"pageNo": 1, "pageSize": 20, "searchTypes": "11,1", "keyWord": name}, timeout=cfg["timeout"], retries=1)
+            org = irm_org_id(src, cfg, code)
+            rows = irm_page(src, cfg, code, org, since, today, 1)["rows"]
             fails = 0
         except Exception as e:  # noqa: BLE001
             log(f"  irm {name}: {e}")
             fails += 1
             if fails >= MAX_CONSECUTIVE_FAILS:
-                log(f"  irm: 连续 {fails} 家失败（多半是接口变了），这个源本轮停止"); break
+                log(f"  irm: 连续 {fails} 家失败（多半是接口又变了），这个源本轮停止"); break
             continue
-        for r in (data.get("results") or data.get("data") or []):
-            out.append({"title": (r.get("mainContent") or r.get("content") or "")[:120],
-                        "url": f"https://irm.cninfo.com.cn/ircs/question/questionDetail?questionId={r.get('indexId') or r.get('id')}",
-                        "summary": r.get("attachedContent") or r.get("answerContent") or "", "date": r.get("pubDate") or r.get("updateDate") or "",
-                        "_company": rec["companyId"]})
+        for r in rows:
+            it = _irm_item(r, rec) if isinstance(r, dict) else None
+            if it and it["url"] not in seen:
+                seen.add(it["url"]); out.append(it)
         time.sleep(0.3)
+    return out
+
+
+def irm_companies(conn: sqlite3.Connection) -> list[dict]:
+    """互动易回填对象:站在某个实物部件上的深交所公司。"""
+    return [c for c in backfill_companies(conn) if is_szse(c.get("ticker"))]
+
+
+def backfill_irm(conn: sqlite3.Connection, since: str, until: str, spec: dict | None = None, log=progress_log,
+                 pause: float | None = None) -> dict:
+    """互动易回填:深交所实物层公司 × 按月分段 × 翻页到 totalPage,每页入池(origin=backfill)。口径同巨潮回填:
+    每页单独提交;没回答 / 缺字段的单条跳过计数;某段失败记 failures,连续 5 家全失败熔断;complete 只看段。"""
+    spec = spec or load_spec()
+    cfg = spec["fetch"]
+    pause = BACKFILL_PAUSE if pause is None else pause
+    src = next((s for s in spec["sources"] if s["type"] == "cninfo_irm"), None)
+    if not src:
+        return {"skipped": "没有互动易源", "complete": False}
+    companies, parts = build_vocab(conn)
+    targets = irm_companies(conn)
+    segs = month_segments(since, until)
+    log(f"互动易回填 {since} → {until}:{len(targets)} 家 × {len(segs)} 段")
+    seen: set[str] = set()
+    out = {"new": 0, "merged": 0, "seen": 0, "fetched": 0, "tagged": 0, "pages": 0, "skipped": 0,
+           "segments_ok": 0, "segments_failed": 0, "last_position": None, "failures": []}
+    ok = failed = fails = 0
+    stopped = False
+    for index, rec in enumerate(targets, 1):
+        seg_ok = 0
+        try:
+            org = irm_org_id(src, cfg, rec["ticker"])
+        except Exception as e:  # noqa: BLE001
+            out["segments_failed"] += len(segs)
+            out["failures"].append({"company_id": rec["companyId"], "company": rec["name"], "error": f"orgId: {e}"[:300]})
+            org = None
+        for sdate, edate in (segs if org else []):
+            page = 1
+            while True:
+                position = {"company_id": rec["companyId"], "company": rec["name"], "since": sdate, "until": edate, "page": page}
+                out["last_position"] = position
+                label = f"irm {index}/{len(targets)} {rec['name']} {sdate}~{edate} 页 {page}"
+                try:
+                    data = irm_page(src, cfg, rec["ticker"], org, sdate, edate, page)
+                except Exception as e:  # noqa: BLE001
+                    out["segments_failed"] += 1
+                    out["failures"].append({**position, "error": f"{type(e).__name__}: {e}"[:300]})
+                    log(f"  ERR {label}: {e}")
+                    break
+                raw = []
+                for r in data["rows"]:
+                    it = _irm_item(r, rec) if isinstance(r, dict) else None
+                    if not it:
+                        out["skipped"] += 1                     # 没回答 / 缺字段:跳过计数,不算页失败
+                        continue
+                    if it["url"] not in seen:
+                        seen.add(it["url"]); raw.append(it)
+                cands = [c for c in (tag(src, it, companies, parts, spec) for it in raw) if c]
+                for c in cands:
+                    c["origin"] = "backfill"
+                stored = store(conn, dedupe(cands, len(raw), log=lambda *_: None, fuzzy=False))
+                for key in ("new", "merged", "seen"):
+                    out[key] += stored[key]
+                out["fetched"] += len(raw); out["tagged"] += len(cands); out["pages"] += 1
+                log(f"  已提交 {label} 返回 {len(data['rows'])} · 已回答 {len(raw)} · new {stored['new']} · 累计 new {out['new']}")
+                total = data.get("totalPage")
+                more = (page < total) if isinstance(total, int) else len(data["rows"]) >= IRM_PAGE_SIZE   # 没给 totalPage:满页就再翻
+                if not data["rows"] or not more:
+                    seg_ok += 1; out["segments_ok"] += 1
+                    break
+                if page >= CNINFO_MAX_PAGES:
+                    out["segments_failed"] += 1
+                    out["failures"].append({**position, "error": "达到页数上限，月份未完整抓取"})
+                    break
+                page += 1
+            if pause:
+                time.sleep(pause)
+        fails = 0 if seg_ok else fails + 1
+        ok, failed = (ok + 1, failed) if seg_ok == len(segs) else (ok, failed + 1)
+        if fails >= MAX_CONSECUTIVE_FAILS:
+            log(f"  irm: 连续 {fails} 家失败，回填停止"); stopped = True; break
+    out.update({"source": "cninfo_irm", "since": since, "until": until, "companies": len(targets), "segments": len(segs),
+                "companies_ok": ok, "companies_failed": failed, "stopped": stopped,
+                "complete": not stopped and out["segments_failed"] == 0})
+    log(f"互动易回填结束 complete={out['complete']} fetched={out['fetched']} new={out['new']}")
     return out
 
 
@@ -397,6 +541,17 @@ def category_verb(title: str) -> tuple[str, str] | None:
     return (m.group(0), m.lastgroup) if m else None
 
 
+_CATEGORIES: dict | None = None
+
+
+def event_signal(text: str) -> bool:
+    """文字里有事件:类别动词,或六类卡口事件的关键词(扩产 / 订单 / 认证 / 供需 / 涨价 / 技术路线)。"""
+    global _CATEGORIES
+    if _CATEGORIES is None:
+        _CATEGORIES = load_spec()["categories"]
+    return bool(category_verb(text) or categorize(text, _CATEGORIES))
+
+
 def product_hit(text: str) -> bool:
     """强产品词命中(DSP / TIA 要和光模块类词同现)。"""
     t = text or ""
@@ -482,7 +637,7 @@ def tag(src: dict, it: dict, companies: dict, parts: dict, spec: dict, cutoff: s
     return {
         "relevance": relevance_of(src, text, cat, ps, title=it.get("title") or ""),
         "id": cand_id(it.get("url", "")), "date": d, "title": title, "url": it.get("url", ""),
-        "summary": re.sub(r"\s+", " ", it.get("summary") or "")[:600 if IR_RECORD in title else 240],
+        "summary": re.sub(r"\s+", " ", it.get("summary") or "")[:600 if IR_RECORD in title or src["type"] == "cninfo_irm" else 240],
         "source": src["name"], "source_type": src["type"], "tier": src["tier"], "weight": src.get("weight", 0.5),
         "evidence": TIER_EVIDENCE.get(src["tier"], "candidate"), "category": cat,
         "companies": [{"companyId": c["companyId"], "name": c["name"]} for c in cs],

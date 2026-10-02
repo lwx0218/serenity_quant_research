@@ -14,7 +14,7 @@
 - **Cowork**：评审（代码、真数据、设计层）、画布方向稿、写规格；不能 push，规格以 `docs/claude/*.md` 交给 CC。
 
 ## 当前基线
-- GitHub `physical-first`：**入账 v2.2**（读正文 + 过程修复，见待做 1）+ 入账 v2.1 + 预审 C 剩余 + AGENTS.md 换成 09-29 版（愿景 / 验收标准 / 刚刚好）
+- GitHub `physical-first`：**入账 v2.3**（归位底线 + 映射提议 + 互动易新接口 + 募投收尾挡掉，见待做 1）+ 入账 v2.2（读正文 + 过程修复）+ 入账 v2.1 + 预审 C 剩余 + AGENTS.md 换成 09-29 版（愿景 / 验收标准 / 刚刚好）
   + 合并 `pi/backfill-fixes`（de76110：回填逐页提交、CLI 的 Ctrl-C / SIGTERM 收尾自己的 run、`tests/__init__.py` 测试隔离；
   CC 验证：`SQR_DB_PATH` 指向一个「生产」库跑全套 pytest / unittest，库文件哈希不变）。
   PI 的 v2.1 执行记录：`ops/reports/2026-09-29-accounting-v2.1.md`（真事件 7 条；回填新增候选 8943，规则入账 1 · 例行 8940 · 交 AI 2）。main 留着 tag `v1.0-teardown-reboot`，未分叉；合并到 main 要 Faye 点头。
@@ -73,9 +73,27 @@
      ① 事件能不能归到公司没有映射的部件（`/judge` 技术上收任何存在的 part_id；映射是研究事实，要加得带来源）；
      ② MPO 跳线是机房外部布线，不是模块内的「MPO 插座与 MT 插芯」——CC 倾向这条不算这只模块的卡口事件（宁可无结论）。
    - 服务器上现在可以放心跑单测：v2.2 的 `connect()` 在测试环境拒绝临时目录以外的库（PI 报告里因风险没跑）。
-2. ~~**PI**（v2.2）~~ 已跑完（4e7da18、00dfd14、d6fc1b1）。下一步离 §4 的门槛（评审 §6：真事件 50 上下、3–5 个部件 n ≥ 5）还差：真事件 27、n ≥ 5 的部件 2 个。
-   能补的来源：媒体回填（`teardown-accounting-v2.md` §3.2，DIGITIMES / 讯石 / C114 / 光纤在线近 6 个月，upload 带 `origin: backfill`，还没做）；
-   互动易换新接口（订单 / 认证类事件主要在这里）。要不要做、先做哪个由 Owner 定。
+   **Owner 10-02 的决定与入账 v2.3（`RULES_VERSION = "v2.3"`）**：
+   - 中天科技 MPO 跳线订单不算（机房外部布线，不是模块内 MPO 插座 / MT 插芯），PI 按 id 判不算。
+   - 归位底线：事件只能落在公司已有映射的部件上。`/judge`、`/confirm` 显式给的部件不在映射里 → 报错并指向映射提议；候选上存的初判不在映射里
+     （没命中公司时的部件词初判）就不用，按映射排；公司不在任何部件上 → 报错；`part_for_event` 读的时候也不认映射以外的 `part_id`。
+     现有 27 条全部在映射内（CC 用快照对过 physical JSON）。
+   - 映射提议：`POST /api/mapping/candidates`（来源每条要 url + quote，stage 必填，已有映射不收）→ `ingest_todo` kind=`mapping_candidate`
+     （company_id 列放「公司@部件」，新列 `payload` 存提议）；`GET /api/mapping/candidates` 列出。谁把它写进 physical JSON：按 `physical/README.md`
+     证据流程（CC / Cowork），重建后 `account()` 自动关掉提议、把牵出的候选重新交 AI（重新计 7 天）。
+   - 下一个来源先做互动易：新接口 `newircs`（同 akshare `stock_irm_cninfo`：`queryKeyboardInfo` 取 orgId → `company/question` 分页），
+     只取已回答的问答（标题 = 问题，摘要 = 回答，日期 = 回答日）。**CC 的容器连不上 irm.cninfo.com.cn / sns.sseinfo.com（代理 403），接口形状按 akshare
+     写、用离线夹具测；PI 先跑 `probe` 看「irm 300308」那一行确认。** 互动易只有深交所（站在部件上的 A 股 72 家里 36 家）；上交所 32 家在上证 e 互动，
+     没写适配器，由 PI 从网页端以 `source_type=cninfo_irm` 上传；北交所 4 家暂无。回填：`backfill --only cninfo_irm`。
+     规则：互动问答不自动入账（问题不是事实）；回答里有事件（类别动词 / 六类关键词）且问答提到部件 / 产品 → 交 AI，否则例行。
+   - 校准：「结项 / 内部投资结构 / 延期 / 变更或增加实施地点、实施主体」进硬例行（「增加实施地点 / 主体」是 CC 按同类补的）；提示词「不是」里同样加上。
+     代价：「募投项目结项并将节余募集资金实施新项目」这类公告里的新项目也一起挡掉了（宁可漏，不要错）。生益电子 10-29、03-13 两条由 PI 按 id 重判。
+   - 效力样本按「公司 × 事件日 × 部件」去重（Owner 同意），做 §4 时实现。
+   - 首页 / 部件页的 30 天窗口要改，属于页面线，等方向稿。
+2. **PI**（v2.3，`ops/README.md` 有逐条命令）：pull → build → 重启 → `probe`（看互动易）→ 按 id 判不算 3 条（生益 ×2、中天 MPO）→ `triage`
+   → 互动易回填（`backfill --only cninfo_irm`；不通就网页端上传）+ 上证 e 互动网页端上传 → 判新一批 → `recompute` → 快照 + 报告（加按类别）。
+   之前：v2.2 已跑完（4e7da18、00dfd14、d6fc1b1）。离 §4 门槛（评审 §6：真事件 50 上下、3–5 个部件 n ≥ 5）还差：真事件 27、n ≥ 5 的部件 2 个。
+   来源顺序（Owner 定）：互动易先（订单 / 认证 / 出货类，都是 A 股、都在篮子里）→ 媒体回填（`teardown-accounting-v2.md` §3.2）第二。
 3. **CC**：回填出 50 条以上真事件后做 `teardown-accounting-v2.md` §4（效力到部件级 + 部件篮子页）→ 预审 D → 预审 A。
 4. **Cowork**：拿到新快照后再做一次真数据评审，回答「够不够直接」。
 5. 互动易接口换新；4 家行情缺口（PI 从网页端 upload）。

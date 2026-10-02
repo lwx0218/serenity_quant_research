@@ -81,9 +81,29 @@ def _write_event(conn: sqlite3.Connection, r: dict, company_id: str, category: s
     return eid
 
 
-def _check_part(conn: sqlite3.Connection, part_id: str | None) -> None:
+def _check_part(conn: sqlite3.Connection, part_id: str | None, company_id: str | None = None) -> None:
+    """部件要存在;给了公司时,公司必须在实物映射里站在这个部件上——事件只能落在已有映射的部件上,
+    事件不改研究事实。AI 认为它该站在这个部件上:POST /api/mapping/candidates 附来源,走证据流程。"""
     if part_id and not conn.execute("SELECT 1 FROM physical_parts WHERE id=?", (part_id,)).fetchone():
         raise LookupError(f"part {part_id!r} not found")
+    if part_id and company_id and not PH.company_on_part(conn, company_id, part_id):
+        raise ValueError(f"{company_id} 在实物映射里不站在 {part_id} 上:事件只能落在公司已有映射的部件上;"
+                         "认为它该站在这里,POST /api/mapping/candidates 附来源提映射,这条先别判算")
+
+
+def _check_on_object(conn: sqlite3.Connection, company_id: str) -> None:
+    if not PH.company_parts(conn, company_id):
+        raise ValueError(f"{company_id} 不在这只模块的任何部件上:事件只能落在公司已有映射的部件上;"
+                         "认为它该站在某个部件上,POST /api/mapping/candidates 附来源提映射")
+
+
+def _placed_part(conn: sqlite3.Connection, company_id: str, explicit: str | None, stored: str | None) -> str | None:
+    """事件的部件:显式给的必须在映射里(不在就报错);候选上存的初判不在映射里就不用(没命中公司时的部件词初判),
+    交给 part_for_event 按映射排。"""
+    if explicit:
+        _check_part(conn, explicit, company_id)
+        return explicit
+    return stored if PH.company_on_part(conn, company_id, stored) else None
 
 
 def _check_confidence(confidence) -> None:
@@ -112,14 +132,15 @@ def confirm(conn: sqlite3.Connection, cand_id: str, *, company_id: str | None = 
         raise ValueError("这条候选没有日期")
     if not conn.execute("SELECT 1 FROM companies WHERE id=?", (company_id,)).fetchone():
         raise LookupError(f"company {company_id!r} not found")
-    _check_part(conn, part_id)
+    _check_on_object(conn, company_id)
+    part_id = _placed_part(conn, company_id, part_id, r.get("part_id"))
     _check_confidence(confidence)
     # 事件日 = 可知日；非交易日顺延到下一交易日
     d0 = date.fromisoformat(d)
     if not A.is_trading_day(d0):
         d0 = A.next_trading_day(d0)
     now = datetime.now().isoformat(timespec="seconds")
-    r.update({"part_id": part_id or r.get("part_id"), "thesis": thesis if thesis is not None else r.get("thesis"),
+    r.update({"part_id": part_id, "thesis": thesis if thesis is not None else r.get("thesis"),
               "confidence": confidence if confidence is not None else r.get("confidence"), "decided_by": by})
     eid = _write_event(conn, r, company_id, category, d0, title, summary)
     conn.execute("""UPDATE candidates SET status='confirmed', event_id=?, decided_at=?, decided_note=?, decided_by=?, company_id=?, category=?, date=?,
@@ -211,8 +232,8 @@ def _judge_one(conn: sqlite3.Connection, it: dict, by: str) -> dict:
         raise ValueError(f"候选命中 {len(ids)} 家公司,要给 company_id" if ids else "候选没命中公司,要给 company_id")
     if not conn.execute("SELECT 1 FROM companies WHERE id=?", (company_id,)).fetchone():
         raise LookupError(f"company {company_id!r} not found")
-    part_id = it.get("part_id") or r.get("part_id")
-    _check_part(conn, part_id)
+    _check_on_object(conn, company_id)
+    part_id = _placed_part(conn, company_id, it.get("part_id"), r.get("part_id"))
     if r["status"] != "pending":
         reopen(conn, cid)                                   # 规则判过的,以 AI 为准
     out = confirm(conn, cid, company_id=company_id, category=category, event_date=d, note=reason, by=by, recompute=False,
@@ -240,6 +261,75 @@ def judge(conn: sqlite3.Connection, items: list[dict], by: str = "ai") -> dict:
     if when:
         out.update(rebuild_reactions(conn, when))
     return out
+
+
+# ------------------------------------------------------------------ 映射提议(mapping_candidate)
+MAPPING_STAGES = ("material", "chip", "device", "engine", "connect", "module", "equip")
+
+
+def propose_mapping(conn: sqlite3.Connection, item: dict, by: str = "ai") -> dict:
+    """AI 认为某家公司该站在某个部件上:开一条 mapping_candidate 待办,附来源。不改实物映射——
+    映射是研究事实,按 physical/README.md 的证据级规则核验后写进 physical/data/module-*.json,重建后待办自动关掉。
+    item: {company_id, part_id, stage, role?, sources:[{title, url, publisher?, date?, quote}], reason, candidate_id?}"""
+    company_id, part_id = item.get("company_id"), item.get("part_id")
+    if not company_id or not conn.execute("SELECT 1 FROM companies WHERE id=?", (company_id,)).fetchone():
+        raise LookupError(f"company {company_id!r} not found")
+    if not part_id or not conn.execute("SELECT 1 FROM physical_parts WHERE id=?", (part_id,)).fetchone():
+        raise LookupError(f"part {part_id!r} not found")
+    if PH.company_on_part(conn, company_id, part_id):
+        raise ValueError(f"{company_id} 已经站在 {part_id} 上,不用提")
+    if item.get("stage") not in MAPPING_STAGES:
+        raise ValueError(f"stage 要是 {' / '.join(MAPPING_STAGES)} 之一")
+    sources = item.get("sources") or []
+    if not sources or not all(isinstance(x, dict) and x.get("url") and x.get("quote") for x in sources):
+        raise ValueError("至少一条来源,每条要有 url 与 quote(原文里支持这条映射的那句话)")
+    if not (item.get("reason") or "").strip():
+        raise ValueError("要给 reason:为什么这家公司站在这个部件上")
+    cand = item.get("candidate_id")
+    if cand:
+        _row(conn, cand)
+    payload = {"company_id": company_id, "part_id": part_id, "stage": item["stage"], "role": item.get("role"),
+               "sources": sources, "reason": item["reason"].strip(), "candidate_id": cand, "by": by}
+    part = conn.execute("SELECT name FROM physical_parts WHERE id=?", (part_id,)).fetchone()["name"]
+    hint = (f"映射提议:{company_id} → {part_id}({PH.short_name(part)},stage={item['stage']})。按 physical/README.md 的证据级规则核验来源,"
+            f"成立就写进 physical/data/module-*.json(带 sources 与 evidence)后重建;不成立 PATCH /api/ingest/todo/{{id}} {{status:'dropped'}}。")
+    now = datetime.now().isoformat(timespec="seconds")
+    conn.execute("""INSERT INTO ingest_todo (kind, company_id, hint, reason, status, created_at, payload) VALUES ('mapping_candidate',?,?,?,'open',?,?)
+                    ON CONFLICT(kind, company_id) DO UPDATE SET hint=excluded.hint, reason=excluded.reason, payload=excluded.payload,
+                      status='open', created_at=excluded.created_at""",
+                 (f"{company_id}@{part_id}", hint, payload["reason"], now, json.dumps(payload, ensure_ascii=False)))
+    conn.commit()
+    return {"ok": True, "key": f"{company_id}@{part_id}", "status": "open"}
+
+
+def mapping_candidates(conn: sqlite3.Connection, status: str = "open") -> list[dict]:
+    q, args = "SELECT * FROM ingest_todo WHERE kind='mapping_candidate'", []
+    if status != "all":
+        q += " AND status=?"; args.append(status)
+    out = []
+    for r in conn.execute(q + " ORDER BY created_at DESC", args):
+        d = dict(r)
+        d["payload"] = json.loads(d["payload"]) if d.get("payload") else None
+        out.append(d)
+    return out
+
+
+def resolve_mappings(conn: sqlite3.Connection) -> int:
+    """映射已经进了实物层(physical JSON 重建后)的提议关掉;它牵出的候选还没判的,交 AI 的待办重新打开、重新计 7 天。"""
+    n = 0
+    now = datetime.now().isoformat(timespec="seconds")
+    for t in mapping_candidates(conn, "open"):
+        p = t["payload"] or {}
+        if not PH.company_on_part(conn, p.get("company_id"), p.get("part_id")):
+            continue
+        conn.execute("UPDATE ingest_todo SET status='done', done_at=? WHERE id=?", (now, t["id"]))
+        if p.get("candidate_id"):
+            conn.execute("""UPDATE ingest_todo SET status='open', created_at=?, done_at=NULL
+                            WHERE kind='candidate_triage' AND company_id=? AND company_id IN
+                              (SELECT id FROM candidates WHERE status='pending' AND decided_by IS NULL)""", (now, p["candidate_id"]))
+        n += 1
+    conn.commit()
+    return n
 
 
 # ------------------------------------------------------------------ 人工只剩「不算」
