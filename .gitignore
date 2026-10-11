@@ -38,6 +38,7 @@ artifacts/
 __pycache__/
 *.pyc
 .venv/
+*.egg-info/
 api/.pytest_cache/
 
 # Runtime database (rebuilt from data/seeds)
