@@ -91,3 +91,11 @@ Teardown(拆解):以实物部件为入口、落到资金投票的产业链量化
 - API:`cd api && python -m unittest -q`
 - Web:`cd web && npm run build`(含 `tsc --noEmit`);界面改动附截图(总览、选中、深色各一张)。
 <!-- PROJECT:OWNED:END -->
+
+## Cursor Cloud specific instructions
+
+- Vite 把 `/api` 代理到 `http://127.0.0.1:5000`（`web/vite.config.ts`）。API：`api/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 5000`。前端：`cd web && npm run dev -- --host 0.0.0.0 --port 5173`。
+- 创建虚拟环境前安装 `python3-venv`（提供 ensurepip）：`sudo apt-get install -y python3-venv`，然后 `cd api && python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"`。前端依赖：`cd web && npm ci`。
+- 登录 shell 能找到 nvm 里的 Node 22。给 tmux 等非登录进程用时，把同一套 `node` / `npm` / `npx` 链到 `/usr/local/bin`。
+- 首次启动 API 会从 `data/seeds/cpo/` 写成 `data/sqr.sqlite`。
+- 验证：`cd api && .venv/bin/python -m unittest -q`；`cd web && npm run build`。
